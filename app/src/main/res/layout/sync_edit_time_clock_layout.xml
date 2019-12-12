@@ -3,37 +3,47 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/time_picker_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_alignParentTop="true"
         >
         <DatePicker
             android:id="@+id/date_picker"
             android:calendarViewShown="false"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="540px"
+            android:datePickerMode="spinner"
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
-            android:datePickerMode="spinner"
-            android:layout_weight="3"
             />
         <TimePicker
             android:id="@+id/time_picker"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="540px"
             android:timePickerMode="spinner"
-            android:layout_weight="2"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@id/date_picker"
+            />
+        <TextView
+            android:id="@+id/flag"
+            android:layout_width="wrap_content"
+            android:layout_height="540px"
+            android:text=":"
+            android:gravity="center"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@id/time_picker"
             />
         <NumberPicker
             android:id="@+id/time_second_picker"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="95px"
+            android:layout_height="540px"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@id/flag"
+            android:layout_marginLeft="15px"
             />
-    </LinearLayout>
+    </RelativeLayout>
 
 
 
