@@ -19,7 +19,7 @@ public class ImageTextButton extends Button
 	{
 		super(context, attrs);
 		setClickable(true);
-		// Ä¬ÈÏÊ¹ÓÃR.drawable.iconÕâÕÅÍ¼Æ¬£¬Í¨¹ýiconÕâ¸öÊôÐÔÀ´»ñÈ¡Í¼Æ¬
+		// é»˜è®¤ä½¿ç”¨R.drawable.iconè¿™å¼ å›¾ç‰‡ï¼Œé€šè¿‡iconè¿™ä¸ªå±žæ€§æ¥èŽ·å–å›¾ç‰‡
 		resourceId = attrs.getAttributeResourceValue(namespace, "icon", R.mipmap.ic_launcher);
 		bitmap = BitmapFactory.decodeResource(getResources(), resourceId);
 		this.setTextSize(12);
@@ -28,12 +28,12 @@ public class ImageTextButton extends Button
 	@Override
 	protected void onDraw(Canvas canvas)
 	{
-		// Í¼Æ¬¶¥²¿¾ÓÖÐÏÔÊ¾
+		// å›¾ç‰‡é¡¶éƒ¨å±…ä¸­æ˜¾ç¤º
 		int x = (this.getMeasuredWidth() - bitmap.getWidth()) >> 1;
 		int y = 0;
 		canvas.drawBitmap(bitmap, x, y, null);
-		// ×ø±êÐèÒª×ª»»£¬ÒòÎªÄ¬ÈÏÇé¿öÏÂButtonÖÐµÄÎÄ×Ö¾ÓÖÐÏÔÊ¾
-		// ÕâÀïÐèÒªÈÃÎÄ×ÖÔÚµ×²¿ÏÔÊ¾
+		// åæ ‡éœ€è¦è½¬æ¢ï¼Œå› ä¸ºé»˜è®¤æƒ…å†µä¸‹Buttonä¸­çš„æ–‡å­—å±…ä¸­æ˜¾ç¤º
+		// è¿™é‡Œéœ€è¦è®©æ–‡å­—åœ¨åº•éƒ¨æ˜¾ç¤º
 		canvas.translate(0,(this.getMeasuredHeight() >> 1) - (int) this.getTextSize());
 		super.onDraw(canvas);
 	}
