@@ -68,7 +68,7 @@ public class SyncEditTimeClock extends RelativeLayout {
 
         int day = calendars.get(Calendar.DATE);
 
-        int hour = calendars.get(Calendar.HOUR);
+        int hour = calendars.get(Calendar.HOUR_OF_DAY);
 
         int min = calendars.get(Calendar.MINUTE);
 
