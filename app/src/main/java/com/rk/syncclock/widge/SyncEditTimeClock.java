@@ -19,8 +19,11 @@ import android.widget.TimePicker;
 
 import com.rk.syncclock.R;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -45,8 +48,11 @@ public class SyncEditTimeClock extends RelativeLayout {
 
             long now = SystemClock.uptimeMillis();
             long next = now + (1000 - now % 1000);
-
-            getHandler().postAtTime(mTicker, next);
+            try {
+                getHandler().postAtTime(mTicker, next);
+            } catch (Exception e) {
+                Log.e(TAG, "e: " + e.getMessage());
+            }
         }
     };
 
@@ -172,10 +178,10 @@ public class SyncEditTimeClock extends RelativeLayout {
         int month = mDatePicker.getMonth();
         int day = mDatePicker.getDayOfMonth();
         sb.append(year);
-        if (month < 10) {
-            sb.append("0" + month);
+        if ((month + 1) < 10) {
+            sb.append("0" + (month + 1));
         } else {
-            sb.append(month);
+            sb.append(month + 1);
         }
         if (day < 10) {
             sb.append("0" + day);
@@ -211,6 +217,29 @@ public class SyncEditTimeClock extends RelativeLayout {
         mTimePicker.setCurrentHour(hour);
         mTimePicker.setCurrentMinute(minute);
         mSecondPicker.setValue(second);
+    }
+
+    public String getWeek() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        Calendar cal = Calendar.getInstance();
+        Date date;
+        try {
+            date = sdf.parse(getDate());
+            cal.setTime(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        int w = cal.get(Calendar.DAY_OF_WEEK) - 1;
+        return ("0" + w);
+    }
+
+    @Override
+    protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        Log.i(TAG, "onWindowVisibilityChanged, visible: " + visibility);
+        if (visibility > 0) {
+            mStopTicking = true;
+        }
     }
 
 
