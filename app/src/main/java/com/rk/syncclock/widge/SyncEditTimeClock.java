@@ -239,6 +239,9 @@ public class SyncEditTimeClock extends RelativeLayout {
         Log.i(TAG, "onWindowVisibilityChanged, visible: " + visibility);
         if (visibility > 0) {
             mStopTicking = true;
+            if (mCheckbox != null) {
+                mCheckbox.setChecked(false);
+            }
         }
     }
 
