@@ -17,7 +17,7 @@
  *  limitations under the License.
  */
 
-package com.rk.syncclock.widge.wheel;
+package com.rk.commonlib.widge.wheel;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -43,7 +43,7 @@ import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.Scroller;
 
-import com.rk.syncclock.R;
+import com.rk.commonlib.R;
 
 
 /**

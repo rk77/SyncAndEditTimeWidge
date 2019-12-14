@@ -1,7 +1,6 @@
-package com.rk.syncclock.widge;
+package com.rk.commonlib.widge;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -17,8 +16,6 @@ import android.widget.NumberPicker;
 import android.widget.RelativeLayout;
 import android.widget.TimePicker;
 
-import com.rk.syncclock.R;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -26,6 +23,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
+
+import com.rk.commonlib.R;
 
 public class SyncEditTimeClock extends RelativeLayout {
     private static final String TAG = SyncEditTimeClock.class.getSimpleName();

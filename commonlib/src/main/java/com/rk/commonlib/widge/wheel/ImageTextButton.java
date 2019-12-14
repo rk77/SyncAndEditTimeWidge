@@ -1,4 +1,4 @@
-package com.rk.syncclock.widge.wheel;
+package com.rk.commonlib.widge.wheel;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -7,7 +7,7 @@ import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.widget.Button;
 
-import com.rk.syncclock.R;
+import com.rk.commonlib.R;
 
 public class ImageTextButton extends Button 
 {
