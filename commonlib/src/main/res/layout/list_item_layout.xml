@@ -7,16 +7,16 @@
     >
 
     <ImageView
-        android:id="@+id/zone_area_image"
+        android:id="@+id/image_icon"
         android:layout_width="25dp"
         android:layout_height="25dp"
         android:src="@drawable/zone_icon"/>
 
     <TextView
-        android:id="@+id/zone_number"
+        android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/zone_area_image"
+        android:layout_toRightOf="@id/image_icon"
         android:includeFontPadding="false"
         android:textColor="@color/gray"
         android:textSize="22dp"
