@@ -44,12 +44,13 @@ public abstract class BaseActivity extends Activity {
     private ChannelManager.IChannelOpenAndCloseListener mChannelOpenAndCloseListener = new ChannelManager.IChannelOpenAndCloseListener() {
         @Override
         public void onOpenFail() {
-
+            setLoadingVisible(false);
         }
 
         @Override
         public void onOpenSuccess() {
             Log.i(TAG, "tty open successfully");
+            setLoadingVisible(false);
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
