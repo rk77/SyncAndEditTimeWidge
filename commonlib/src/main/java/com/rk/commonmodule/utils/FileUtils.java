@@ -36,4 +36,15 @@ public class FileUtils {
         Log.i(TAG, "getSpecificFiles, file list size: "  + fileList.size());
         return fileList;
     }
+
+    public static String getSuffiex(String filepath) {
+        if (TextUtils.isEmpty(filepath)) {
+            return "";
+        }
+        int index = filepath.lastIndexOf(".");
+        if (index == -1) {
+            return "";
+        }
+        return filepath.substring(index + 1, filepath.length());
+    }
 }

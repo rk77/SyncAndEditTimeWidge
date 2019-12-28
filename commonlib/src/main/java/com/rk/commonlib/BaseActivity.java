@@ -95,6 +95,7 @@ public abstract class BaseActivity extends Activity {
     protected void onStart() {
         super.onStart();
         Log.i(TAG, "onStart");
+        setLoadingVisible(true);
         ChannelManager.getInstance(this).setChannelOpenAndCloseListener(mChannelOpenAndCloseListener);
         ChannelManager.getInstance(this).openTty();
     }
@@ -102,6 +103,9 @@ public abstract class BaseActivity extends Activity {
     @Override
     protected void onStop() {
         Log.i(TAG, "onStop");
+        if (mLoadingDialog != null && mLoadingDialog.isShowing()) {
+            mLoadingDialog.cancel();
+        }
         mUiHandler.removeCallbacksAndMessages(null);
         ChannelManager.getInstance(this).setChannelOpenAndCloseListener(null);
         ChannelManager.getInstance(this).closeTty();
