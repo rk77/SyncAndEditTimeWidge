@@ -293,4 +293,111 @@ public class ChannelManager {
         }
     }
 
+    public boolean openChannelSync(ChannelConstant.Channel channel) {
+        if (!mIsChannelManagerOpen) {
+            Log.i(TAG, "openChannelSync, channel manager is not opened");
+            return false;
+        }
+
+        boolean opened = false;
+
+        mCurrentChannel = channel;
+        switch (channel) {
+            case CHANNEL_NONE:
+                break;
+            case CHANNEL_INFRARED:
+                opened = openIRSync();
+                break;
+            case CHANNEL_485:
+                break;
+            case CHANNEL_PLC:
+                break;
+            case CHANNEL_LORA:
+                break;
+            case CHANNEL_NET:
+                break;
+            default:
+                break;
+        }
+        return opened;
+    }
+
+    private boolean openIRSync() {
+        Log.i(TAG, "openIRSync");
+        byte[] frame = ChannelManagerProtocolUtils.makeFrame(Channel.CHANNEL_INFRARED, ChannelCtrl.CHANNEL_SET_CROL);
+        if (frame == null) {
+            Log.i(TAG, "openIRSync, no frame, not send");
+        }
+        return sendAndReceiveFrameSync(frame);
+    }
+
+    public boolean sendAndReceiveFrameSync(byte[] frame) {
+        Log.i(TAG, "sendAndReceiveFrameSync");
+        if (mStatus == ChannelManagerStatus.BUSY) {
+            return false;
+        }
+        mStatus = ChannelManagerStatus.BUSY;
+        Log.i(TAG, "sendAndReceiveFrameSync, send data: " + DataConvertUtils.convertByteArrayToString(frame, false));
+        int ret = -1;
+        try {
+            for (int i = 0; i < 30; i++) {
+                ret = JniMethods.writeMGR(frame, frame.length);
+                if (ret >= 0) {
+                    break;
+                }
+                Thread.sleep(100);
+            }
+            if (ret < 0) {
+                mStatus = ChannelManagerStatus.IDLE;
+                return false;
+            } else {
+                byte[] data = new byte[1024];
+                ArrayList<Byte> frameByteList = new ArrayList<>();
+                int tryTime = 5;
+                for (int i = 0; i < 30; i++) {
+                    int length = JniMethods.readMGR(data, data.length);
+                    Log.i(TAG, "sendAndReceiveFrameSync, length: " + length + ", i: " + i);
+                    if (length <= 0) {
+                        if (tryTime > 0) {
+                            tryTime = tryTime - 1;
+                            Thread.sleep(200);
+                            continue;
+                        } else {
+                            Log.i(TAG, "sendAndReceiveFrameSync, i: " + i);
+                            break;
+                        }
+                    }
+                    for (int index = 0; index < length; index++) {
+                        frameByteList.add(data[index]);
+                    }
+                    Thread.sleep(200);
+                }
+                byte[] recvFrame = null;
+                if (frameByteList.size() > 0) {
+                    recvFrame = new byte[frameByteList.size()];
+                    for (int i = 0; i < frameByteList.size(); i++) {
+                        recvFrame[i] = frameByteList.get(i);
+                    }
+                }
+                if (recvFrame != null) {
+                    String dataString = DataConvertUtils.convertByteArrayToString(recvFrame, false);
+                    Log.i(TAG, "sendAndReceiveFrameSync, recev frame: " + dataString);
+                    // Infrared open
+                    if ("01000500".equals(dataString)) {
+                        TransferManager.getInstance(sContext).setChannel(new InfraredChannel());
+                    }
+                    mStatus = ChannelManagerStatus.IDLE;
+                    return true;
+                } else {
+                    mStatus = ChannelManagerStatus.IDLE;
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "sendAndReceiveFrameSync, error: " + e.getMessage());
+        }
+        mStatus = ChannelManagerStatus.IDLE;
+        return false;
+    }
+
 }
