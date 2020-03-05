@@ -10,13 +10,13 @@ import com.rk.commonmodule.utils.DataConvertUtils;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class InfraredChannel extends Channel implements IChannel {
-    private static final String TAG = InfraredChannel.class.getSimpleName();
+public class Channel485 extends Channel implements IChannel {
+    private static final String TAG = Channel485.class.getSimpleName();
 
     @Override
     public boolean channelOpen(int flag) {
         Log.i(TAG, "channelOpen");
-        byte[] frame = ChannelManagerProtocolUtils.makeFrame(ChannelConstant.Channel.CHANNEL_INFRARED, ChannelConstant.ChannelCtrl.CHANNEL_SET_CROL);
+        byte[] frame = ChannelManagerProtocolUtils.makeFrame(ChannelConstant.Channel.CHANNEL_485, ChannelConstant.ChannelCtrl.CHANNEL_SET_CROL);
         if (frame == null) {
             Log.i(TAG, "channelOpen, no frame, not send");
             return false;
@@ -42,7 +42,7 @@ public class InfraredChannel extends Channel implements IChannel {
         int ret = -1;
         try {
             for (int i = 0; i < 30; i++) {
-                ret = JniMethods.writeIR(data, length);
+                ret = JniMethods.write485(data, length);
                 if (ret >= 0) {
                     Log.i(TAG, "channelSend, i: " + i + ", ret: " + ret);
                     break;
@@ -63,7 +63,7 @@ public class InfraredChannel extends Channel implements IChannel {
             ArrayList<Byte> frameByteList = new ArrayList<>();
             int tryTime = 5;
             for (int i = 0; i < 30; i++) {
-                int length = JniMethods.readIR(data, data.length);
+                int length = JniMethods.read485(data, data.length);
                 Log.i(TAG, "channelReceive, length: " + length + "， i: " + i);
                 if (length <= 0) {
                     if (tryTime > 0) {
@@ -105,6 +105,6 @@ public class InfraredChannel extends Channel implements IChannel {
 
     @Override
     public ChannelConstant.Channel getChannelType() {
-        return ChannelConstant.Channel.CHANNEL_INFRARED;
+        return ChannelConstant.Channel.CHANNEL_485;
     }
 }

@@ -7,10 +7,13 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
+import com.rk.commonmodule.channel.Channel485;
 import com.rk.commonmodule.channel.ChannelConstant;
 import com.rk.commonmodule.channel.ChannelConstant.Channel;
 import com.rk.commonmodule.channel.ChannelConstant.ChannelCtrl;
+import com.rk.commonmodule.channel.IChannel;
 import com.rk.commonmodule.channel.InfraredChannel;
+import com.rk.commonmodule.channel.UsbChannel;
 import com.rk.commonmodule.jni.JniMethods;
 import com.rk.commonmodule.transfer.TransferManager;
 import com.rk.commonmodule.utils.DataConvertUtils;
@@ -28,7 +31,13 @@ public class ChannelManager {
 
     private boolean mIsChannelManagerOpen = false;
 
-    private ChannelConstant.Channel mCurrentChannel = ChannelConstant.Channel.CHANNEL_NONE;
+    private boolean mIsPowerOn = false;
+
+    private ChannelConstant.Channel mCurrentChannelType = ChannelConstant.Channel.CHANNEL_NONE;
+    private IChannel mCurrentChannel;
+    private static final InfraredChannel sInfraredChannel = new InfraredChannel();
+    private static final Channel485 s485Channel = new Channel485();
+    private static final UsbChannel sUsbChannel = new UsbChannel();
 
     private IChannelOpenAndCloseListener mChannelOpenAndCloseListener;
     private IChannelManagerSendListener mChannelManagerSendListener;
@@ -237,7 +246,7 @@ public class ChannelManager {
             }
         }
 
-        mCurrentChannel = channel;
+        mCurrentChannelType = channel;
         switch (channel) {
             case CHANNEL_NONE:
                 break;
@@ -301,7 +310,7 @@ public class ChannelManager {
 
         boolean opened = false;
 
-        mCurrentChannel = channel;
+        mCurrentChannelType = channel;
         switch (channel) {
             case CHANNEL_NONE:
                 break;
@@ -327,14 +336,55 @@ public class ChannelManager {
         byte[] frame = ChannelManagerProtocolUtils.makeFrame(Channel.CHANNEL_INFRARED, ChannelCtrl.CHANNEL_SET_CROL);
         if (frame == null) {
             Log.i(TAG, "openIRSync, no frame, not send");
+            return false;
         }
-        return sendAndReceiveFrameSync(frame);
+        byte[] recv =  sendAndReceiveFrameSync(frame);
+        if (recv == null || recv.length <= 0) {
+            return false;
+        } else {
+            String dataString = DataConvertUtils.convertByteArrayToString(recv, false);
+            Log.i(TAG, "openIRSync, recv frame: " + dataString);
+            // Infrared open
+            if ("01000500".equals(dataString)) {
+                TransferManager.getInstance(sContext).setChannel(new InfraredChannel());
+            }
+            return true;
+        }
     }
 
-    public boolean sendAndReceiveFrameSync(byte[] frame) {
+    private boolean open485Sync() {
+        Log.i(TAG, "open485Sync");
+        byte[] frame = ChannelManagerProtocolUtils.makeFrame(Channel.CHANNEL_INFRARED, ChannelCtrl.CHANNEL_SET_CROL);
+        if (frame == null) {
+            Log.i(TAG, "open485Sync, no frame, not send");
+            return false;
+        }
+        byte[] recv =  sendAndReceiveFrameSync(frame);
+        if (recv == null || recv.length <= 0) {
+            return false;
+        } else {
+            String dataString = DataConvertUtils.convertByteArrayToString(recv, false);
+            Log.i(TAG, "open485Sync, recv frame: " + dataString);
+            TransferManager.getInstance(sContext).setChannel(new Channel485());
+            return true;
+        }
+    }
+
+    private boolean openPLCSync() {
+        Log.i(TAG, "openPLCSync");
+        int result = JniMethods.ttyUSBOpen(9600);
+        if (result > 0) {
+            TransferManager.getInstance(sContext).setChannel(new UsbChannel());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public byte[] sendAndReceiveFrameSync(byte[] frame) {
         Log.i(TAG, "sendAndReceiveFrameSync");
         if (mStatus == ChannelManagerStatus.BUSY) {
-            return false;
+            return null;
         }
         mStatus = ChannelManagerStatus.BUSY;
         Log.i(TAG, "sendAndReceiveFrameSync, send data: " + DataConvertUtils.convertByteArrayToString(frame, false));
@@ -349,7 +399,7 @@ public class ChannelManager {
             }
             if (ret < 0) {
                 mStatus = ChannelManagerStatus.IDLE;
-                return false;
+                return null;
             } else {
                 byte[] data = new byte[1024];
                 ArrayList<Byte> frameByteList = new ArrayList<>();
@@ -380,24 +430,99 @@ public class ChannelManager {
                     }
                 }
                 if (recvFrame != null) {
+                    /*
                     String dataString = DataConvertUtils.convertByteArrayToString(recvFrame, false);
                     Log.i(TAG, "sendAndReceiveFrameSync, recev frame: " + dataString);
                     // Infrared open
+
                     if ("01000500".equals(dataString)) {
                         TransferManager.getInstance(sContext).setChannel(new InfraredChannel());
                     }
+                    */
                     mStatus = ChannelManagerStatus.IDLE;
-                    return true;
+                    return recvFrame;
                 } else {
                     mStatus = ChannelManagerStatus.IDLE;
-                    return false;
+                    return null;
                 }
             }
         } catch (Exception e) {
             Log.e(TAG, "sendAndReceiveFrameSync, error: " + e.getMessage());
         }
         mStatus = ChannelManagerStatus.IDLE;
-        return false;
+        return null;
     }
+    /************************** new interface ***************************************/
+    private boolean powerOn() {
+        int retOpen = JniMethods.tryOpenTty();
+        if (retOpen >= 0){
+            mIsPowerOn = true;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean powerOff() {
+        int retClose = JniMethods.ttyClose();
+        if (retClose >= 0) {
+            mIsPowerOn = false;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean channelOn(Channel channel) {
+        mCurrentChannelType = channel;
+        boolean opened = false;
+        switch (channel) {
+            case CHANNEL_NONE:
+                break;
+            case CHANNEL_INFRARED:
+                mCurrentChannel = sInfraredChannel;
+                if (mIsPowerOn){
+                    opened = mCurrentChannel.channelOpen(0);
+                } else {
+                    if (powerOn()) {
+                        opened = mCurrentChannel.channelOpen(0);
+                    }
+                }
+                break;
+            case CHANNEL_485:
+                mCurrentChannel = s485Channel;
+                if (mIsPowerOn){
+                    opened = mCurrentChannel.channelOpen(0);
+                } else {
+                    if (powerOn()) {
+                        opened = mCurrentChannel.channelOpen(0);
+                    }
+                }
+                break;
+            case CHANNEL_PLC:
+                mCurrentChannel = sUsbChannel;
+                opened = mCurrentChannel.channelOpen(0);
+                break;
+            case CHANNEL_LORA:
+                break;
+            case CHANNEL_NET:
+                break;
+            default:
+                break;
+        }
+        if (opened) {
+            TransferManager.getInstance(sContext).setChannel(mCurrentChannel);
+        }
+        return opened;
+    }
+
+    public void channelOff() {
+        powerOff();
+        JniMethods.closeEth();
+        JniMethods.loraClose();
+        JniMethods.ttyUSBClose();
+        JniMethods.deinitSecurityUnit();
+    }
+
 
 }
