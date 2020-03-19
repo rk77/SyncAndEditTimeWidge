@@ -521,7 +521,7 @@ public class ChannelManager {
         JniMethods.closeEth();
         JniMethods.loraClose();
         JniMethods.ttyUSBClose();
-        JniMethods.deinitSecurityUnit();
+        //JniMethods.deinitSecurityUnit();
     }
 
 

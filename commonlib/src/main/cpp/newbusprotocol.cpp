@@ -150,7 +150,7 @@ typedef enum
 
 
 /*For android app use*/
-int upgrade_fplus(char *path);
+int upgrade_fplus(char *path, int baudrate);
 int tryOpenTty(void);
 void ttyClose(void);
 int writeMGR(const uint8 * buf, int len);
@@ -179,7 +179,7 @@ void got_ack(uint8 recv_seq);
 void send_frame(struct frame_struct *fr_st);
 void *frame_send_loop(void*);
 void *frame_receive_loop(void*);
-int _upgrade_fplus(char *path, int baudrate);
+
 
 static volatile int ttyfd = -1;
 static int report_count = 0;
@@ -211,8 +211,8 @@ void gpio_power_off(void)
 
 int _ttyOpen(int speed)
 {
-    int ret;
-    struct termios2	options;
+	int ret;
+	struct termios2	options;
 
     if(0 == pthread_mutex_trylock(&tty_mutex)) {
         if(ttyfd < 0) {
@@ -293,10 +293,10 @@ int _ttyOpen(int speed)
         LOGD("tty open success, fd[%d]\n", ttyfd);
         return ttyfd;
     }
-    else {
-        LOGE("ttyOpen already be inited\n");
-        return -1;
-    }
+	else {
+	    LOGE("ttyOpen already be inited\n");
+	    return -1;
+	}
 
 }
 
@@ -314,8 +314,6 @@ void _ttyClose(void)
         close(ttyfd);
         ttyfd = -1;
     }
-
-
     pthread_mutex_trylock(&tty_mutex);
     pthread_mutex_unlock(&tty_mutex);
 }
@@ -688,11 +686,12 @@ void *frame_send_loop(void *arg)
             send_thread_stop_flag = 1;
             break;
         }
+
         temp = frame_queue_reduce();
         if(temp != NULL) {
             //LOGD("TEMP : %ul ,  len:%d, channel:%d\n", temp, temp->data_lenth, temp->channel);
             send_frame(temp);
-            if(temp->flag & IS_DATA) {
+            /*if(temp->flag & IS_DATA) {
                 temp->flag |= NEED_REPEAT;
                 temp->timerfd = timerfd_create(CLOCK_MONOTONIC,TFD_NONBLOCK);
                 if(temp->timerfd >= 0) {
@@ -703,11 +702,12 @@ void *frame_send_loop(void *arg)
                     time_out.it_value.tv_nsec = 40000000;//400000000;//400ms初始
 
                     timerfd_settime(temp->timerfd,0,&time_out,NULL);
-                    repeat_queue_add(temp);
+                    //repeat_queue_add(temp);
                 }
-            }
+            }*/
         }
 
+/*
         temp = repeat_queue_reduce();
         if(temp != NULL) {
             if((temp->flag & NEED_REPEAT) != NEED_REPEAT) {
@@ -733,6 +733,7 @@ void *frame_send_loop(void *arg)
                 repeat_queue_add(temp);
             }
         }
+        */
     }
     return NULL;
 }
@@ -964,14 +965,14 @@ void *frame_receive_loop(void *arg)
         **buf头部位置。计算出接收到的有效数据长度。
         */
         if(recv_data_tail != pBufHead){
-            //LOGD("BUS recv_data_tail : %u\n", recv_data_tail);
-            //LOGD("BUS pBufHead : %u\n", pBufHead);
-            //LOGD("XXXXXXX: ");
-            //for(pTmp = pBufHead; pTmp < recv_data_tail; pTmp++)
-            {
-                //  LOGD(" %X", *pTmp);
-            }
-            //LOGD("\n");
+              //LOGD("BUS recv_data_tail : %u\n", recv_data_tail);
+              //LOGD("BUS pBufHead : %u\n", pBufHead);
+              //LOGD("XXXXXXX: ");
+              //for(pTmp = pBufHead; pTmp < recv_data_tail; pTmp++)
+              {
+              //  LOGD(" %X", *pTmp);
+              }
+              //LOGD("\n");
         }
 
         recv_lenth = recv_data_tail - pBufHead;
@@ -1631,31 +1632,31 @@ void commMGR(uint8 *send, int send_len, uint8 *recv, int *recv_len, int ms_sleep
     int rd_pos  = 0;
     writeMGR(send, send_len);
     LOGD("*******Send a frame  len:%d******.\n", send_len);
-    usleep(ms_sleep * 1000);
+	usleep(ms_sleep * 1000);
 
-    while(1)
-    {
-        rd_len = readMGR((uint8*)(recv + rd_pos));
-        if(-1 != rd_len)
-        {
-            LOGD("Read len: %d\n", rd_len);
-            rd_pos += rd_len;
-            try_tms = 0;
-        }
-        else
-        {
-            try_tms++;
-        }
+	while(1)
+	{
+		rd_len = readMGR((uint8*)(recv + rd_pos));
+		if(-1 != rd_len)
+		{
+			LOGD("Read len: %d\n", rd_len);
+			rd_pos += rd_len;
+			try_tms = 0;
+		}
+		else
+		{
+			try_tms++;
+		}
 
-        if(4 == try_tms)
-        {
-            LOGD("!!!!!!!!Break!!!!!!!!!\n");
-            break;
-        }
-        usleep(50 * 1000);
-    }
+		if(4 == try_tms)
+		{
+		    LOGD("!!!!!!!!Break!!!!!!!!!\n");
+			break;
+		}
+		usleep(50 * 1000);
+	}
 
-    *recv_len = rd_pos;
+	*recv_len = rd_pos;
 }
 
 void commIR(uint8 *send, int send_len, uint8 *recv, int *recv_len)
@@ -1664,29 +1665,29 @@ void commIR(uint8 *send, int send_len, uint8 *recv, int *recv_len)
     int try_tms = 0;
     int rd_pos  = 0;
     writeIR(send, send_len);
-    usleep(200 * 1000);
+	usleep(200 * 1000);
 
-    while(1)
-    {
-        rd_len = readIR((uint8*)(recv + rd_pos));
-        if(-1 != rd_len)
-        {
-            rd_pos += rd_len;
-            try_tms = 0;
-        }
-        else
-        {
-            try_tms++;
-        }
+	while(1)
+	{
+		rd_len = readIR((uint8*)(recv + rd_pos));
+		if(-1 != rd_len)
+		{
+			rd_pos += rd_len;
+			try_tms = 0;
+		}
+		else
+		{
+			try_tms++;
+		}
 
-        if(8 == try_tms)
-        {
-            break;
-        }
-        usleep(100 * 1000);
-    }
+		if(8 == try_tms)
+		{
+			break;
+		}
+		usleep(100 * 1000);
+	}
 
-    *recv_len = rd_pos;
+	*recv_len = rd_pos;
 }
 
 void comm485(uint8 *send, int send_len, uint8 *recv, int *recv_len)
@@ -1695,29 +1696,29 @@ void comm485(uint8 *send, int send_len, uint8 *recv, int *recv_len)
     int try_tms = 0;
     int rd_pos  = 0;
     write485(send, send_len);
-    usleep(300 * 1000);
+	usleep(300 * 1000);
 
-    while(1)
-    {
-        rd_len = read485((uint8*)(recv + rd_pos));
-        if(-1 != rd_len)
-        {
-            rd_pos += rd_len;
-            try_tms = 0;
-        }
-        else
-        {
-            try_tms++;
-        }
+	while(1)
+	{
+		rd_len = read485((uint8*)(recv + rd_pos));
+		if(-1 != rd_len)
+		{
+			rd_pos += rd_len;
+			try_tms = 0;
+		}
+		else
+		{
+			try_tms++;
+		}
 
-        if(7 == try_tms)
-        {
-            break;
-        }
-        usleep(100 * 1000);
-    }
+		if(7 == try_tms)
+		{
+			break;
+		}
+		usleep(100 * 1000);
+	}
 
-    *recv_len = rd_pos;
+	*recv_len = rd_pos;
 }
 
 void commNFC(uint8 *send, int send_len, uint8 *recv, int *recv_len)
@@ -1726,35 +1727,35 @@ void commNFC(uint8 *send, int send_len, uint8 *recv, int *recv_len)
     int try_tms = 0;
     int rd_pos  = 0;
     writeNFC(send, send_len);
-    usleep(300 * 1000);
+	usleep(300 * 1000);
 
-    while(1)
-    {
-        rd_len = readNFC((uint8*)(recv + rd_pos));
-        if(-1 != rd_len)
-        {
-            rd_pos += rd_len;
-            try_tms = 0;
-        }
-        else
-        {
-            try_tms++;
-        }
+	while(1)
+	{
+		rd_len = readNFC((uint8*)(recv + rd_pos));
+		if(-1 != rd_len)
+		{
+			rd_pos += rd_len;
+			try_tms = 0;
+		}
+		else
+		{
+			try_tms++;
+		}
 
-        if(7 == try_tms)
-        {
-            break;
-        }
-        usleep(100 * 1000);
-    }
+		if(7 == try_tms)
+		{
+			break;
+		}
+		usleep(100 * 1000);
+	}
 
-    *recv_len = rd_pos;
+	*recv_len = rd_pos;
 }
 
 int readVersion()
 {
     const uint8 ver_commd[3]= {0x00, 0x00, 0x00};
-    uint8 rd_data[30] = {0};
+	uint8 rd_data[30] = {0};
     int try_tms = 0;
     int rd      = 0;
     RED_VER:
@@ -1808,13 +1809,13 @@ int readmeter()
 {
     const uint8 ver_commd[3]= {0x00, 0x00, 0x00};
     const uint8 sel_ir_commd[4] = {0x01, 0x00, 0x05, 0x01};
-    const uint8 data[12] = {0x68,0xAA,0xAA,0xAA,0xAA,0xAA,0xAA,0x68,0x13,0x00,0xDF,0x16};
-    const uint8 re_data[22]= {0xFE, 0xFE, 0xFE, 0xFE, 0x68, 0x76, 0x93, 0x76, 0x03, 0x00, 0x00, 0x68, 0x93, 0x06, 0xA9, 0xC6, 0xA9, 0x36, 0x33, 0x33, 0x9F, 0x16};
-    uint8 rd_data[30] = {0};
-    int  rd_len = 0;
-    int  try_tms= 0;
-    int  loop   = 0;
-    int  cnt = 0;
+	const uint8 data[12] = {0x68,0xAA,0xAA,0xAA,0xAA,0xAA,0xAA,0x68,0x13,0x00,0xDF,0x16};
+	const uint8 re_data[22]= {0xFE, 0xFE, 0xFE, 0xFE, 0x68, 0x76, 0x93, 0x76, 0x03, 0x00, 0x00, 0x68, 0x93, 0x06, 0xA9, 0xC6, 0xA9, 0x36, 0x33, 0x33, 0x9F, 0x16};
+	uint8 rd_data[30] = {0};
+	int  rd_len = 0;
+	int  try_tms= 0;
+	int  loop   = 0;
+	int  cnt = 0;
 
     sleep(1);
 
@@ -1854,23 +1855,23 @@ int readmeter()
         //sleep(1);
         memset(rd_data, 0, 30);
         commIR((uint8*)data, 12, (uint8*)rd_data, &rd_len);
-        if(rd_len == 22)
-        {
-            if (strncmp((char*)re_data, (char*)rd_data, 13))
-            {
+		if(rd_len == 22)
+		{
+    		if (strncmp((char*)re_data, (char*)rd_data, 13))
+    		{
                 printf("Error data  EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE cnt[%d]\n", cnt);
-                for(loop =0; loop < 13; loop++)
-                {
-                    printf("%x\n", rd_data[loop]);
-                }
-                //return -1;
-            }
-            else
-            {
-                //printf("Ok\n");
-            }
-        }
-        else if(rd_len > 22)
+    			for(loop =0; loop < 13; loop++)
+    			{
+    				printf("%x\n", rd_data[loop]);
+    			}
+    			//return -1;
+    		}
+    		else
+    		{
+    			//printf("Ok\n");
+    		}
+    	}
+    	else if(rd_len > 22)
         {
             if (strncmp((char*)re_data, (char*)rd_data, 13))
             {
@@ -1881,10 +1882,10 @@ int readmeter()
                 }
                 continue;
             }
-            printf("Error too long  rd_len[%d], cnt[%d] LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL\n", rd_len, cnt);
-            //return -1;
-        }
-        else
+    	    printf("Error too long  rd_len[%d], cnt[%d] LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL\n", rd_len, cnt);
+    	    //return -1;
+    	}
+    	else
         {
             if (strncmp((char*)re_data, (char*)rd_data, rd_len))
             {
@@ -1895,9 +1896,9 @@ int readmeter()
                 }
                 continue;
             }
-            printf("Error too short rd_len[%d], cnt[%d] SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS\n", rd_len, cnt);
-            //return -1;
-        }
+    	    printf("Error too short rd_len[%d], cnt[%d] SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS\n", rd_len, cnt);
+    	    //return -1;
+    	}
         cnt++;
         //if(!(cnt%1000))
         {
@@ -1989,7 +1990,7 @@ void testUpgrade(void)
     else
     {
         sleep(1);
-        _upgrade_fplus("/data/fp.dat", 1250000);
+        upgrade_fplus("/data/fp.dat", 1250000);
     }
     ttyClose();
 }
@@ -2024,18 +2025,13 @@ void set_upgrade_bus_param(int baud)
         bus_param.exec_time_out_period_sec     = 0;
         bus_param.exec_time_out_period_nsec    = 20000000;
     }
-    else
-    {
-        LOGE("set_upgrade_bus_param invalid baudrate\n");
-    }
+	else
+	{
+		LOGE("set_upgrade_bus_param invalid baudrate\n");
+	}
 }
 
-int upgrade_fplus(char *path)
-{
-    _upgrade_fplus(path, 1250000);
-}
-
-int _upgrade_fplus(char *path, int baudrate)
+int upgrade_fplus(char *path, int baudrate)
 {
     int ret = 0;
 
@@ -2053,7 +2049,7 @@ int _upgrade_fplus(char *path, int baudrate)
     else {
         LOGI("Request success start to upgrade\n");
     }
-    ret = upgrade_exec(path);
+	ret = upgrade_exec(path);
     if(-1 == ret) {
         ttyClose();
         LOGE("Upgrade %s failed\n", path);
@@ -2088,7 +2084,7 @@ int diablo(char *path, int baudrate)
         LOGI("Diablo success start to upgrade\n");
     }
     set_upgrade_bus_param(1250000);
-    ret = diablo_exec(path);
+	ret = diablo_exec(path);
     if(-1 == ret) {
         ttyClose();
         LOGE("Diablo %s failed\n", path);
@@ -2153,7 +2149,7 @@ int diablo_tool(int argc, char **argv)
     }
     if(!strcmp("app", *(argv+1)))
     {
-        ret = _upgrade_fplus("/data/app.dat", 4800);
+        ret = upgrade_fplus("/data/app.dat", 4800);
         if(ret)
         {
             return -1;
@@ -2171,7 +2167,7 @@ int diablo_tool(int argc, char **argv)
     }
     else if(!strcmp("leon", *(argv+1)))
     {
-        ret = _upgrade_fplus("/data/leon.dat", 1250000);
+        ret = upgrade_fplus("/data/leon.dat", 1250000);
         if(ret)
         {
             return -1;
@@ -2182,8 +2178,7 @@ int diablo_tool(int argc, char **argv)
     {
         if(argc < 3)
         {
-            printf(
-                    "Please input delay param\n");
+            printf("Please input delay param\n");
             return -1;
         }
         printf("Delay %d\n", atoi(*(argv+2)));

@@ -587,7 +587,7 @@ extern "C"
 JNIEXPORT jint JNICALL
 Java_com_rk_commonmodule_jni_JniMethods_upgradeFpuls(JNIEnv *env, jclass type,jstring path_) {
     char *strContent = (char *) env->GetStringUTFChars(path_, JNI_FALSE);
-    jint result = upgrade_fplus(strContent);
+    jint result = upgrade_fplus(strContent, 1250000);
     LOGE("升级F+芯片程序   result=%d" , result);
     return result;
 }
