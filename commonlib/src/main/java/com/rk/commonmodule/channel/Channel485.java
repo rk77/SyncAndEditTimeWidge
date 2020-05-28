@@ -141,7 +141,7 @@ public class Channel485 extends Channel implements IChannel {
             Log.i(TAG, "setChannelParams, recv frame: " + dataString);
             return 1;
         }
-        
+
     }
 
     @Override

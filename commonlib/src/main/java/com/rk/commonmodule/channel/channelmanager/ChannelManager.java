@@ -19,6 +19,7 @@ import com.rk.commonmodule.transfer.TransferManager;
 import com.rk.commonmodule.utils.DataConvertUtils;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 
 public class ChannelManager {
@@ -67,6 +68,7 @@ public class ChannelManager {
                     int retOpen = JniMethods.tryOpenTty();
                     Log.i(TAG, "handleMessage, OPEN_TTY_MSG, ret: " + retOpen);
                     mIsChannelManagerOpen = true;
+                    mIsPowerOn = true;
                     if (mChannelOpenAndCloseListener != null) {
                         mChannelOpenAndCloseListener.onOpenSuccess();
                     }
@@ -75,6 +77,7 @@ public class ChannelManager {
                     int retClose = JniMethods.ttyClose();
                     Log.i(TAG, "handleMessage, CLOSE_TTY_MSG, ret: " + retClose);
                     mIsChannelManagerOpen = false;
+                    mIsPowerOn = false;
                     mStatus = ChannelManagerStatus.IDLE;
                     if (mChannelOpenAndCloseListener != null) {
                         mChannelOpenAndCloseListener.onCloseSuccess();
@@ -471,6 +474,58 @@ public class ChannelManager {
         } else {
             return false;
         }
+    }
+
+    public boolean channelOnWithParas(Channel channel, Map params) {
+        mCurrentChannelType = channel;
+        boolean opened = false;
+        switch (channel) {
+            case CHANNEL_NONE:
+                break;
+            case CHANNEL_INFRARED:
+                mCurrentChannel = sInfraredChannel;
+                if (mIsPowerOn){
+                    if (mCurrentChannel.setChannelParams(params) == 1) {
+                        opened = mCurrentChannel.channelOpen(0);
+                    }
+                } else {
+                    if (powerOn()) {
+                        if (mCurrentChannel.setChannelParams(params) == 1) {
+                            opened = mCurrentChannel.channelOpen(0);
+                        }
+                    }
+                }
+                break;
+            case CHANNEL_485:
+                mCurrentChannel = s485Channel;
+                if (mIsPowerOn){
+                    if (mCurrentChannel.setChannelParams(params) == 1) {
+                        opened = mCurrentChannel.channelOpen(0);
+                    }
+                } else {
+                    if (powerOn()) {
+                        if (mCurrentChannel.setChannelParams(params) == 1) {
+                            opened = mCurrentChannel.channelOpen(0);
+                        }
+                    }
+                }
+                break;
+            case CHANNEL_PLC:
+                mCurrentChannel = sUsbChannel;
+                opened = mCurrentChannel.channelOpen(0);
+                break;
+            case CHANNEL_LORA:
+                break;
+            case CHANNEL_NET:
+                break;
+            default:
+                break;
+        }
+        if (opened) {
+            TransferManager.getInstance(sContext).setChannel(mCurrentChannel);
+        }
+        return opened;
+
     }
 
     public boolean channelOn(Channel channel) {
