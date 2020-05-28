@@ -106,7 +106,7 @@ public class Protocol698Frame {
         BYTE_UNIT,KBYTE_UNIT,
     }
 
-    public class Length_Area {
+    public static class Length_Area {
         public FRAME_UNIT frame_unit;
         public int length;
         public byte[] data;

@@ -7,6 +7,74 @@ public enum Protocol698 {
     PROTOCOL_698;
     private static final String TAG = Protocol698.class.getSimpleName();
 
+    private byte[] makeFrame(Protocol698Frame.CtrlArea ctrlArea, Protocol698Frame.AddressArea addressArea, byte[] apdu) {
+        ArrayList<Byte> byteArray = new ArrayList<>();
+        if (ctrlArea != null && addressArea != null && addressArea.data != null && addressArea.data.length > 0 && apdu != null) {
+            byteArray.add((byte)0x68);
+            int length = 2 + 1 + addressArea.data.length + 2 + apdu.length + 2;
+            Protocol698Frame.Length_Area length_area = new Protocol698Frame.Length_Area(Protocol698Frame.FRAME_UNIT.BYTE_UNIT, length);
+            if (length_area.data != null && length_area.data.length == 2) {
+                for (int i = 0; i < length_area.data.length; i++) {
+                    byteArray.add(length_area.data[i]);
+                }
+
+            } else {
+                return null;
+            }
+            byteArray.add(ctrlArea.data);
+            for (int i = 0; i < addressArea.data.length; i++) {
+                byteArray.add(addressArea.data[i]);
+            }
+
+            byte[] headData = new byte[byteArray.size() - 1];
+            for (int i = 0; i < headData.length; i++) {
+                headData[i] = byteArray.get(i + 1);
+            }
+            byte[] hCs = null;
+            boolean calcHCSRight = calculateOrVerifyCs(ProtocolConstant.INIT_FCS, headData, hCs);
+            if (calcHCSRight) {
+                byteArray.add(hCs[0]);
+                byteArray.add(hCs[1]);
+
+                for (int i = 0; i < apdu.length; i++) {
+                    byteArray.add(apdu[i]);
+                }
+
+                byte[] frameData = new byte[byteArray.size() - 1];
+                for (int i = 0; i < frameData.length; i++) {
+                    frameData[i] = byteArray.get(i + 1);
+                }
+
+                byte[] fCs = null;
+                boolean calcFCSRight = calculateOrVerifyCs(ProtocolConstant.INIT_FCS, frameData, fCs);
+                if (calcFCSRight) {
+                    byteArray.add(fCs[0]);
+                    byteArray.add(fCs[1]);
+                    byteArray.add((byte)0x16);
+
+                    byte[] bytes = new byte[byteArray.size()];
+
+                    for (int i = 0; i < bytes.length; i++) {
+                        bytes[i] = byteArray.get(i);
+                    }
+                    return bytes;
+
+                } else {
+                    return null;
+                }
+
+
+            } else {
+                return null;
+            }
+
+
+        }
+        return null;
+
+    }
+
+
     public byte[] makeAPDU(int first_id, int second_id, Map map) {
         ArrayList<Byte> byteArray = new ArrayList<>();
 
@@ -100,6 +168,43 @@ public enum Protocol698 {
         }
         data = (byte) (data & (0x07 & funCode));
         return data;
+    }
+
+    /**
+     * if cs is null, use this function to calculate the Cs value.
+     * if cs is non-null, use this function to verify the Cs value.
+     * @param initCs
+     * @param data
+     * @param cs
+     * @return
+     */
+
+    public boolean calculateOrVerifyCs(int initCs, byte[] data, byte[] cs) {
+        if (data != null) {
+            for (int i = 0; i < data.length; i++) {
+                initCs = (((initCs & 0xFFFF) >> 8) ^ ProtocolConstant.FCS_TAB[((initCs & 0xFFFF) ^ data[i]) & 0xFF]) & 0xFFFF;
+            }
+            if (cs != null) {
+                if (cs.length == 2) {
+                    if ((cs[1] * 256 + cs[0]) == initCs) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+
+                } else {
+                    return false;
+                }
+
+            } else {
+                cs = new byte[2];
+                cs[0] = (byte) (initCs & 0xFF);
+                cs[1] = (byte) ((initCs >> 8) & 0xFF);
+                return true;
+            }
+
+        }
+        return false;
     }
 
 }
