@@ -22,4 +22,9 @@ public class ChannelConstant {
         public static final byte CHANNEL_SET_CROL = 0x05;//通道设置
         public static final byte LED_LIGHT_CROL = 0x06;//LED亮灭控制
     }
+
+    public static final String BAUD_RATE_KEY = "baud_rate";
+    public static final String PARITY_CHECK_BIT_KEY = "parity_check_bit";
+    public static final String BYTE_BIT_CNT_KEY = "byte_bit_count";
+    public static final String STOP_BIT_KEY = "stop_bit";
 }

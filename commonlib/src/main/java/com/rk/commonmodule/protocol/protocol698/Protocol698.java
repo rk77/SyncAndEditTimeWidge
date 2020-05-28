@@ -196,7 +196,7 @@ public enum Protocol698 {
                 if (cs.length == 2) {
                     cs[0] = (byte) (initCs & 0xFF);
                     cs[1] = (byte) ((initCs >> 8) & 0xFF);
-                    Log.i(TAG, "calculateOrVerifyCs, cs value: " + initCs + ", cs: " + DataConvertUtils.convertByteArrayToString(cs, false));
+                    Log.i(TAG, "calculateCs, cs value: " + initCs + ", cs: " + DataConvertUtils.convertByteArrayToString(cs, false));
                     return true;
                 } else {
                     return false;
