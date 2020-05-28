@@ -2,7 +2,7 @@ package com.rk.commonmodule.protocol.protocol698;
 
 public class Protocol698Frame {
 
-    public class PIID {
+    public static class PIID {
         public int priority;
         public int serviceNum;
         public byte data;
@@ -28,7 +28,7 @@ public class Protocol698Frame {
         }
     }
 
-    public class OAD {
+    public static class OAD {
         public byte[] data;
         public byte[] OI = new byte[2];
         public int OI_VALUE;
@@ -149,7 +149,7 @@ public class Protocol698Frame {
         SINGLE, GROUP, WILDCARD, BROADCAST,
     }
 
-    public class SERV_ADDR {
+    public static class SERV_ADDR {
         public ADDRESS_TYPE address_type;
         public boolean hasExLogicAddress;
         public int logicAddress;
@@ -244,7 +244,7 @@ public class Protocol698Frame {
         }
     }
 
-    public class AddressArea {
+    public static class AddressArea {
         public SERV_ADDR serv_addr;
         public byte client_addr;
         public byte[] data;
@@ -282,7 +282,7 @@ public class Protocol698Frame {
         CLIENT_RESPONSE, CLIENT_REQUEST, SERVER_REPORT, SERVER_RESPONSE,
     }
 
-    public class CtrlArea {
+    public static class CtrlArea {
         public DIR_PRM dir_prm;
         public boolean isSplitFrame;
         public boolean isScramble;
@@ -330,7 +330,7 @@ public class Protocol698Frame {
 
     }
 
-    public class DateTimeS {
+    public static class DateTimeS {
         public int year;
         public int month;
         public int day;
@@ -388,7 +388,7 @@ public class Protocol698Frame {
 
     }
 
-    public class TI {
+    public static class TI {
         public byte[] data;
         public TimeUnit unit;
         public int delayTime;

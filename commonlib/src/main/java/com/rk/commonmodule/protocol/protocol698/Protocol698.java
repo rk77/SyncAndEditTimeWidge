@@ -1,5 +1,9 @@
 package com.rk.commonmodule.protocol.protocol698;
 
+import android.util.Log;
+
+import com.rk.commonmodule.utils.DataConvertUtils;
+
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -7,12 +11,13 @@ public enum Protocol698 {
     PROTOCOL_698;
     private static final String TAG = Protocol698.class.getSimpleName();
 
-    private byte[] makeFrame(Protocol698Frame.CtrlArea ctrlArea, Protocol698Frame.AddressArea addressArea, byte[] apdu) {
+    public byte[] makeFrame(Protocol698Frame.CtrlArea ctrlArea, Protocol698Frame.AddressArea addressArea, byte[] apdu) {
         ArrayList<Byte> byteArray = new ArrayList<>();
         if (ctrlArea != null && addressArea != null && addressArea.data != null && addressArea.data.length > 0 && apdu != null) {
             byteArray.add((byte)0x68);
             int length = 2 + 1 + addressArea.data.length + 2 + apdu.length + 2;
             Protocol698Frame.Length_Area length_area = new Protocol698Frame.Length_Area(Protocol698Frame.FRAME_UNIT.BYTE_UNIT, length);
+            Log.i(TAG, "makeFrame, length_area: " + DataConvertUtils.convertByteArrayToString(length_area.data, false));
             if (length_area.data != null && length_area.data.length == 2) {
                 for (int i = 0; i < length_area.data.length; i++) {
                     byteArray.add(length_area.data[i]);
@@ -30,8 +35,9 @@ public enum Protocol698 {
             for (int i = 0; i < headData.length; i++) {
                 headData[i] = byteArray.get(i + 1);
             }
-            byte[] hCs = null;
-            boolean calcHCSRight = calculateOrVerifyCs(ProtocolConstant.INIT_FCS, headData, hCs);
+            byte[] hCs = new byte[2];
+            boolean calcHCSRight = calculateCs(ProtocolConstant.INIT_FCS, headData, hCs);
+            Log.i(TAG, "makeFrame, calcHCSRight: " + calcHCSRight + ", hCs: " + hCs);
             if (calcHCSRight) {
                 byteArray.add(hCs[0]);
                 byteArray.add(hCs[1]);
@@ -45,8 +51,8 @@ public enum Protocol698 {
                     frameData[i] = byteArray.get(i + 1);
                 }
 
-                byte[] fCs = null;
-                boolean calcFCSRight = calculateOrVerifyCs(ProtocolConstant.INIT_FCS, frameData, fCs);
+                byte[] fCs = new byte[2];
+                boolean calcFCSRight = calculateCs(ProtocolConstant.INIT_FCS, frameData, fCs);
                 if (calcFCSRight) {
                     byteArray.add(fCs[0]);
                     byteArray.add(fCs[1]);
@@ -143,16 +149,16 @@ public enum Protocol698 {
         byte data = (byte) 0xFF;
         switch (dir_prm) {
             case SERVER_REPORT:
-                data = (byte) (data & 0xBF);
+                data = (byte) (data & 0x80);
                 break;
             case SERVER_RESPONSE:
-                data = (byte) (data & 0xFF);
+                data = (byte) (data & 0xC0);
                 break;
             case CLIENT_REQUEST:
-                data = (byte) (data & 0x7F);
+                data = (byte) (data & 0x40);
                 break;
             case CLIENT_RESPONSE:
-                data = (byte) (data & 0x3F);
+                data = (byte) (data & 0x00);
                 break;
         }
         if (isSplitedFrame) {
@@ -166,7 +172,7 @@ public enum Protocol698 {
         } else {
             data = (byte) (data & 0xF7);
         }
-        data = (byte) (data & (0x07 & funCode));
+        data = (byte) (data | (0x07 & funCode));
         return data;
     }
 
@@ -179,28 +185,25 @@ public enum Protocol698 {
      * @return
      */
 
-    public boolean calculateOrVerifyCs(int initCs, byte[] data, byte[] cs) {
+    public boolean calculateCs(int initCs, byte[] data, byte[] cs) {
+        Log.i(TAG, "calculateCs, data: " + DataConvertUtils.convertByteArrayToString(data, false));
         if (data != null) {
             for (int i = 0; i < data.length; i++) {
                 initCs = (((initCs & 0xFFFF) >> 8) ^ ProtocolConstant.FCS_TAB[((initCs & 0xFFFF) ^ data[i]) & 0xFF]) & 0xFFFF;
             }
+            initCs = initCs ^ 0xFFFF;
             if (cs != null) {
                 if (cs.length == 2) {
-                    if ((cs[1] * 256 + cs[0]) == initCs) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-
+                    cs[0] = (byte) (initCs & 0xFF);
+                    cs[1] = (byte) ((initCs >> 8) & 0xFF);
+                    Log.i(TAG, "calculateOrVerifyCs, cs value: " + initCs + ", cs: " + DataConvertUtils.convertByteArrayToString(cs, false));
+                    return true;
                 } else {
                     return false;
                 }
 
             } else {
-                cs = new byte[2];
-                cs[0] = (byte) (initCs & 0xFF);
-                cs[1] = (byte) ((initCs >> 8) & 0xFF);
-                return true;
+                return false;
             }
 
         }
