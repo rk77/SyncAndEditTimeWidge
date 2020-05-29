@@ -24,7 +24,47 @@ public class Protocol698Frame {
             } else {
                 this.priority = 0;
             }
-            this.serviceNum = data & 0x1F;
+            this.serviceNum = data & 0x3F;
+        }
+    }
+
+    public static class PIID_ACD {
+        public int priority;
+        public boolean accessACD;
+        public int serviceNum;
+        public byte data;
+        public PIID_ACD(int priority, boolean accessACD, int serviceNum) {
+            this.priority = priority;
+            this.accessACD = accessACD;
+            this.serviceNum = serviceNum;
+            if (priority >=0 && priority <= 1 && serviceNum >= 0 && serviceNum <= 63) {
+                if (priority == 0) {
+                    data = (byte) (0x7F & serviceNum);
+                } else {
+                    data = (byte) (0x80 | serviceNum);
+                }
+
+                if (accessACD) {
+                    data = (byte) (data | 0x40);
+                } else {
+                    data = (byte) (data & 0xBF);
+                }
+            }
+        }
+        public PIID_ACD(byte data) {
+            this.data = data;
+            if ((data & 0x80) == 0x80) {
+                this.priority = 1;
+            } else {
+                this.priority = 0;
+            }
+
+            if ((data & 0x40) == 0x00) {
+                this.accessACD = false;
+            } else {
+                this.accessACD = true;
+            }
+            this.serviceNum = data & 0x3F;
         }
     }
 

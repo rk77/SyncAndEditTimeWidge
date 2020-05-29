@@ -210,4 +210,180 @@ public enum Protocol698 {
         return false;
     }
 
+    public boolean verifyCs(int initCs, byte[] data, byte[] cs) {
+        Log.i(TAG, "verifyCs, data: " + DataConvertUtils.convertByteArrayToString(data, false)
+                + ", verified cs: " + DataConvertUtils.convertByteArrayToString(cs, false));
+        if (data != null) {
+            for (int i = 0; i < data.length; i++) {
+                initCs = (((initCs & 0xFFFF) >> 8) ^ ProtocolConstant.FCS_TAB[((initCs & 0xFFFF) ^ data[i]) & 0xFF]) & 0xFFFF;
+            }
+            initCs = initCs ^ 0xFFFF;
+            if (cs != null) {
+                if (cs.length == 2) {
+                    byte cs0 = (byte) (initCs & 0xFF);
+                    byte cs1 = (byte) ((initCs >> 8) & 0xFF);
+                    Log.i(TAG, "verifyCs, cs0: " + DataConvertUtils.convertByteToString(cs0)
+                            + ", cs1: " + DataConvertUtils.convertByteToString(cs1));
+                    if (cs0 == cs[0] && cs1 == cs[1]) {
+                        return true;
+                    }
+                } else {
+                    return false;
+                }
+
+            } else {
+                return false;
+            }
+
+        }
+        return false;
+    }
+
+    public int mBeginPos = 0;
+    public int mLengthPos0 = 0;
+    public int mLengthPos1 = 0;
+    public int mCtrlAreaPos = 0;
+    public int mAddressAreaBeginPos = 0;
+    public int mAddressAreaEndPos = 0;
+    public int mHCsPos0 = 0;
+    public int mHCsPos1 = 0;
+    public int mApduBegin = 0;
+    public int mApduEnd = 0;
+    public int mFCsPos0 = 0;
+    public int mFCsPos1 = 0;
+    public int mEndPos = 0;
+    public boolean verify698Frame(byte[] frame) {
+        if (frame == null || frame.length < 12) {
+            return false;
+        }
+
+        for (mBeginPos = 0; mBeginPos < frame.length; mBeginPos++) {
+            if (frame[mBeginPos] == 0x68) {
+                break;
+            }
+        }
+        if (mBeginPos == frame.length) {
+            return false;
+        }
+
+        if (mBeginPos + 3 >= (frame.length - 1)) {
+            return false;
+        }
+
+        mLengthPos0 = mBeginPos + 1;
+        mLengthPos1 = mLengthPos0 + 1;
+
+        byte[] lengthData = new byte[2];
+        lengthData[0] = frame[mLengthPos0];
+        lengthData[1] = frame[mLengthPos1];
+        int frameLength = 0;
+
+        Protocol698Frame.Length_Area length_area = new Protocol698Frame.Length_Area(lengthData);
+
+        switch (length_area.frame_unit) {
+            case BYTE_UNIT:
+                frameLength = length_area.length;
+                break;
+            case KBYTE_UNIT:
+                frameLength = length_area.length * 1024;
+                break;
+        }
+        Log.i(TAG, "verify698Frame, frame length: " + frameLength);
+        if (frameLength == 0) {
+            return false;
+        }
+
+        mCtrlAreaPos = mLengthPos1 + 1;
+
+        if (mCtrlAreaPos + 1 >= (frame.length - 1)) {
+            return false;
+        }
+
+        mAddressAreaBeginPos = mCtrlAreaPos + 1;
+
+        int addrLength = (frame[mAddressAreaBeginPos] & 0x0F) + 1;
+
+        Log.i(TAG, "verify698Frame, serve address length: " + addrLength + ", address begin position: " + mAddressAreaBeginPos);
+
+        if ((mAddressAreaBeginPos + addrLength + 1) >= (frame.length - 1)) {
+            return false;
+        }
+        mAddressAreaEndPos = mAddressAreaBeginPos + addrLength + 1;
+
+        if ((mAddressAreaEndPos + 1 + 1) >= (frame.length - 1)) {
+            return false;
+        }
+
+        mHCsPos0 = mAddressAreaEndPos + 1;
+        mHCsPos1 = mAddressAreaEndPos + 2;
+
+        byte[] hCs = new byte[2];
+        hCs[0] = frame[mHCsPos0];
+        hCs[1] = frame[mHCsPos1];
+
+        boolean verifyHCs = verifyCs(ProtocolConstant.INIT_FCS, DataConvertUtils.getSubByteArray(frame, mLengthPos0, mAddressAreaEndPos), hCs);
+        if (!verifyHCs) {
+            return false;
+        }
+
+        if (mHCsPos1 + 1 >= frame.length - 1) {
+            return false;
+        }
+
+        mApduBegin = mHCsPos1 + 1;
+
+        mApduEnd = mBeginPos + frameLength - 1 - 1;
+
+        if (mApduEnd < mApduBegin) {
+            return false;
+        }
+
+        if (mApduEnd + 1 + 1 >= frame.length - 1) {
+            return false;
+        }
+        mFCsPos0 = mApduEnd + 1;
+        mFCsPos1 = mApduEnd + 2;
+
+        byte[] fCs = new byte[2];
+        fCs[0] = frame[mFCsPos0];
+        fCs[1] = frame[mFCsPos1];
+
+        boolean verifyFCs = verifyCs(ProtocolConstant.INIT_FCS, DataConvertUtils.getSubByteArray(frame, mLengthPos0, mApduEnd), fCs);
+        if (!verifyFCs) {
+            return false;
+        }
+
+        if (mFCsPos1 + 1 > frame.length - 1) {
+            return false;
+        }
+
+        mEndPos = mFCsPos1 + 1;
+
+        if (frame[mEndPos] != 0x16) {
+            return false;
+        }
+        Log.i(TAG, "verify698Frame, verfiy OK.");
+        return true;
+
+    }
+
+    public String parseApud(byte[] apduFrame) {
+        if (apduFrame == null || apduFrame.length <= 0) {
+            return null;
+        }
+        Log.i(TAG, "parseApud, apud: " + DataConvertUtils.convertByteArrayToString(apduFrame, false));
+
+        switch ((int) apduFrame[0]) {
+            case ProtocolConstant.SERVER_APDU.GET_RESPONSE.CLASS_ID:
+                switch ((int) apduFrame[1]) {
+                    case ProtocolConstant.SERVER_APDU.GET_RESPONSE.GET_RESPONSE_NORMAL.CLASS_ID:
+                        break;
+                }
+                break;
+
+        }
+
+        return null;
+    }
+
 }
