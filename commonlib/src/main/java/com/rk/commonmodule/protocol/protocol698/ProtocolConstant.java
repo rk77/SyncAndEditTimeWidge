@@ -2,8 +2,10 @@ package com.rk.commonmodule.protocol.protocol698;
 
 public class ProtocolConstant {
     public final static String PIID_KEY = "PIID";
+    public final static String PIID_ACD_KEY = "PIID_ACD_KEY";
     public final static String OAD_KEY = "OAD";
     public final static String TIME_LABLE_KEY = "TIME_LABLE_KEY";
+    public final static String DAR_KEY = "dar";
 
     public final static class LINK_APDU {
         public final static class LINK_REQUEST {

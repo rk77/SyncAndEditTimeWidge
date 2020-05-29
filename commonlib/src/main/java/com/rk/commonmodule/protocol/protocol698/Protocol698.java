@@ -5,6 +5,7 @@ import android.util.Log;
 import com.rk.commonmodule.utils.DataConvertUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 public enum Protocol698 {
@@ -367,18 +368,95 @@ public enum Protocol698 {
 
     }
 
-    public String parseApud(byte[] apduFrame) {
+    public Map parseApud(byte[] apduFrame) {
         if (apduFrame == null || apduFrame.length <= 0) {
             return null;
         }
         Log.i(TAG, "parseApud, apud: " + DataConvertUtils.convertByteArrayToString(apduFrame, false));
 
-        switch ((int) apduFrame[0]) {
+        Map map = new HashMap();
+
+        switch (((int) apduFrame[0]) & 0xFF) {
             case ProtocolConstant.SERVER_APDU.GET_RESPONSE.CLASS_ID:
-                switch ((int) apduFrame[1]) {
+                if (apduFrame.length < 2) {
+                    return null;
+                }
+                switch (((int) apduFrame[1]) & 0xFF) {
                     case ProtocolConstant.SERVER_APDU.GET_RESPONSE.GET_RESPONSE_NORMAL.CLASS_ID:
+                        if (apduFrame.length < 3) {
+                            return null;
+                        }
+                        map.put(ProtocolConstant.PIID_ACD_KEY, new Protocol698Frame.PIID_ACD(apduFrame[2]));
+                        if (apduFrame.length < 7) {
+                            return null;
+                        }
+                        map.put(ProtocolConstant.OAD_KEY, new Protocol698Frame.OAD(DataConvertUtils.getSubByteArray(apduFrame, 3, 6)));
+                        if (apduFrame.length < 8) {
+                            return null;
+                        }
+                        if (apduFrame[7] == 0) {
+                            if (apduFrame.length < 9) {
+                                return null;
+                            } else {
+                                map.put(ProtocolConstant.DAR_KEY, apduFrame[8]);
+                                return map;
+                            }
+
+                        } else if (apduFrame[7] == 1) {
+                            if (apduFrame.length < 9) {
+                                return null;
+                            } else {
+                                switch ((int) apduFrame[8]) {
+                                    case 9:
+                                        if (apduFrame.length < 10) {
+                                            return null;
+                                        }
+
+                                        if ((apduFrame[9] & 0x80) == 0x00) {
+                                            if ((9 + apduFrame[9]) <= (apduFrame.length - 1)) {
+                                                map.put("value", DataConvertUtils.convertByteArrayToString(
+                                                        DataConvertUtils.getSubByteArray(apduFrame, 10, 10 + apduFrame[9] - 1), false));
+                                                return map;
+                                            } else {
+                                                return null;
+                                            }
+                                        } else {
+                                            int lengthSize = apduFrame[9] & 0x7F;
+                                            if (9 + lengthSize <= apduFrame.length - 1) {
+                                                int length = 0;
+                                                for (int i = 0; i < lengthSize; i++) {
+                                                    length = length * 256 + apduFrame[10 + i];
+                                                }
+                                                if (9 + lengthSize + length <= apduFrame.length - 1) {
+                                                    map.put("value", DataConvertUtils.convertByteArrayToString(
+                                                            DataConvertUtils.getSubByteArray(apduFrame, 9 + lengthSize + 1, 9 + lengthSize + length),
+                                                            false
+                                                    ));
+                                                } else {
+                                                    return null;
+                                                }
+                                            } else {
+                                                return null;
+                                            }
+                                        }
+                                        break;
+
+                                }
+                            }
+
+                        } else {
+                            Log.i(TAG, "TST 877");
+                            return null;
+                        }
+                        break;
+                    default:
+                        Log.i(TAG, "parseApud, no action 1: " + (((int) apduFrame[1]) & 0xFF));
+
                         break;
                 }
+                break;
+            default:
+                Log.i(TAG, "parseApud, no action: " + (((int) apduFrame[0]) & 0xFF));
                 break;
 
         }
