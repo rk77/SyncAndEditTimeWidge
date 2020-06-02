@@ -1,0 +1,35 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    >
+    
+    <com.rk.commonlib.widge.XiMiClock
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+    <TextClock
+        android:id="@+id/date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:format12Hour="yyyy/MM/dd"
+        android:format24Hour="yyyy/MM/dd"
+        android:textColor="@android:color/holo_blue_light"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@id/time"
+        android:textStyle="bold"
+        />
+    <TextClock
+        android:id="@+id/time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:format12Hour="HH:mm:ss"
+        android:format24Hour="HH:mm:ss"
+        android:textColor="@android:color/holo_blue_light"
+        android:textSize="30dp"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:textStyle="bold"
+        />
+
+</RelativeLayout>
