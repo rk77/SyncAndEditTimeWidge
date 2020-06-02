@@ -631,6 +631,15 @@ public class SmartLoadingView extends TextView {
         }
     }
 
+    public void netFaile(String message, int errColor) {
+        if (isLoading) {
+            errorString = message;
+            currentString = errorString;
+            paint.setColor(errColor);
+            animatorNetfail.start();
+        }
+    }
+
     public void backToStart() {
         if (isLoading) {
             currentString = normalString;
