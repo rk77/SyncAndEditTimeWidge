@@ -66,7 +66,7 @@ public class Protocol645FrameBaseParser {
                 }
                 String dataLable = DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, 0, 3, true);
                 Log.i(TAG, "parseDetail, dataLable: " + dataLable);
-                switch (dataLable) {
+                switch (dataLable.toUpperCase()) {
                     case "00000000": //(当前)组合有功总电能
                     case "00000100": //(当前)组合有功费率 1 电能
                     case "00000200": //(当前)组合有功费率 2 电能
@@ -132,6 +132,12 @@ public class Protocol645FrameBaseParser {
                     case "05060901": // (上 1 次）日冻结正向有功最大需量及发生时间数据：
                                      // 正向有功总最大需量及发生时间/正向有功费率 1 最大需量及发生时间/.../正向有功费率 63 最大需量及发生时间
                         return parse_N_XX_XXXX_YYMMDDhhmm(protocol645Frame.mData, 4);
+                    case "04000101": //日期及星期
+                        return parse_YYMMDDWW(protocol645Frame.mData, 4);
+                    case "04000102": //时间
+                        return parse_hhmmss(protocol645Frame.mData, 4);
+                    case "0400010C":
+                        return parse_YYMMDDWWhhmmss(protocol645Frame.mData, 4);
                     default:
                         return null;
 
@@ -144,7 +150,7 @@ public class Protocol645FrameBaseParser {
                 }
                 String dataLable97 = DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, 0, 1, true);
                 Log.i(TAG, "parseDetail, dataLable97: " + dataLable97);
-                switch (dataLable97) {
+                switch (dataLable97.toUpperCase()) {
                     case "9010": //(当前)正向有功总电能(+A)
                     case "9011": //(当前)费率 1 正向有功电能
                     case "9012": //(当前)费率 2 正向有功电能
@@ -197,6 +203,10 @@ public class Protocol645FrameBaseParser {
                         } else {
                             return parseXX_XXXX(protocol645Frame.mData, 2);
                         }
+                    case "C010": //日期周次
+                        return parse_YYMMDDWW(protocol645Frame.mData, 2);
+                    case "C011": //时间
+                        return parse_hhmmss(protocol645Frame.mData, 2);
                     default:
                         return null;
                 }
@@ -289,6 +299,57 @@ public class Protocol645FrameBaseParser {
                 .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 7]));
         sb.append(dataSb.toString()).append(" ").append(dateSb.toString());
         return sb.toString();
+    }
+
+    private String parse_YYMMDDWW(byte[] data, int dataBegin) {
+        if (data == null || dataBegin > data.length - 1 || (dataBegin + 3) > (data.length - 1)) {
+            return null;
+        }
+        StringBuilder dateSb = new StringBuilder();
+        dateSb.insert(0, DataConvertUtils.convertByteToString(data[dataBegin]))
+                .insert(0, " ")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 1]))
+                .insert(0, "-")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 2]))
+                .insert(0, "-")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 3]));
+
+        return dateSb.toString();
+    }
+
+    private String parse_hhmmss(byte[] data, int dataBegin) {
+        if (data == null || dataBegin > data.length - 1 || (dataBegin + 2) > (data.length - 1)) {
+            return null;
+        }
+        StringBuilder timeSb = new StringBuilder();
+        timeSb.insert(0, DataConvertUtils.convertByteToString(data[dataBegin]))
+                .insert(0, ":")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 1]))
+                .insert(0, ":")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 2]));
+        return timeSb.toString();
+    }
+
+    private String parse_YYMMDDWWhhmmss(byte[] data, int dataBegin) {
+        Log.i(TAG, "parse_YYMMDDWWhhmmss, data: " + DataConvertUtils.convertByteArrayToString(data, false));
+        if (data == null || dataBegin > data.length - 1 || (dataBegin + 6) > (data.length - 1)) {
+            return null;
+        }
+        StringBuilder timeSb = new StringBuilder();
+        timeSb.insert(0, DataConvertUtils.convertByteToString(data[dataBegin]))
+                .insert(0, ":")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 1]))
+                .insert(0, ":")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 2]))
+                .insert(0, " ")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 3]))
+                .insert(0, " ")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 4]))
+                .insert(0, "-")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 5]))
+                .insert(0, "-")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 6]));
+        return timeSb.toString();
     }
 
     // split by one blank space, sub string is split by "_"

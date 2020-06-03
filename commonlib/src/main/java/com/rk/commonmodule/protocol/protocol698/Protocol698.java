@@ -406,6 +406,7 @@ public enum Protocol698 {
                             if (apduFrame.length < 9) {
                                 return null;
                             } else {
+                                Log.i(TAG, "paseApdu, value type: " + (int) apduFrame[8]);
                                 switch ((int) apduFrame[8]) {
                                     case 9:
                                         if (apduFrame.length < 10) {
@@ -432,6 +433,7 @@ public enum Protocol698 {
                                                             DataConvertUtils.getSubByteArray(apduFrame, 9 + lengthSize + 1, 9 + lengthSize + length),
                                                             false
                                                     ));
+                                                    return map;
                                                 } else {
                                                     return null;
                                                 }
@@ -439,8 +441,13 @@ public enum Protocol698 {
                                                 return null;
                                             }
                                         }
-                                        break;
-
+                                    case 28:
+                                        if (apduFrame.length < 18) {
+                                            return null;
+                                        }
+                                        Protocol698Frame.DateTimeS dateTimeS = new Protocol698Frame.DateTimeS(DataConvertUtils.getSubByteArray(apduFrame, 9, 15));
+                                        map.put("value", dateTimeS);
+                                        return map;
                                 }
                             }
 

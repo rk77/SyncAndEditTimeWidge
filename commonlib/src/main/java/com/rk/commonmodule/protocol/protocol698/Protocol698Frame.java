@@ -1,5 +1,7 @@
 package com.rk.commonmodule.protocol.protocol698;
 
+import com.rk.commonmodule.utils.DataConvertUtils;
+
 public class Protocol698Frame {
 
     public static class PIID {
@@ -387,8 +389,8 @@ public class Protocol698Frame {
             this.minute = minute;
             this.second = second;
             data = new byte[7];
-            data[0] = (byte) (year & 0xFF);
-            data[1] = (byte) ((year / 256) & 0xFF);
+            data[1] = (byte) (year & 0xFF);
+            data[0] = (byte) ((year >> 8) & 0xFF);
             data[2] = (byte) (month & 0xFF);
             data[3] = (byte) (day & 0xFF);
             data[4] = (byte) (hour & 0xFF);
@@ -400,7 +402,7 @@ public class Protocol698Frame {
         public DateTimeS(byte[] data) {
             this.data = data;
             if (data != null && data.length>= 7) {
-                this.year = data[1] * 256 + data[0];
+                this.year = ((data[0] << 8) & 0xFF00) | (data[1] & 0xFF);
                 this.month = data[2];
                 this.day = data[3];
                 this.hour = data[4];
@@ -408,6 +410,19 @@ public class Protocol698Frame {
                 this.second = data[6];
             }
         }
+
+        @Override
+        public String toString() {
+            return (this.year + "-" + postD(this.month) + "-" + postD(this.day) + " " + postD(this.hour) + ":" + postD(this.minute) + ":" + postD(this.second));
+        }
+
+    }
+
+    private static String postD(int a) {
+        if (a < 10) {
+            return ("0" + a);
+        }
+        return String.valueOf(a);
 
     }
 
