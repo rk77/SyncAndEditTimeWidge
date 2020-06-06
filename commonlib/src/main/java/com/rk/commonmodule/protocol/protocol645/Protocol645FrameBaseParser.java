@@ -301,6 +301,7 @@ public class Protocol645FrameBaseParser {
         return sb.toString();
     }
 
+    //YY-MM-DD WW
     private String parse_YYMMDDWW(byte[] data, int dataBegin) {
         if (data == null || dataBegin > data.length - 1 || (dataBegin + 3) > (data.length - 1)) {
             return null;
@@ -317,6 +318,7 @@ public class Protocol645FrameBaseParser {
         return dateSb.toString();
     }
 
+    //hh:mm:ss
     private String parse_hhmmss(byte[] data, int dataBegin) {
         if (data == null || dataBegin > data.length - 1 || (dataBegin + 2) > (data.length - 1)) {
             return null;
