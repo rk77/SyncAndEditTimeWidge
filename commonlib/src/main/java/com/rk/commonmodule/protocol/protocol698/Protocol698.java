@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.OAD_KEY;
+
 public enum Protocol698 {
     PROTOCOL_698;
     private static final String TAG = Protocol698.class.getSimpleName();
@@ -102,8 +104,8 @@ public enum Protocol698 {
                         } else {
                             byteArray.add((byte)0x00); // set default priority and service number
                         }
-                        if (map != null && map.containsKey(ProtocolConstant.OAD_KEY) && map.get(ProtocolConstant.OAD_KEY) != null) {
-                            Protocol698Frame.OAD oad = (Protocol698Frame.OAD) map.get(ProtocolConstant.OAD_KEY);
+                        if (map != null && map.containsKey(OAD_KEY) && map.get(OAD_KEY) != null) {
+                            Protocol698Frame.OAD oad = (Protocol698Frame.OAD) map.get(OAD_KEY);
                             if (oad != null && oad.data != null) {
                                 for (int i = 0; i < oad.data.length; i++) {
                                     byteArray.add(oad.data[i]);
@@ -390,7 +392,7 @@ public enum Protocol698 {
                         if (apduFrame.length < 7) {
                             return null;
                         }
-                        map.put(ProtocolConstant.OAD_KEY, new Protocol698Frame.OAD(DataConvertUtils.getSubByteArray(apduFrame, 3, 6)));
+                        map.put(OAD_KEY, new Protocol698Frame.OAD(DataConvertUtils.getSubByteArray(apduFrame, 3, 6)));
                         if (apduFrame.length < 8) {
                             return null;
                         }
@@ -448,6 +450,65 @@ public enum Protocol698 {
                                         Protocol698Frame.DateTimeS dateTimeS = new Protocol698Frame.DateTimeS(DataConvertUtils.getSubByteArray(apduFrame, 9, 15));
                                         map.put("value", dateTimeS);
                                         return map;
+                                    case 1: //array
+                                        Protocol698Frame.OAD oad = (Protocol698Frame.OAD) map.get(ProtocolConstant.OAD_KEY);
+                                        String oadString = DataConvertUtils.convertByteArrayToString(oad.data, false);
+                                        Log.i(TAG, "parseApdu, oad: " + oad);
+                                        if (apduFrame.length < 10) {
+                                            return map;
+                                        }
+
+                                        if ((apduFrame[9] & 0x80) == 0x00) {
+                                            int arrayLen = apduFrame[9];
+                                            switch (oadString) {
+                                                case "00100200": //正向有功总电能组
+                                                    double[] array = new double[arrayLen];
+                                                    if ((9 + arrayLen * 5) > (apduFrame.length - 1)) {
+                                                        return map;
+                                                    }
+                                                    for (int i = 0; i < arrayLen; i++) {
+                                                        array[i] = parse_DoubleLongUnsigned(DataConvertUtils.getSubByteArray(apduFrame, 9 + i * 5 + 1 + 1, 9 + i * 5 + 5), -2);
+                                                    }
+                                                    map.put("array", array);
+                                                    break;
+                                                default:
+                                                    Log.i(TAG, "default parse oad：" + oadString);
+                                                    break;
+
+                                            }
+                                        } else {
+                                            int lengthSize = apduFrame[9] & 0x7F;
+                                            if (9 + lengthSize <= apduFrame.length - 1) {
+                                                int length = 0;
+                                                for (int i = 0; i < lengthSize; i++) {
+                                                    length = length * 256 + apduFrame[10 + i];
+                                                }
+                                                if (9 + lengthSize + length <= apduFrame.length - 1) {
+                                                    //TODO:
+                                                } else {
+                                                    return null;
+                                                }
+                                            } else {
+                                                return null;
+                                            }
+                                        }
+
+                                        return map;
+                                    case 6: //double-long-unsigned
+                                        Protocol698Frame.OAD oad1 = (Protocol698Frame.OAD) map.get(ProtocolConstant.OAD_KEY);
+                                        String oadString1 = DataConvertUtils.convertByteArrayToString(oad1.data, false);
+                                        Log.i(TAG, "parseApdu, oad1: " + oadString1);
+                                        if (8 + 4 > apduFrame.length - 1) {
+                                            return map;
+                                        }
+                                        switch (oadString1.substring(0, 4)) {
+                                            case "0010": //正向有功电能
+                                                double power = parse_DoubleLongUnsigned(DataConvertUtils.getSubByteArray(apduFrame, 9, 12), -2);
+                                                map.put("value", power);
+                                                return map;
+                                                //break;
+                                        }
+                                        break;
                                 }
                             }
 
@@ -469,6 +530,22 @@ public enum Protocol698 {
         }
 
         return null;
+    }
+
+    private double parse_DoubleLongUnsigned(byte[] data, int divisor) {
+        if (data == null || data.length != 4) {
+            return 0.0;
+        }
+
+        long value = 0 & 0x00000000;
+
+        value = value | (data[3] & 0xFF);
+        value = value | ((data[2] << 8) & 0xFF00);
+        value = value | ((data[1] << 16) & 0xFF0000);
+        value = value | ((data[0] << 24) & 0xFF000000);
+        value = value & 0xFFFFFFFF;
+        Log.i(TAG, "parse_DoubleLongUnsigned, value: " + value);
+        return value * Math.pow(10, divisor * 1);
     }
 
 }
