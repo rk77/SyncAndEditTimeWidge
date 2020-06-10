@@ -2,6 +2,8 @@ package com.rk.commonmodule.protocol.protocol698;
 
 import com.rk.commonmodule.utils.DataConvertUtils;
 
+import java.util.ArrayList;
+
 public class Protocol698Frame {
 
     public static class PIID {
@@ -486,5 +488,290 @@ public class Protocol698Frame {
             }
         }
 
+    }
+
+    public static class RSD {
+        public int type;
+        public Object obj;
+        public byte[] data;
+
+        public RSD(int type, Object obj) {
+            this.type = type;
+            switch (type) {
+                case 0:
+                    data = new byte[1];
+                    data[0] = (byte) (type & 0xFF);
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    break;
+                case 5:
+                    break;
+                case 6:
+                    break;
+                case 7:
+                    break;
+                case 8:
+                    break;
+                case 9:
+                    if (obj != null && obj instanceof Selector9) {
+                        Selector9 src = ((Selector9) obj);
+                        data = new byte[1 + 1];
+                        data[0] = (byte) (type & 0xFF);
+                        data[1] = src.data;
+                    }
+                    break;
+                case 10:
+                    break;
+            }
+
+        }
+
+        public RSD(byte[] data) {
+            this.data = data;
+            if (data != null && data.length > 0) {
+                switch (data[0] & 0xFF) {
+                    case 0:
+                        this.type = 0;
+                        break;
+                    case 1:
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                    case 5:
+                        break;
+                    case 6:
+                        break;
+                    case 7:
+                        break;
+                    case 8:
+                        break;
+                    case 9:
+                        this.type = 9;
+                        if (data.length >= 2) {
+                            this.obj = new Selector9(data[1]);
+                        }
+                        break;
+                    case 10:
+                        break;
+                }
+            }
+        }
+    }
+
+    public static class Selector9 {
+        public int last;
+        public byte data;
+        public Selector9(int last) {
+            this.last = last;
+            data = (byte) (last & 0xFF);
+
+        }
+
+        public Selector9(byte data) {
+            this.data = data;
+            this.last = data & 0xFF;
+        }
+    }
+
+    public static class ROAD {
+        public OAD oad;
+        public ArrayList<OAD> oadArrayList = new ArrayList<>();
+        public byte[] data;
+
+        public ROAD(OAD oad, ArrayList<OAD> oadArrayList) {
+            this.oad = oad;
+            this.oadArrayList = oadArrayList;
+            ArrayList<Byte> bytes = new ArrayList<>();
+            if (oad != null && oad.data != null && oad.data.length > 0) {
+                for (int i = 0; i < oad.data.length; i++) {
+                    bytes.add(oad.data[i]);
+                }
+            }
+
+            if (oadArrayList != null && oadArrayList.size() > 0) {
+                bytes.add((byte)(oadArrayList.size()));
+                for (int i = 0; i < oadArrayList.size(); i++) {
+                    OAD oadItem = oadArrayList.get(i);
+                    if (oadItem != null && oadItem.data != null && oadItem.data.length > 0) {
+                        for (int j = 0; j < oadItem.data.length; j++) {
+                            bytes.add(oad.data[i]);
+                        }
+                    }
+                }
+            }
+
+            data = new byte[bytes.size()];
+            for (int i = 0; i < data.length; i++) {
+                data[i] = bytes.get(i);
+            }
+        }
+
+        public ROAD(byte[] data) {
+            this.data = data;
+
+            if (data != null && data.length >= 5) {
+                this.oad = new OAD(DataConvertUtils.getSubByteArray(data, 0, 3));
+                int road_length = data[4];
+
+                if (road_length > 0) {
+                    for (int i = 1; i <= road_length - 1; i++) {
+                        this.oadArrayList.add(new OAD(DataConvertUtils.getSubByteArray(data, i * 4 + 1, i * 4 + 4)));
+                    }
+                }
+            }
+        }
+    }
+
+    public static class CSD {
+        public int type;
+        public byte[] data;
+        public Object object;
+
+        public CSD(int type, Object object) {
+            this.type = type;
+            this.object = object;
+            switch (type) {
+                case 0:
+                    if (object instanceof OAD) {
+                        OAD src = (OAD) object;
+                        if (src.data != null && src.data.length > 0) {
+                            this.data = new byte[1 + src.data.length];
+                            for (int i = 0; i < this.data.length; i++) {
+                                if (i == 0) {
+                                    this.data[0] = (byte) (type & 0xFF);
+                                    continue;
+                                }
+                                this.data[i] = src.data[i - 1];
+                            }
+                        }
+                    }
+                    break;
+                case 1:
+                    if (object instanceof ROAD) {
+                        ROAD src = (ROAD) object;
+                        if (src.data != null && src.data.length > 0) {
+                            this.data = new byte[1 + src.data.length];
+                            for (int i = 0; i < this.data.length; i++) {
+                                if (i == 0) {
+                                    this.data[0] = (byte) (type & 0xFF);
+                                    continue;
+                                }
+                                this.data[i] = src.data[i - 1];
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+
+        public CSD(byte[] data) {
+            if (data != null && data.length > 0) {
+                this.data = data;
+                this.type = data[0];
+                switch (this.type) {
+                    case 0:
+                        if (data.length >= 5) {
+                            this.object = new OAD(DataConvertUtils.getSubByteArray(data, 1, 4));
+                        }
+                        break;
+                    case 1:
+                        if (data.length >= 5) {
+                            this.object = new ROAD(DataConvertUtils.getSubByteArray(data, 1, data.length - 1));
+                        }
+                        break;
+                }
+            }
+        }
+    }
+
+    public static class RCSD {
+        public int length = 0;
+        public ArrayList<CSD> csdArrayList = new ArrayList<>();
+        public byte[] data;
+
+        public RCSD(ArrayList<CSD> csds) {
+            this.csdArrayList = csds;
+            if (csds != null && csds.size() > 0) {
+                this.length = csds.size();
+                ArrayList<Byte> bytes = new ArrayList<>();
+                bytes.add((byte)(this.length));
+                for (int i = 0; i < csds.size(); i++) {
+                    CSD csdItem = csds.get(i);
+                    if (csdItem != null && csdItem.data != null && csdItem.data.length > 0) {
+                        for (int j = 0; j < csdItem.data.length; j++) {
+                            bytes.add(csdItem.data[j]);
+                        }
+                    }
+                }
+                this.data = new byte[bytes.size()];
+                for (int i = 0; i < this.data.length; i++) {
+                    this.data[i] = bytes.get(i);
+                }
+            }
+
+        }
+
+        public RCSD(byte[] data) {
+            if (data != null && data.length > 0) {
+                this.data = data;
+                this.length = data[0];
+                if (this.length > 0) {
+
+                }
+            }
+
+        }
+    }
+
+    public static class GetRecord {
+        public OAD oad;
+        public RSD rsd;
+        public RCSD rcsd;
+        public byte[] data;
+
+        public GetRecord(OAD oad, RSD rsd, RCSD rcsd) {
+            this.oad = oad;
+            this.rsd = rsd;
+            this.rcsd = rcsd;
+            ArrayList<Byte> bytes = new ArrayList<>();
+            if (oad != null && oad.data != null && oad.data.length > 0) {
+                for (int i = 0; i < oad.data.length ; i++) {
+                    bytes.add(oad.data[i]);
+                }
+            }
+
+            if (rsd != null && rsd.data != null && rsd.data.length > 0) {
+                for (int i = 0; i < rsd.data.length ; i++) {
+                    bytes.add(rsd.data[i]);
+                }
+            }
+
+            if (rcsd != null && rcsd.data != null && rcsd.data.length > 0) {
+                for (int i = 0; i < rcsd.data.length ; i++) {
+                    bytes.add(rcsd.data[i]);
+                }
+            }
+
+            this.data = new byte[bytes.size()];
+            for (int i = 0; i < this.data.length; i++) {
+                this.data[i] = bytes.get(i);
+            }
+        }
+
+        public GetRecord(byte[] data) {
+            if (data != null) {
+                this.data = data;
+            }
+        }
     }
 }

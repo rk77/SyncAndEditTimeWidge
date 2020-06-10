@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.GET_RECORD_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.OAD_KEY;
 
 public enum Protocol698 {
@@ -142,7 +143,50 @@ public enum Protocol698 {
                 break;
             case ProtocolConstant.CLIENT_APDU.SET_REQUEST.CLASS_ID:
                 break;
+            case ProtocolConstant.SECURITY_APDU.SECURITY_REQUEST.CLASS_ID:
+                byteArray.add((byte) ProtocolConstant.SECURITY_APDU.SECURITY_REQUEST.CLASS_ID);
+                if (map != null && map.containsKey(ProtocolConstant.PIID_KEY)) {
+                    Protocol698Frame.PIID piid = (Protocol698Frame.PIID) map.get(ProtocolConstant.PIID_KEY);
+                    if (piid != null) {
+                        byteArray.add(piid.data);
+                    } else {
+                        byteArray.add((byte)0x00); // set default priority and service number
+                    }
 
+                } else {
+                    byteArray.add((byte)0x00); // set default priority and service number
+                }
+
+                if (map != null && map.containsKey(GET_RECORD_KEY) && map.get(GET_RECORD_KEY) != null) {
+                    Protocol698Frame.GetRecord getRecord = (Protocol698Frame.GetRecord) map.get(OAD_KEY);
+                    if (getRecord != null && getRecord.data != null) {
+                        for (int i = 0; i < getRecord.data.length; i++) {
+                            byteArray.add(getRecord.data[i]);
+                        }
+                    } else {
+                        return null;
+                    }
+                } else {
+                    return null;
+                }
+                if (map != null && map.containsKey(ProtocolConstant.TIME_LABLE_KEY)) {
+                    Protocol698Frame.TimeTag timeTag = (Protocol698Frame.TimeTag) map.get(ProtocolConstant.TIME_LABLE_KEY);
+                    if (timeTag != null && timeTag.data != null) {
+                        for (int i = 0; i < timeTag.data.length; i++) {
+                            byteArray.add(timeTag.data[i]);
+                        }
+                    } else {
+                        byteArray.add((byte) 0x00);
+                    }
+
+                } else {
+                    byteArray.add((byte)0x00);
+                }
+                byte[] bytes = new byte[byteArray.size()];
+                for (int i = 0; i < bytes.length; i++) {
+                    bytes[i] = byteArray.get(i);
+                }
+                return bytes;
         }
         return null;
     }
