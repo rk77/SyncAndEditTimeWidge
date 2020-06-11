@@ -729,7 +729,6 @@ public class Protocol698Frame {
 
                 }
             }
-
         }
     }
 
@@ -771,6 +770,87 @@ public class Protocol698Frame {
         public GetRecord(byte[] data) {
             if (data != null) {
                 this.data = data;
+            }
+        }
+    }
+
+    public enum DataUnit_Type {
+        CLEAR_TEXT, CIPHER_TEXT
+    }
+    public static class DataUnit {
+        public DataUnit_Type type;
+        public byte[] srcData;
+        public byte[] data;
+
+        public DataUnit(DataUnit_Type type, byte[] srcData) {
+            this.type = type;
+            this.srcData = srcData;
+            if (srcData != null && srcData.length > 0) {
+                data = new byte[1 + 1 + srcData.length];
+                switch (type) {
+                    case CLEAR_TEXT:
+                        data[0] = 0;
+                        break;
+                    case CIPHER_TEXT:
+                        data[0] = 1;
+                        break;
+                }
+                data[1] = (byte) srcData.length;
+                for (int i = 0; i < srcData.length; i++) {
+                    data[i + 1 + 1] = srcData[i];
+                }
+
+            }
+        }
+
+    }
+
+    public enum DataVerifyInfo_Type {
+        SID_MAC, RN, RN_MAC, SID
+    }
+    public static class DataVerifyInfo {
+        public DataVerifyInfo_Type type;
+        public Object object;
+        public byte[] data;
+
+        public DataVerifyInfo(DataVerifyInfo_Type type, Object object) {
+            this.type = type;
+            object = object;
+            switch (type) {
+                case SID_MAC:
+                    break;
+                case RN:
+                    if (object instanceof  RN) {
+                        RN rn = (RN) object;
+                        if (rn != null&& rn.data != null && rn.data.length > 0) {
+                            data = new byte[1 + rn.data.length];
+                            data[0] = 1;
+                            for (int i = 0; i < rn.data.length; i++) {
+                                data[i + 1] = rn.data[i];
+                            }
+                        }
+                    }
+                    break;
+                case RN_MAC:
+                    break;
+                case SID:
+                    break;
+            }
+        }
+
+    }
+
+    public static class RN {
+        public byte[] srcData;
+        public byte[] data;
+        public RN(byte[] srcData) {
+            this.srcData = srcData;
+            if (srcData != null && srcData.length > 0) {
+                data = new byte[1 + srcData.length];
+                data[0] = (byte) srcData.length;
+                for (int i = 0; i < srcData.length; i++) {
+                    data[i + 1] = srcData[i];
+                }
             }
         }
     }

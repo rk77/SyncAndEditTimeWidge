@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DATA_UNIT_KEY;
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DATA_VERIFY_INFO_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.GET_RECORD_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.OAD_KEY;
 
@@ -87,7 +89,7 @@ public enum Protocol698 {
 
     public byte[] makeAPDU(int first_id, int second_id, Map map) {
         ArrayList<Byte> byteArray = new ArrayList<>();
-
+        byte[] bytes = null;
         switch (first_id) {
             case ProtocolConstant.CLIENT_APDU.GET_REQUEST.CLASS_ID:
                 byteArray.add((byte) ProtocolConstant.CLIENT_APDU.GET_REQUEST.CLASS_ID);
@@ -105,6 +107,7 @@ public enum Protocol698 {
                         } else {
                             byteArray.add((byte)0x00); // set default priority and service number
                         }
+
                         if (map != null && map.containsKey(OAD_KEY) && map.get(OAD_KEY) != null) {
                             Protocol698Frame.OAD oad = (Protocol698Frame.OAD) map.get(OAD_KEY);
                             if (oad != null && oad.data != null) {
@@ -117,6 +120,7 @@ public enum Protocol698 {
                         } else {
                             return null;
                         }
+
                         if (map != null && map.containsKey(ProtocolConstant.TIME_LABLE_KEY)) {
                             Protocol698Frame.TimeTag timeTag = (Protocol698Frame.TimeTag) map.get(ProtocolConstant.TIME_LABLE_KEY);
                             if (timeTag != null && timeTag.data != null) {
@@ -130,11 +134,57 @@ public enum Protocol698 {
                         } else {
                             byteArray.add((byte)0x00);
                         }
-                        byte[] bytes = new byte[byteArray.size()];
+                        bytes = new byte[byteArray.size()];
                         for (int i = 0; i < bytes.length; i++) {
                             bytes[i] = byteArray.get(i);
                         }
                         return bytes;
+                    case ProtocolConstant.CLIENT_APDU.GET_REQUEST.GET_REQUEST_RECORD.CLASS_ID:
+                        byteArray.add((byte) ProtocolConstant.CLIENT_APDU.GET_REQUEST.GET_REQUEST_RECORD.CLASS_ID);
+                        if (map != null && map.containsKey(ProtocolConstant.PIID_KEY)) {
+                            Protocol698Frame.PIID piid = (Protocol698Frame.PIID) map.get(ProtocolConstant.PIID_KEY);
+                            if (piid != null) {
+                                byteArray.add(piid.data);
+                            } else {
+                                byteArray.add((byte)0x00); // set default priority and service number
+                            }
+                        } else {
+                            byteArray.add((byte)0x00); // set default priority and service number
+                        }
+
+                        if (map != null && map.containsKey(GET_RECORD_KEY) && map.get(GET_RECORD_KEY) != null) {
+                            Protocol698Frame.GetRecord getRecord = (Protocol698Frame.GetRecord) map.get(GET_RECORD_KEY);
+                            if (getRecord != null && getRecord.data != null) {
+                                for (int i = 0; i < getRecord.data.length; i++) {
+                                    byteArray.add(getRecord.data[i]);
+                                }
+                            } else {
+                                return null;
+                            }
+                        } else {
+                            return null;
+                        }
+
+                        if (map != null && map.containsKey(ProtocolConstant.TIME_LABLE_KEY)) {
+                            Protocol698Frame.TimeTag timeTag = (Protocol698Frame.TimeTag) map.get(ProtocolConstant.TIME_LABLE_KEY);
+                            if (timeTag != null && timeTag.data != null) {
+                                for (int i = 0; i < timeTag.data.length; i++) {
+                                    byteArray.add(timeTag.data[i]);
+                                }
+                            } else {
+                                byteArray.add((byte) 0x00);
+                            }
+                        } else {
+                            byteArray.add((byte)0x00);
+                        }
+
+
+                        bytes = new byte[byteArray.size()];
+                        for (int i = 0; i < bytes.length; i++) {
+                            bytes[i] = byteArray.get(i);
+                        }
+                        return bytes;
+
                 }
                 break;
             case ProtocolConstant.CLIENT_APDU.CONNECT_REQUEST.CLASS_ID:
@@ -145,44 +195,35 @@ public enum Protocol698 {
                 break;
             case ProtocolConstant.SECURITY_APDU.SECURITY_REQUEST.CLASS_ID:
                 byteArray.add((byte) ProtocolConstant.SECURITY_APDU.SECURITY_REQUEST.CLASS_ID);
-                if (map != null && map.containsKey(ProtocolConstant.PIID_KEY)) {
-                    Protocol698Frame.PIID piid = (Protocol698Frame.PIID) map.get(ProtocolConstant.PIID_KEY);
-                    if (piid != null) {
-                        byteArray.add(piid.data);
-                    } else {
-                        byteArray.add((byte)0x00); // set default priority and service number
-                    }
-
-                } else {
-                    byteArray.add((byte)0x00); // set default priority and service number
-                }
-
-                if (map != null && map.containsKey(GET_RECORD_KEY) && map.get(GET_RECORD_KEY) != null) {
-                    Protocol698Frame.GetRecord getRecord = (Protocol698Frame.GetRecord) map.get(OAD_KEY);
-                    if (getRecord != null && getRecord.data != null) {
-                        for (int i = 0; i < getRecord.data.length; i++) {
-                            byteArray.add(getRecord.data[i]);
+                //TODO:
+                if (map != null && map.containsKey(DATA_UNIT_KEY) && map.get(DATA_UNIT_KEY) != null
+                        && map.containsKey(DATA_VERIFY_INFO_KEY) && map.get(DATA_VERIFY_INFO_KEY) != null) {
+                    Protocol698Frame.DataUnit dataUnit = (Protocol698Frame.DataUnit) map.get(DATA_UNIT_KEY);
+                    if (dataUnit != null && dataUnit.data != null && dataUnit.data.length > 0) {
+                        for (int i = 0; i < dataUnit.data.length; i++) {
+                            byteArray.add(dataUnit.data[i]);
                         }
                     } else {
+                        Log.i(TAG, "SECURITY_REQUEST 1");
                         return null;
                     }
-                } else {
-                    return null;
-                }
-                if (map != null && map.containsKey(ProtocolConstant.TIME_LABLE_KEY)) {
-                    Protocol698Frame.TimeTag timeTag = (Protocol698Frame.TimeTag) map.get(ProtocolConstant.TIME_LABLE_KEY);
-                    if (timeTag != null && timeTag.data != null) {
-                        for (int i = 0; i < timeTag.data.length; i++) {
-                            byteArray.add(timeTag.data[i]);
+
+                    Protocol698Frame.DataVerifyInfo dataVerifyInfo = (Protocol698Frame.DataVerifyInfo) map.get(DATA_VERIFY_INFO_KEY);
+                    if (dataVerifyInfo != null && dataVerifyInfo.data != null && dataVerifyInfo.data.length > 0) {
+                        for (int i = 0; i < dataVerifyInfo.data.length; i++) {
+                            byteArray.add(dataVerifyInfo.data[i]);
                         }
                     } else {
-                        byteArray.add((byte) 0x00);
+                        Log.i(TAG, "SECURITY_REQUEST 2");
+                        return null;
                     }
 
                 } else {
-                    byteArray.add((byte)0x00);
+                    Log.i(TAG, "SECURITY_REQUEST 3");
+                    return null;
                 }
-                byte[] bytes = new byte[byteArray.size()];
+
+                bytes = new byte[byteArray.size()];
                 for (int i = 0; i < bytes.length; i++) {
                     bytes[i] = byteArray.get(i);
                 }

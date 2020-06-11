@@ -8,6 +8,11 @@ public class ProtocolConstant {
     public final static String DAR_KEY = "dar";
     public final static String GET_RECORD_KEY = "GET_RECORD_KEY";
 
+    public final static String DATA_UNIT_KEY = "DATA_UNIT_KEY";
+    public final static String DATA_VERIFY_INFO_KEY = "DATA_VERIFY_INFO_KEY";
+
+
+
     public final static class LINK_APDU {
         public final static class LINK_REQUEST {
             public final static int CLASS_ID = 1;
