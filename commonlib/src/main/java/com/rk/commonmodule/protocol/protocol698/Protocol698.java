@@ -8,10 +8,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DAR_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DATA_UNIT_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DATA_VERIFY_INFO_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.GET_RECORD_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.OAD_KEY;
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.RCSD_KEY;
 
 public enum Protocol698 {
     PROTOCOL_698;
@@ -485,7 +487,7 @@ public enum Protocol698 {
                             if (apduFrame.length < 9) {
                                 return null;
                             } else {
-                                map.put(ProtocolConstant.DAR_KEY, apduFrame[8]);
+                                map.put(DAR_KEY, apduFrame[8]);
                                 return map;
                             }
 
@@ -602,12 +604,77 @@ public enum Protocol698 {
                             return null;
                         }
                         break;
+                    case ProtocolConstant.SERVER_APDU.GET_RESPONSE.GET_RESPONSE_RECORD.CLASS_ID:
+                        if (apduFrame.length < 3) {
+                            return null;
+                        }
+                        map.put(ProtocolConstant.PIID_ACD_KEY, new Protocol698Frame.PIID_ACD(apduFrame[2]));
+                        if (6 <= apduFrame.length - 1) {
+                            Protocol698Frame.OAD oad = new Protocol698Frame.OAD(DataConvertUtils.getSubByteArray(apduFrame, 3, 6));
+                            map.put(OAD_KEY, oad);
+
+                            Protocol698Frame.RCSD rcsd = new Protocol698Frame.RCSD(apduFrame, 7);
+                            map.put(RCSD_KEY, rcsd);
+                            if (rcsd.data == null) {
+                                return null;
+                            }
+                            if (6 + rcsd.data.length + 1 > apduFrame.length - 1) {
+                                return null;
+                            }
+
+                            Log.i(TAG, "parsApdu， GET_RESPONSE_RECORD， choice：" + apduFrame[6 + rcsd.data.length + 1]);
+
+                            if (apduFrame[6 + rcsd.data.length + 1] == 0) {
+                                if (6 + rcsd.data.length + 1 + 1 > apduFrame.length - 1) {
+                                    return null;
+                                }
+                                map.put(DAR_KEY, apduFrame[6 + rcsd.data.length + 1 + 1]);
+                                return map;
+
+                            } else if (apduFrame[6 + rcsd.data.length + 1] == 1) {
+                                if (6 + rcsd.data.length + 1 + 1 <= apduFrame.length - 1) {
+                                    Protocol698Frame.A_RecordRow a_recordRow = new Protocol698Frame.A_RecordRow(apduFrame, 6 + rcsd.data.length + 1 + 1);
+                                    if (a_recordRow.data != null) {
+                                        Log.i(TAG, "parsApdu， GET_RESPONSE_RECORD， a_recordRow：" + DataConvertUtils.convertByteArrayToString(a_recordRow.data, false));
+                                    } else {
+                                        Log.i(TAG, "parsApdu， GET_RESPONSE_RECORD， a_recordRow data is null");
+                                    }
+                                    map.put(ProtocolConstant.A_RECORD_ROW_KEY, a_recordRow);
+                                    return map;
+                                }
+
+                            } else {
+                                return null;
+                            }
+
+                        } else {
+                            return null;
+                        }
+                        break;
                     default:
                         Log.i(TAG, "parseApud, no action 1: " + (((int) apduFrame[1]) & 0xFF));
 
                         break;
                 }
                 break;
+            case ProtocolConstant.SECURITY_APDU.SECURITY_RESPONSE.CLASS_ID:
+                if (1 > apduFrame.length - 1) {
+                    return null;
+                }
+                if (apduFrame[1] == 0) {
+                    byte[] value = parse_OctetString(apduFrame, 2);
+                    map.put("value", value);
+                    map.put("security", Protocol698Frame.DataUnit_Type.CLEAR_TEXT);
+                } else if (apduFrame[1] == 1) {
+                    byte[] value = parse_OctetString(apduFrame, 2);
+                    map.put("value", value);
+                    map.put("security", Protocol698Frame.DataUnit_Type.CIPHER_TEXT);
+                } else if (apduFrame[1] == 2) {
+                    if (2 <= apduFrame.length - 1) {
+                        map.put("dar", apduFrame[2]);
+                    }
+                }
+                return map;
             default:
                 Log.i(TAG, "parseApud, no action: " + (((int) apduFrame[0]) & 0xFF));
                 break;
@@ -615,6 +682,35 @@ public enum Protocol698 {
         }
 
         return null;
+    }
+
+    private byte[] parse_OctetString(byte[] frame, int begin) {
+        if (frame == null || frame.length <= 0 || begin > frame.length - 1) {
+            return null;
+        }
+        if ((frame[begin] & 0x80) == 0x00) {
+            if ((begin + frame[begin]) <= (frame.length - 1)) {
+                return DataConvertUtils.getSubByteArray(frame, begin + 1, begin + frame[begin]);
+            } else {
+                return null;
+            }
+        } else {
+            int lengthSize = frame[begin] & 0x7F;
+            if (begin + lengthSize <= frame.length - 1) {
+                int length = 0;
+                for (int i = 0; i < lengthSize; i++) {
+                    length = length * 256 + frame[begin + 1 + i];
+                }
+                if (begin + lengthSize + length <= frame.length - 1) {
+                    return DataConvertUtils.getSubByteArray(frame, begin + lengthSize + 1, begin + lengthSize + length);
+                } else {
+                    return null;
+                }
+            } else {
+                return null;
+            }
+        }
+
     }
 
     private double parse_DoubleLongUnsigned(byte[] data, int divisor) {

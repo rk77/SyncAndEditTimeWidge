@@ -10,6 +10,8 @@ public class ProtocolConstant {
 
     public final static String DATA_UNIT_KEY = "DATA_UNIT_KEY";
     public final static String DATA_VERIFY_INFO_KEY = "DATA_VERIFY_INFO_KEY";
+    public final static String A_RECORD_ROW_KEY = "A_RECORD_ROW_KEY";
+    public final static String RCSD_KEY = "RCSD_KEY";
 
 
 
@@ -69,6 +71,10 @@ public class ProtocolConstant {
             public final static int CLASS_ID = 133;
             public final static class GET_RESPONSE_NORMAL {
                 public final static int CLASS_ID = 1;
+            }
+
+            public final static class GET_RESPONSE_RECORD {
+                public final static int CLASS_ID = 3;
             }
         }
 

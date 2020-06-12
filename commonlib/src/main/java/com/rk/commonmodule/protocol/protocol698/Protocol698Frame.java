@@ -721,14 +721,52 @@ public class Protocol698Frame {
 
         }
 
-        public RCSD(byte[] data) {
-            if (data != null && data.length > 0) {
-                this.data = data;
-                this.length = data[0];
-                if (this.length > 0) {
+        public RCSD(byte[] frame, int begin) {
+            if (frame != null && frame.length > 0 && begin >= 0 && begin <= frame.length - 1) {
+                if (frame[begin] == 0) {
+                    this.data = new byte[1];
+                    this.data[0] = 0;
+                } else {
+                    int cnt = frame[begin];
+                    int pos = begin + 1;
+                    int i = 0;
+                    for (i = 0; i < cnt; i++) {
+                        int csdLength = calcCsdLength(frame, pos);
+                        if (csdLength > 0) {
+                            CSD csd = new CSD(DataConvertUtils.getSubByteArray(frame, pos, pos + csdLength - 1));
+                            this.csdArrayList.add(csd);
+                            pos = pos + csdLength;
+                        } else {
+                            break;
+                        }
+                    }
+                    if (i == cnt) {
+                        this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
+                    } else {
+                        this.data = null;
+                        this.csdArrayList.clear();
+                    }
 
                 }
             }
+        }
+
+        private int calcCsdLength(byte[] frame, int begin) {
+            int length_nextPos = -1;
+            if (begin <= frame.length - 1) {
+                if (frame[begin] == 0) {
+                    length_nextPos = 5;
+                } else if (frame[begin] == 1) {
+                    if (begin + 5 <= frame.length - 1) {
+                        int oadCnt = frame[begin + 5];
+                        if (begin + 5 + oadCnt * 4 <= frame.length - 1) {
+                            length_nextPos = 1 + 4 + 1 + oadCnt * 4;
+                        }
+                    }
+                }
+            }
+            return length_nextPos;
+
         }
     }
 
@@ -850,6 +888,251 @@ public class Protocol698Frame {
                 data[0] = (byte) srcData.length;
                 for (int i = 0; i < srcData.length; i++) {
                     data[i + 1] = srcData[i];
+                }
+            }
+        }
+    }
+
+    public enum Data_Type {
+        NULL_TYPE,
+        ARRAY_TYPE,
+        STRUCTURE_TYPE,
+        BOOL_TYPE,
+        BIT_STRING_TYPE,
+        DOUBLE_LONG_TYPE,
+        DOUBLE_LONG_UNSIGNED_TYPE,
+        OCTET_STRING_TYPE,
+        VISIBLE_STRING_TYPE,
+        UTF8_STRING_TYPE,
+        INTEGER_TYPE,
+        LONG_TYPE,
+        UNSIGNED_TYPE,
+        LONG_UNSIGNED_TYPE,
+        LONG64_TYPE,
+        LONG64_UNSIGNED_TYPE,
+        ENUM_TYPE,
+        FLOAT32_TYPE,
+        FLOAT64_TYPE,
+        DATE_TIME_TYPE,
+        DATE_TYPE,
+        TIME_TYPE,
+        DATE_TIME_S_TYPE,
+        OI_TYPE,
+        OAD_TYPE,
+        ROAD_TYPE,
+        OMD_TYPE,
+        TI_TYPE,
+        TSA_TYPE,
+        MAC_TYPE,
+        RN_TYPE,
+        REGION_TYPE,
+        SCALER_UNIT_TYPE,
+        RSD_TYPE,
+        CSD_TYPE,
+        MS_TYPE,
+        SID_TYPE,
+        SID_MAC_TYPE,
+        COMDCB_TYPE,
+        RCSD_TYPE,
+    }
+
+    public static class Data {
+        public Data_Type type;
+        public Object obj;
+        public byte[] data;
+
+        public Data(Data_Type type, Object obj) {
+            this.type = type;
+            this.obj = obj;
+            switch (type) {
+                case NULL_TYPE:
+                    this.data = new byte[1];
+                    this.data[0] = 0;
+                    break;
+                case DOUBLE_LONG_UNSIGNED_TYPE:
+                    if (obj instanceof Integer) {
+                        this.data = new byte[1 + 4];
+                        this.data[0] = 6;
+                        int value = (int) obj;
+                        this.data[1] = (byte) ((value >> 24) & 0xFF);
+                        this.data[2] = (byte) ((value >> 16) & 0xFF);
+                        this.data[3] = (byte) ((value >> 8) & 0xFF);
+                        this.data[4] = (byte) (value & 0xFF);
+                    }
+                    break;
+                case DATE_TIME_S_TYPE:
+                    if (obj instanceof DateTimeS) {
+                        this.data = new byte[8];
+                        this.data[0] = 28;
+                        DateTimeS dateTimeS = (DateTimeS) obj;
+                        if (dateTimeS.data != null && dateTimeS.data.length == 7) {
+                            for (int i = 0; i < dateTimeS.data.length; i++) {
+                                this.data[i + 1] = dateTimeS.data[i];
+                            }
+                        }
+                    }
+                    break;
+                case ARRAY_TYPE:
+                    if (obj instanceof ArrayList) {
+                        ArrayList<Data> array = (ArrayList<Data>) obj;
+                        if (array.size() > 0) {
+                            int length = 0;
+                            for (int i = 0; i < array.size(); i++) {
+                                Data item = array.get(i);
+                                if (item.data != null) {
+                                    length = length + item.data.length;
+                                }
+                            }
+                            length = length + 1 + 1;
+                            this.data = new byte[length];
+                            this.data[0] = 1;
+                            this.data[1] = (byte) array.size();
+                            int pos = 2;
+
+                            for (int i = 0; i < array.size(); i++) {
+                                Data item = array.get(i);
+                                if (item.data != null) {
+                                    for (int j = 0; j < item.data.length; j++) {
+                                        this.data[pos++] = item.data[j];
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                    break;
+            }
+        }
+
+        public Data(byte[] frame, int begin) {
+            if (frame != null && begin <= frame.length - 1) {
+                switch (frame[begin]) {
+                    case 0:
+                        this.type = Data_Type.NULL_TYPE;
+                        this.obj = null;
+                        this.data = new byte[1];
+                        this.data[0] = 0;
+                        break;
+                    case 1:
+                        this.type = Data_Type.ARRAY_TYPE;
+                        ArrayList<Byte> bytes = new ArrayList<>();
+                        bytes.add((byte)1);
+                        if (begin + 1 <= frame.length - 1) {
+                            int size = frame[begin + 1];
+                            bytes.add((byte)size);
+                            if (size > 0) {
+                                ArrayList<Data> dataArrayList = new ArrayList<>(size);
+                                int pos = begin + 2;
+                                int i = 0;
+                                for (i = 0; i < size; i++) {
+                                    Data data = new Data(frame, pos);
+                                    if (data.data == null) {
+                                        break;
+                                    }
+                                    for (int j = 0; j < data.data.length; j++) {
+                                        bytes.add(data.data[0]);
+                                    }
+                                    dataArrayList.add(data);
+                                    pos = pos + data.data.length;
+                                }
+                                if (i == size) {
+                                    this.obj = dataArrayList;
+                                    this.data = new byte[bytes.size()];
+                                    for (int k = 0; k < bytes.size(); k++) {
+                                        this.data[k] = bytes.get(k);
+                                    }
+                                } else {
+                                    this.data = null;
+                                    this.obj = null;
+                                }
+                            }
+                        }
+
+                        break;
+                    case 6:
+                        this.type = Data_Type.DOUBLE_LONG_UNSIGNED_TYPE;
+                        this.data = new byte[5];
+                        this.data[0] = 6;
+                        int value = 0;
+                        if (begin + 4 <= frame.length - 1) {
+                            value = (value | (frame[begin + 1] << 24)) & 0xFF000000;
+                            this.data[1] = frame[begin + 1];
+                            value = (value | (frame[begin + 2] << 16)) & 0xFFFF0000;
+                            this.data[2] = frame[begin + 2];
+                            value = (value | (frame[begin + 3] << 8)) & 0xFFFFFF00;
+                            this.data[3] = frame[begin + 3];
+                            value = (value | (frame[begin + 4])) & 0xFFFFFFFF;
+                            this.data[4] = frame[begin + 4];
+                        }
+                        this.obj = value;
+                        break;
+                    case 28:
+                        this.type = Data_Type.DATE_TIME_S_TYPE;
+                        this.data = new byte[8];
+                        this.data[0] = 28;
+                        if (begin + 7 <= frame.length - 1) {
+                            DateTimeS dateTimeS = new DateTimeS(DataConvertUtils.getSubByteArray(frame, begin + 1, begin + 7));
+                            this.obj = dateTimeS;
+
+                            for (int i = 0; i < 7; i++) {
+                                this.data[i + 1] = frame[begin + 1 + i];
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+    }
+
+    public static class A_RecordRow {
+        public ArrayList<Data> dataArrayList;
+        public byte[] data;
+        public A_RecordRow(ArrayList<Data> dataArrayList) {
+            this.dataArrayList = dataArrayList;
+            ArrayList<Byte> bytes = new ArrayList<>();
+            if (dataArrayList != null && dataArrayList.size() > 0) {
+                for (int i = 0; i < dataArrayList.size(); i++) {
+                    Data item = dataArrayList.get(i);
+                    if (item.data != null) {
+                        for (int j = 0; j < item.data.length; j++) {
+                            bytes.add(item.data[0]);
+                        }
+                    }
+                }
+            }
+            if (bytes.size() > 0) {
+                this.data = new byte[bytes.size()];
+                for (int i = 0; i < bytes.size(); i++) {
+                    this.data[i] = bytes.get(i);
+                }
+            }
+        }
+
+        public A_RecordRow(byte[] frame, int begin) {
+            if (frame != null && begin <= frame.length - 1) {
+                ArrayList<Byte> bytes = new ArrayList<>();
+                int size = frame[begin];
+                if (size > 0) {
+                    bytes.add(frame[begin]);
+                    this.dataArrayList = new ArrayList<>(size);
+                    int i = 0;
+                    int pos = begin + 1;
+                    for (i = 0; i < size; i++) {
+                        Data data = new Data(frame, pos);
+                        if (data.data == null) {
+                            break;
+                        }
+                        for (int j = 0; j < data.data.length; j++) {
+                            bytes.add(data.data[j]);
+                        }
+                        this.dataArrayList.add(data);
+                        pos = pos + data.data.length;
+                    }
+                    if (i != size) {
+                        this.dataArrayList.clear();
+                        this.data = null;
+                    }
+
                 }
             }
         }
