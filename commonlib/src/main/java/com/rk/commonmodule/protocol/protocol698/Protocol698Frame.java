@@ -1,10 +1,14 @@
 package com.rk.commonmodule.protocol.protocol698;
 
+import android.util.Log;
+
 import com.rk.commonmodule.utils.DataConvertUtils;
 
 import java.util.ArrayList;
 
 public class Protocol698Frame {
+
+    private static final String TAG = Protocol698Frame.class.getSimpleName();
 
     public static class PIID {
         public int priority;
@@ -1030,7 +1034,7 @@ public class Protocol698Frame {
                                         break;
                                     }
                                     for (int j = 0; j < data.data.length; j++) {
-                                        bytes.add(data.data[0]);
+                                        bytes.add(data.data[j]);
                                     }
                                     dataArrayList.add(data);
                                     pos = pos + data.data.length;
@@ -1055,13 +1059,13 @@ public class Protocol698Frame {
                         this.data[0] = 6;
                         int value = 0;
                         if (begin + 4 <= frame.length - 1) {
-                            value = (value | (frame[begin + 1] << 24)) & 0xFF000000;
+                            value = (value | ((frame[begin + 1] & 0xFF) << 24)) & 0xFF000000;
                             this.data[1] = frame[begin + 1];
-                            value = (value | (frame[begin + 2] << 16)) & 0xFFFF0000;
+                            value = (value | ((frame[begin + 2] & 0xFF) << 16)) & 0xFFFF0000;
                             this.data[2] = frame[begin + 2];
-                            value = (value | (frame[begin + 3] << 8)) & 0xFFFFFF00;
+                            value = (value | ((frame[begin + 3] & 0xFF) << 8)) & 0xFFFFFF00;
                             this.data[3] = frame[begin + 3];
-                            value = (value | (frame[begin + 4])) & 0xFFFFFFFF;
+                            value = (value | (frame[begin + 4] & 0xFF)) & 0xFFFFFFFF;
                             this.data[4] = frame[begin + 4];
                         }
                         this.obj = value;
@@ -1108,29 +1112,37 @@ public class Protocol698Frame {
             }
         }
 
-        public A_RecordRow(byte[] frame, int begin) {
+        public A_RecordRow(byte[] frame, int begin, int columeSize) {
             if (frame != null && begin <= frame.length - 1) {
                 ArrayList<Byte> bytes = new ArrayList<>();
-                int size = frame[begin];
+                int size = columeSize;
+                Log.i(TAG, "A_RecordRow, array size: " + size);
                 if (size > 0) {
-                    bytes.add(frame[begin]);
                     this.dataArrayList = new ArrayList<>(size);
                     int i = 0;
-                    int pos = begin + 1;
+                    int pos = begin;
                     for (i = 0; i < size; i++) {
                         Data data = new Data(frame, pos);
                         if (data.data == null) {
+                            Log.i(TAG, "A_RecordRow, data null, i: " + i);
                             break;
                         }
                         for (int j = 0; j < data.data.length; j++) {
                             bytes.add(data.data[j]);
                         }
+                        Log.i(TAG, "A_RecordRow, data[" + i + "]: " + DataConvertUtils.convertByteArrayToString(data.data, false));
                         this.dataArrayList.add(data);
                         pos = pos + data.data.length;
                     }
                     if (i != size) {
+                        Log.i(TAG, "A_RecordRow, clear data, i: " + i);
                         this.dataArrayList.clear();
                         this.data = null;
+                    } else {
+                        this.data = new byte[bytes.size()];
+                        for (int j = 0; j < this.data.length; j++) {
+                            this.data[j] = bytes.get(j);
+                        }
                     }
 
                 }

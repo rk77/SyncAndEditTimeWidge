@@ -618,11 +618,12 @@ public enum Protocol698 {
                             if (rcsd.data == null) {
                                 return null;
                             }
+                            int columeSize = rcsd.csdArrayList.size();
                             if (6 + rcsd.data.length + 1 > apduFrame.length - 1) {
                                 return null;
                             }
 
-                            Log.i(TAG, "parsApdu， GET_RESPONSE_RECORD， choice：" + apduFrame[6 + rcsd.data.length + 1]);
+                            Log.i(TAG, "parsApdu， GET_RESPONSE_RECORD， choice：" + apduFrame[6 + rcsd.data.length + 1] + ", colume size: " + columeSize);
 
                             if (apduFrame[6 + rcsd.data.length + 1] == 0) {
                                 if (6 + rcsd.data.length + 1 + 1 > apduFrame.length - 1) {
@@ -633,13 +634,29 @@ public enum Protocol698 {
 
                             } else if (apduFrame[6 + rcsd.data.length + 1] == 1) {
                                 if (6 + rcsd.data.length + 1 + 1 <= apduFrame.length - 1) {
-                                    Protocol698Frame.A_RecordRow a_recordRow = new Protocol698Frame.A_RecordRow(apduFrame, 6 + rcsd.data.length + 1 + 1);
-                                    if (a_recordRow.data != null) {
-                                        Log.i(TAG, "parsApdu， GET_RESPONSE_RECORD， a_recordRow：" + DataConvertUtils.convertByteArrayToString(a_recordRow.data, false));
-                                    } else {
-                                        Log.i(TAG, "parsApdu， GET_RESPONSE_RECORD， a_recordRow data is null");
+                                    int size = apduFrame[6 + rcsd.data.length + 1 + 1];
+                                    Log.i(TAG, "parsApdu， GET_RESPONSE_RECORD， a_recordRow list size：" + size);
+                                    ArrayList<Protocol698Frame.A_RecordRow> a_recordRowArrayList = new ArrayList<>();
+                                    int i = 0;
+                                    int beginPos = 6 + rcsd.data.length + 1 + 1 + 1;
+                                    for (i = 0; i < size; i++) {
+                                        Protocol698Frame.A_RecordRow a_recordRow = new Protocol698Frame.A_RecordRow(apduFrame, beginPos, columeSize);
+                                        if (a_recordRow.data == null) {
+                                            Log.i(TAG, "parsApdu， GET_RESPONSE_RECORD, a_recordRow.data is null, i: " + i);
+                                            break;
+                                        }
+                                        a_recordRowArrayList.add(a_recordRow);
+                                        beginPos = beginPos + a_recordRow.data.length;
                                     }
-                                    map.put(ProtocolConstant.A_RECORD_ROW_KEY, a_recordRow);
+                                    if (i < size) {
+                                        a_recordRowArrayList.clear();
+                                    }
+                                    if (a_recordRowArrayList.size() != 0) {
+                                        Log.i(TAG, "parsApdu， GET_RESPONSE_RECORD， a_recordRow：" + a_recordRowArrayList.size());
+                                    } else {
+                                        Log.i(TAG, "parsApdu， GET_RESPONSE_RECORD， a_recordRow list is null");
+                                    }
+                                    map.put(ProtocolConstant.A_RECORD_ROW_KEY, a_recordRowArrayList);
                                     return map;
                                 }
 
