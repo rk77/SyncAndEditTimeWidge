@@ -2,6 +2,7 @@ package com.rk.commonmodule.utils;
 
 import android.util.Log;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 public class DataConvertUtils {
@@ -152,4 +153,10 @@ public class DataConvertUtils {
         }
         return sb.toString();
     }
+
+    public static String InterDivToString(int a, int b) {
+        DecimalFormat df=new DecimalFormat("0.00");
+        return (df.format((float)a/b));
+    }
+
 }
