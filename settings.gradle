@@ -1,2 +1,3 @@
 include ':app', ':commonlib'
 include ':app', ':smartloadview'
+include ':app', ':locktableview'
