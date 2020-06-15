@@ -2,6 +2,7 @@ package com.rk.commonmodule.utils;
 
 import android.util.Log;
 
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
@@ -157,6 +158,26 @@ public class DataConvertUtils {
     public static String InterDivToString(int a, int b) {
         DecimalFormat df=new DecimalFormat("0.00");
         return (df.format((float)a/b));
+    }
+
+    //String or Double conver to String（0.00）
+    public static String format2(Object value) {
+        Double a = 0.0;
+        if (value instanceof String) {
+            a = Double.valueOf((String)value);
+        } else if (value instanceof Double) {
+            a = (Double) value;
+        } else {
+            return "";
+        }
+        DecimalFormat df = new DecimalFormat("0.00");
+        df.setRoundingMode(RoundingMode.HALF_UP);
+        try {
+            return df.format(a);
+        } catch (IllegalArgumentException e) {
+            return "";
+        }
+
     }
 
 }

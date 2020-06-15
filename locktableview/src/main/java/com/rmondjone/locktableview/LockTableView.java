@@ -407,6 +407,8 @@ public class LockTableView {
         mUnLockScrollView = (CustomHorizontalScrollView) mTableView.findViewById(R.id.unlockHeadView_ScrollView);
         //表格主视图
         mTableScrollView = (XRecyclerView) mTableView.findViewById(R.id.table_scrollView);
+        mTableScrollView.setNoMore(true);
+        mTableScrollView.setLoadingMoreEnabled(false);
         LinearLayoutManager layoutManager = new LinearLayoutManager(mContext);
         layoutManager.setOrientation(RecyclerView.VERTICAL);
         mTableScrollView.setLayoutManager(layoutManager);
