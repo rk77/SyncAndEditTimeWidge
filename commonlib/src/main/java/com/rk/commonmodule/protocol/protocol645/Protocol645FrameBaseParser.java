@@ -124,7 +124,7 @@ public class Protocol645FrameBaseParser {
                         } else {
                             return parse_XX_XXXX_YYMMDDhhmm(protocol645Frame.mData, 4);
                         }
-                    case "05060101": //（上 1 次）日冻结正向有功电能数据：正向有功总电能/正向有功费率 1 电能/.../正向有功费率 63 电能
+                   // case "05060101": //（上 1 次）日冻结正向有功电能数据：正向有功总电能/正向有功费率 1 电能/.../正向有功费率 63 电能
                     case "05060201": //（上 1 次）日冻结反向有功电能数据：反向有功总电能/反向有功费率 1 电能/.../反向有功费率 63 电能
                     case "05060301": //（上 1 次）日冻结组合无功 1（正向无功）电能数据：组合无功 1 总电能/组合无功 1 费率 1 电能/.../组合无功 1 费率 63 电能
                     case "05060401": //（上 1 次）日冻结组合无功 2（反向无功）电能数据：组合无功 2 总电能/组合无功 2 费率 1 电能/.../组合无功 2 费率 63 电能
@@ -139,8 +139,14 @@ public class Protocol645FrameBaseParser {
                     case "0400010C":
                         return parse_YYMMDDWWhhmmss(protocol645Frame.mData, 4);
                     default:
-                        return null;
+                        //return null;
 
+                }
+                switch (dataLable.toUpperCase().substring(0, 6)) {
+                    case "050600": //日冻结时间
+                        return parse_YYMMDDhhmm(protocol645Frame.mData, 4);
+                    case "050601": //日冻结正向有功电能数据
+                        return parse_N_XXXXXX_XX(protocol645Frame.mData, 4);
                 }
             case (byte) 0xD1: //07规约，读数据，从站异常应答
                 return null;
@@ -351,6 +357,24 @@ public class Protocol645FrameBaseParser {
                 .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 5]))
                 .insert(0, "-")
                 .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 6]));
+        return timeSb.toString();
+    }
+
+    private String parse_YYMMDDhhmm(byte[] data, int dataBegin) {
+        Log.i(TAG, "parse_YYMMDDhhmm, data: " + DataConvertUtils.convertByteArrayToString(data, false));
+        if (data == null || dataBegin > data.length - 1 || (dataBegin + 4) > (data.length - 1)) {
+            return null;
+        }
+        StringBuilder timeSb = new StringBuilder();
+        timeSb.insert(0, DataConvertUtils.convertByteToString(data[dataBegin]))
+                .insert(0, ":")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 1]))
+                .insert(0, " ")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 2]))
+                .insert(0, "-")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 3]))
+                .insert(0, "-")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 4]));
         return timeSb.toString();
     }
 
