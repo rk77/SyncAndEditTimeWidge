@@ -4,6 +4,7 @@ public class ProtocolConstant {
     public final static String PIID_KEY = "PIID";
     public final static String PIID_ACD_KEY = "PIID_ACD_KEY";
     public final static String OAD_KEY = "OAD";
+    public final static String OAD_ARRAY_KEY = "OAD_ARRAY_KEY";
     public final static String TIME_LABLE_KEY = "TIME_LABLE_KEY";
     public final static String DAR_KEY = "dar";
     public final static String GET_RECORD_KEY = "GET_RECORD_KEY";
@@ -40,6 +41,10 @@ public class ProtocolConstant {
                 public final static int CLASS_ID = 1;
             }
 
+            public final static class GET_REQUEST_NORMAL_LIST {
+                public final static int CLASS_ID = 2;
+            }
+
             public final static class GET_REQUEST_RECORD {
                 public final static int CLASS_ID = 3;
             }
@@ -71,6 +76,10 @@ public class ProtocolConstant {
             public final static int CLASS_ID = 133;
             public final static class GET_RESPONSE_NORMAL {
                 public final static int CLASS_ID = 1;
+            }
+
+            public final static class GET_RESPONSE_NORMAL_LIST {
+                public final static int CLASS_ID = 2;
             }
 
             public final static class GET_RESPONSE_RECORD {

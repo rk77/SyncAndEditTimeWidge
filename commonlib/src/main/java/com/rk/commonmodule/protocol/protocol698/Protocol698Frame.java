@@ -1005,12 +1005,23 @@ public class Protocol698Frame {
                         }
                     }
                     break;
+                case DOUBLE_LONG_TYPE:
+                    if (obj instanceof Integer) {
+                        this.data = new byte[1 + 4];
+                        this.data[0] = 5;
+                        int value = (int) obj;
+                        this.data[1] = (byte) ((value >> 24) & 0xFF);
+                        this.data[2] = (byte) ((value >> 16) & 0xFF);
+                        this.data[3] = (byte) ((value >> 8) & 0xFF);
+                        this.data[4] = (byte) (value & 0xFF);
+                    }
+                    break;
             }
         }
 
         public Data(byte[] frame, int begin) {
             if (frame != null && begin <= frame.length - 1) {
-                switch (frame[begin]) {
+                switch (frame[begin] & 0xFF) {
                     case 0:
                         this.type = Data_Type.NULL_TYPE;
                         this.obj = null;
@@ -1053,6 +1064,25 @@ public class Protocol698Frame {
                         }
 
                         break;
+                    case 5:
+                        this.type = Data_Type.DOUBLE_LONG_TYPE;
+                        this.data = new byte[5];
+                        this.data[0] = 5;
+                        int value1 = 0;
+                        if (begin + 4 <= frame.length - 1) {
+                            value1 = (value1 | ((frame[begin + 1] & 0xFF) << 24)) & 0xFF000000;
+                            this.data[1] = frame[begin + 1];
+                            value1 = (value1 | ((frame[begin + 2] & 0xFF) << 16)) & 0xFFFF0000;
+                            this.data[2] = frame[begin + 2];
+                            value1 = (value1 | ((frame[begin + 3] & 0xFF) << 8)) & 0xFFFFFF00;
+                            this.data[3] = frame[begin + 3];
+                            value1 = (value1 | (frame[begin + 4] & 0xFF)) & 0xFFFFFFFF;
+                            this.data[4] = frame[begin + 4];
+                        } else {
+                            this.data = null;
+                        }
+                        this.obj = value1;
+                        break;
                     case 6:
                         this.type = Data_Type.DOUBLE_LONG_UNSIGNED_TYPE;
                         this.data = new byte[5];
@@ -1067,6 +1097,8 @@ public class Protocol698Frame {
                             this.data[3] = frame[begin + 3];
                             value = (value | (frame[begin + 4] & 0xFF)) & 0xFFFFFFFF;
                             this.data[4] = frame[begin + 4];
+                        } else {
+                            this.data = null;
                         }
                         this.obj = value;
                         break;
@@ -1081,6 +1113,8 @@ public class Protocol698Frame {
                             for (int i = 0; i < 7; i++) {
                                 this.data[i + 1] = frame[begin + 1 + i];
                             }
+                        } else {
+                            this.data = null;
                         }
                         break;
                 }
@@ -1145,6 +1179,103 @@ public class Protocol698Frame {
                         }
                     }
 
+                }
+            }
+        }
+    }
+
+    public enum Get_Result_Type {
+        DAR_TYPE, DATA_TYPE,
+    }
+    public static class Get_Result {
+        public Get_Result_Type type;
+        public Object object;
+        public byte[] data;
+
+        public Get_Result(Get_Result_Type type, Object object) {
+            this.type = type;
+            this.object = object;
+            switch (type) {
+                case DAR_TYPE:
+                    data = new byte[2];
+                    data[0] = 0;
+                    data[1] = (byte) ((int) object);
+                    break;
+                case DATA_TYPE:
+                    if (object instanceof Data) {
+                        Data data1 = (Data) object;
+                        if (data1 != null && data1.data != null) {
+                            data = new byte[1 + data1.data.length];
+                            data[0] = (byte) 1;
+                            for (int i = 1; i < data.length; i++) {
+                                data[1] = data1.data[i - 1];
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+
+        public Get_Result(byte[] frame, int begin) {
+            if (frame != null && begin <= frame.length - 1) {
+                switch (frame[begin] & 0xFF) {
+                    case 0:
+                        this.type = Get_Result_Type.DAR_TYPE;
+                        if (begin + 1 <= frame.length - 1) {
+                            this.object = (int) frame[begin + 1];
+                            data = new byte[2];
+                            data[0] = frame[begin];
+                            data[1] = frame[begin + 1];
+                        }
+                        break;
+                    case 1:
+                        this.type = Get_Result_Type.DATA_TYPE;
+                        Data dat1 = new Data(frame, begin + 1);
+                        if (dat1 != null && dat1.data != null) {
+                            this.object = dat1;
+                            data = new byte[1 + dat1.data.length];
+                            data[0] = frame[begin];
+                            for (int i = 1; i < data.length; i++) {
+                                data[i] = dat1.data[i - 1];
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+
+    }
+
+    public static class A_ResultNormal {
+        public OAD oad;
+        public Get_Result getResult;
+        public byte[] data;
+
+        public A_ResultNormal(OAD oad, Get_Result get_result) {
+            this.oad = oad;
+            this.getResult = get_result;
+
+            if (oad != null && oad.data != null && get_result != null && get_result.data != null) {
+                this.data = new byte[oad.data.length + get_result.data.length];
+                System.arraycopy(oad.data, 0, this.data, 0, oad.data.length);
+                System.arraycopy(get_result.data, 0, this.data, oad.data.length, get_result.data.length);
+            }
+        }
+
+        public A_ResultNormal(byte[] frame, int begin) {
+            if (frame != null && begin + 3 <= frame.length - 1) {
+                this.oad = new OAD(DataConvertUtils.getSubByteArray(frame, begin, begin + 3));
+
+                this.getResult = new Get_Result(frame, begin + 4);
+                if (this.getResult.data == null) {
+                    this.getResult = null;
+                    return;
+                }
+
+                if (oad != null && oad.data != null && getResult != null && getResult.data != null) {
+                    this.data = new byte[oad.data.length + getResult.data.length];
+                    System.arraycopy(oad.data, 0, this.data, 0, oad.data.length);
+                    System.arraycopy(getResult.data, 0, this.data, oad.data.length, getResult.data.length);
                 }
             }
         }

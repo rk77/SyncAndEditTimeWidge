@@ -12,6 +12,7 @@ import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DAR_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DATA_UNIT_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DATA_VERIFY_INFO_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.GET_RECORD_KEY;
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.OAD_ARRAY_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.OAD_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.RCSD_KEY;
 
@@ -118,6 +119,59 @@ public enum Protocol698 {
                                 }
                             } else {
                                 return null;
+                            }
+                        } else {
+                            return null;
+                        }
+
+                        if (map != null && map.containsKey(ProtocolConstant.TIME_LABLE_KEY)) {
+                            Protocol698Frame.TimeTag timeTag = (Protocol698Frame.TimeTag) map.get(ProtocolConstant.TIME_LABLE_KEY);
+                            if (timeTag != null && timeTag.data != null) {
+                                for (int i = 0; i < timeTag.data.length; i++) {
+                                    byteArray.add(timeTag.data[i]);
+                                }
+                            } else {
+                                byteArray.add((byte) 0x00);
+                            }
+
+                        } else {
+                            byteArray.add((byte)0x00);
+                        }
+                        bytes = new byte[byteArray.size()];
+                        for (int i = 0; i < bytes.length; i++) {
+                            bytes[i] = byteArray.get(i);
+                        }
+                        return bytes;
+                    case ProtocolConstant.CLIENT_APDU.GET_REQUEST.GET_REQUEST_NORMAL_LIST.CLASS_ID:
+                        byteArray.add((byte) ProtocolConstant.CLIENT_APDU.GET_REQUEST.GET_REQUEST_NORMAL_LIST.CLASS_ID);
+                        if (map != null && map.containsKey(ProtocolConstant.PIID_KEY)) {
+                            Protocol698Frame.PIID piid = (Protocol698Frame.PIID) map.get(ProtocolConstant.PIID_KEY);
+                            if (piid != null) {
+                                byteArray.add(piid.data);
+                            } else {
+                                byteArray.add((byte)0x00); // set default priority and service number
+                            }
+
+                        } else {
+                            byteArray.add((byte)0x00); // set default priority and service number
+                        }
+
+                        if (map != null && map.containsKey(OAD_ARRAY_KEY) && map.get(OAD_ARRAY_KEY) != null) {
+                            ArrayList<Protocol698Frame.OAD> oadArrayList = (ArrayList<Protocol698Frame.OAD>) map.get(OAD_ARRAY_KEY);
+                            if (oadArrayList.size() > 0) {
+                                byteArray.add((byte)(oadArrayList.size()));
+                            } else {
+                                return null;
+                            }
+                            for (int i = 0; i < oadArrayList.size(); i++) {
+                                Protocol698Frame.OAD oad = oadArrayList.get(i);
+                                if (oad != null && oad.data != null) {
+                                    for (int j = 0; j < oad.data.length; j++) {
+                                        byteArray.add(oad.data[j]);
+                                    }
+                                } else {
+                                    return null;
+                                }
                             }
                         } else {
                             return null;
@@ -604,6 +658,34 @@ public enum Protocol698 {
                             return null;
                         }
                         break;
+                    case ProtocolConstant.SERVER_APDU.GET_RESPONSE.GET_RESPONSE_NORMAL_LIST.CLASS_ID:
+                        if (apduFrame.length < 3) {
+                            return null;
+                        }
+                        map.put(ProtocolConstant.PIID_ACD_KEY, new Protocol698Frame.PIID_ACD(apduFrame[2]));
+                        if (3 > apduFrame.length - 1) {
+                            return null;
+                        }
+
+                        int length = apduFrame[3];
+                        ArrayList<Protocol698Frame.A_ResultNormal> a_resultNormalList = new ArrayList<>();
+                        int i1 = 0;
+                        int beginPos1 = 4;
+                        for (i1 = 0; i1 < length; i1++) {
+                            Protocol698Frame.A_ResultNormal a_resultNormal = new Protocol698Frame.A_ResultNormal(apduFrame, beginPos1);
+                            if (a_resultNormal.data == null) {
+                                break;
+                            }
+                            a_resultNormalList.add(a_resultNormal);
+                            beginPos1 = beginPos1 + a_resultNormal.data.length;
+                        }
+
+                        if (i1 < length) {
+                            a_resultNormalList.clear();
+                            return null;
+                        }
+                        map.put("value", a_resultNormalList);
+                        return map;
                     case ProtocolConstant.SERVER_APDU.GET_RESPONSE.GET_RESPONSE_RECORD.CLASS_ID:
                         if (apduFrame.length < 3) {
                             return null;
@@ -744,6 +826,28 @@ public enum Protocol698 {
         value = value & 0xFFFFFFFF;
         Log.i(TAG, "parse_DoubleLongUnsigned, value: " + value);
         return value * Math.pow(10, divisor * 1);
+    }
+
+    public static void parseData(Protocol698Frame.Data data) {
+        if (data != null && data.data != null) {
+            Log.i(TAG, "parseData, data type: " + data.type);
+            switch (data.type) {
+                case DOUBLE_LONG_TYPE:
+                    Log.i(TAG, "parseData, data: " + (int)data.obj);
+                    break;
+                case ARRAY_TYPE:
+                    ArrayList<Protocol698Frame.Data> dataArrayList = (ArrayList<Protocol698Frame.Data>) data.obj;
+                    if (dataArrayList != null && dataArrayList.size() > 0) {
+                        Log.i(TAG, "parseData, array size: " + dataArrayList.size());
+                        for (int i = 0; i < dataArrayList.size(); i++) {
+                            parseData(dataArrayList.get(i));
+                        }
+                    }
+                    break;
+            }
+            return;
+        }
+        Log.i(TAG, "parseData, data is null");
     }
 
 }
