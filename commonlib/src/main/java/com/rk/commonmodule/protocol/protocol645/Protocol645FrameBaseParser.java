@@ -124,6 +124,15 @@ public class Protocol645FrameBaseParser {
                         } else {
                             return parse_XX_XXXX_YYMMDDhhmm(protocol645Frame.mData, 4);
                         }
+                    case "0280000E": //火线电流(扩展)
+                    case "02800001": //零线电流
+                    case "02020100": //A 相电流
+                    case "02020200": //B 相电流
+                    case "02020300": //C 相电流
+                        return parseXXX_XXX(protocol645Frame.mData, 4);
+                    case "03300D00": //开表盖总次数
+                        return parseXXXXXX(protocol645Frame.mData, 4);
+
                    // case "05060101": //（上 1 次）日冻结正向有功电能数据：正向有功总电能/正向有功费率 1 电能/.../正向有功费率 63 电能
                     case "05060201": //（上 1 次）日冻结反向有功电能数据：反向有功总电能/反向有功费率 1 电能/.../反向有功费率 63 电能
                     case "05060301": //（上 1 次）日冻结组合无功 1（正向无功）电能数据：组合无功 1 总电能/组合无功 1 费率 1 电能/.../组合无功 1 费率 63 电能
@@ -147,6 +156,14 @@ public class Protocol645FrameBaseParser {
                         return parse_YYMMDDhhmm(protocol645Frame.mData, 4);
                     case "050601": //日冻结正向有功电能数据
                         return parse_N_XXXXXX_XX(protocol645Frame.mData, 4);
+                    case "03300D":
+                        String beginTime = parse_YYMMDDhhmmss(protocol645Frame.mData, 4);
+                        String endTime = parse_YYMMDDhhmmss(protocol645Frame.mData, 10);
+                        String positivePower = parseXXXXXX_XX(protocol645Frame.mData, 16);
+                        String negPower = parseXXXXXX_XX(protocol645Frame.mData, 20);
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(beginTime).append("|").append(endTime).append("|").append(positivePower).append("|").append(negPower);
+                        return sb.toString();
                 }
             case (byte) 0xD1: //07规约，读数据，从站异常应答
                 return null;
@@ -256,6 +273,37 @@ public class Protocol645FrameBaseParser {
             if (i == 1) {
                 sb.insert(0, ".");
             }
+        }
+        return sb.toString();
+    }
+
+    private String parseXXX_XXX(byte[] data, int dataBegin) {
+        if (data == null || data.length <= 0
+                || dataBegin > data.length - 1
+                || (dataBegin + 2) > data.length - 1) {
+            return null;
+
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 3; i++) {
+            byte byteData = data[dataBegin + i];
+            sb.insert(0, DataConvertUtils.convertByteToString(byteData));
+        }
+        sb.insert(3, ".");
+        return sb.toString();
+    }
+
+    private String parseXXXXXX(byte[] data, int dataBegin) {
+        if (data == null || data.length <= 0
+                || dataBegin > data.length - 1
+                || (dataBegin + 2) > data.length - 1) {
+            return null;
+
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 3; i++) {
+            byte byteData = data[dataBegin + i];
+            sb.insert(0, DataConvertUtils.convertByteToString(byteData));
         }
         return sb.toString();
     }
@@ -375,6 +423,26 @@ public class Protocol645FrameBaseParser {
                 .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 3]))
                 .insert(0, "-")
                 .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 4]));
+        return timeSb.toString();
+    }
+
+    private String parse_YYMMDDhhmmss(byte[] data, int dataBegin) {
+        Log.i(TAG, "parse_YYMMDDhhmmss, data: " + DataConvertUtils.convertByteArrayToString(data, false));
+        if (data == null || dataBegin > data.length - 1 || (dataBegin + 5) > (data.length - 1)) {
+            return null;
+        }
+        StringBuilder timeSb = new StringBuilder();
+        timeSb.insert(0, DataConvertUtils.convertByteToString(data[dataBegin]))
+                .insert(0, ":")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 1]))
+                .insert(0, ":")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 2]))
+                .insert(0, " ")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 3]))
+                .insert(0, "-")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 4]))
+                .insert(0, "-")
+                .insert(0, DataConvertUtils.convertByteToString(data[dataBegin + 5]));
         return timeSb.toString();
     }
 
