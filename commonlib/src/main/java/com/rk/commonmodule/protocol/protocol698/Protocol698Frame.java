@@ -1016,6 +1016,15 @@ public class Protocol698Frame {
                         this.data[4] = (byte) (value & 0xFF);
                     }
                     break;
+                case LONG_UNSIGNED_TYPE:
+                    if (obj instanceof Integer) {
+                        this.data = new byte[1 + 2];
+                        this.data[0] = 18;
+                        int value = (int) obj;
+                        this.data[1] = (byte) ((value >> 8) & 0xFF);
+                        this.data[2] = (byte) (value & 0xFF);
+                    }
+                    break;
             }
         }
 
@@ -1101,6 +1110,21 @@ public class Protocol698Frame {
                             this.data = null;
                         }
                         this.obj = value;
+                        break;
+                    case 18:
+                        this.type = Data_Type.LONG_UNSIGNED_TYPE;
+                        this.data = new byte[3];
+                        this.data[0] = 18;
+                        int long_unsigned_value = 0;
+                        if (begin + 2 <= frame.length - 1) {
+                            long_unsigned_value = (long_unsigned_value | ((frame[begin + 1] & 0xFF) << 8)) & 0xFF00;
+                            this.data[1] = frame[begin + 1];
+                            long_unsigned_value = (long_unsigned_value | (frame[begin + 2] & 0xFF)) & 0xFFFF;
+                            this.data[2] = frame[begin + 2];
+                        } else {
+                            this.data = null;
+                        }
+                        this.obj = long_unsigned_value;
                         break;
                     case 28:
                         this.type = Data_Type.DATE_TIME_S_TYPE;

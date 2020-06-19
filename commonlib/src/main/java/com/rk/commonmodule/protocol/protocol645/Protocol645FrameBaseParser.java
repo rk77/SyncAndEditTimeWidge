@@ -130,6 +130,8 @@ public class Protocol645FrameBaseParser {
                     case "02020200": //B 相电流
                     case "02020300": //C 相电流
                         return parseXXX_XXX(protocol645Frame.mData, 4);
+                    case "0202FF00": //电流数据块
+                        return parseN_XXX_XXX(protocol645Frame.mData, 4);
                     case "03300D00": //开表盖总次数
                         return parseXXXXXX(protocol645Frame.mData, 4);
 
@@ -290,6 +292,27 @@ public class Protocol645FrameBaseParser {
             sb.insert(0, DataConvertUtils.convertByteToString(byteData));
         }
         sb.insert(3, ".");
+        return sb.toString();
+    }
+
+    private String parseN_XXX_XXX(byte[] data, int dataBegin) {
+        if (data == null || data.length <= 0
+                || dataBegin > data.length - 1
+                || (dataBegin + 2) > data.length - 1) {
+            return null;
+
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 3; i++) {
+            String value = parseXXX_XXX(data, dataBegin + i * 3);
+            if (value == null) {
+                value = "";
+            }
+            sb.append(value);
+            if (i != 2) {
+                sb.append("|");
+            }
+        }
         return sb.toString();
     }
 

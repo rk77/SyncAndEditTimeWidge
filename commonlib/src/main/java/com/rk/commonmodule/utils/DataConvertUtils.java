@@ -160,6 +160,18 @@ public class DataConvertUtils {
         return (df.format((float)a/b));
     }
 
+    public static String StringReserveBit(String a, int reserveBit) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("0.");
+        int b = 1;
+        for (int i = 0; i < reserveBit; i++) {
+            sb.append("0");
+            b = b * 10;
+        }
+        DecimalFormat df=new DecimalFormat(sb.toString());
+        return df.format(Float.parseFloat(a) / b);
+    }
+
     //String or Double conver to String（0.00）
     public static String format2(Object value) {
         Double a = 0.0;

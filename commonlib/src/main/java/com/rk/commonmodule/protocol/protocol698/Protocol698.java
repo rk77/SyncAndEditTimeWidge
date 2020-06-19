@@ -668,6 +668,7 @@ public enum Protocol698 {
                         }
 
                         int length = apduFrame[3];
+                        Log.i(TAG, "parseApdu, GET_RESPONSE_NORMAL_LIST, length: " + length);
                         ArrayList<Protocol698Frame.A_ResultNormal> a_resultNormalList = new ArrayList<>();
                         int i1 = 0;
                         int beginPos1 = 4;
@@ -682,6 +683,7 @@ public enum Protocol698 {
 
                         if (i1 < length) {
                             a_resultNormalList.clear();
+                            Log.i(TAG, "parse error 1");
                             return null;
                         }
                         map.put("value", a_resultNormalList);
@@ -828,26 +830,38 @@ public enum Protocol698 {
         return value * Math.pow(10, divisor * 1);
     }
 
-    public static void parseData(Protocol698Frame.Data data) {
+    public static String parseData(Protocol698Frame.Data data) {
+        String value = null;
         if (data != null && data.data != null) {
             Log.i(TAG, "parseData, data type: " + data.type);
             switch (data.type) {
                 case DOUBLE_LONG_TYPE:
                     Log.i(TAG, "parseData, data: " + (int)data.obj);
+                    value = String.valueOf((int)data.obj);
                     break;
                 case ARRAY_TYPE:
                     ArrayList<Protocol698Frame.Data> dataArrayList = (ArrayList<Protocol698Frame.Data>) data.obj;
                     if (dataArrayList != null && dataArrayList.size() > 0) {
                         Log.i(TAG, "parseData, array size: " + dataArrayList.size());
+                        StringBuilder sb = new StringBuilder();
                         for (int i = 0; i < dataArrayList.size(); i++) {
-                            parseData(dataArrayList.get(i));
+                            sb.append(parseData(dataArrayList.get(i)));
+                            if (i < dataArrayList.size() - 1) {
+                                sb.append("|");
+                            }
                         }
+                        value = sb.toString();
                     }
                     break;
+                case LONG_UNSIGNED_TYPE:
+                    Log.i(TAG, "parseData, data: " + (int)data.obj);
+                    value = String.valueOf((int)data.obj);
+                    break;
             }
-            return;
+
         }
-        Log.i(TAG, "parseData, data is null");
+        Log.i(TAG, "parseData, value: " + value);
+        return value;
     }
 
 }
