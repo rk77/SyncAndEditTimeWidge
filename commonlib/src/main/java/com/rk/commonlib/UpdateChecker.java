@@ -201,6 +201,7 @@ public class UpdateChecker {
                 handler.sendMessage(message1);
             }
         } catch (Exception e) {
+            Log.i(TAG, "sendPost, error: " + e.getMessage());
             Message msg = new Message();
             msg.what = MyAppVersion.NETFAILED;
             handler.sendMessage(msg);
@@ -377,10 +378,11 @@ public class UpdateChecker {
             Uri uri;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {//7.0 android and more bigger
                 uri = FileProvider.getUriForFile(mContext,
-                        mContext.getApplicationContext().getPackageName() + ".providertopscomm", new File(filePath));
+                        mContext.getApplicationContext().getPackageName() + ".providerrk", new File(filePath));
             }else{
                 uri = Uri.fromFile(new File(filePath));
             }
+            Log.i(TAG, "installApp, uri: " + uri);
             i.setDataAndType(uri, "application/vnd.android.package-archive");
             i.addCategory("android.intent.category.DEFAULT");
             mContext.grantUriPermission (mContext.getPackageName (),uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);

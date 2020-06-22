@@ -21,6 +21,9 @@ public class UpdateUtils {
             public void handleMessage(Message msg) {
                 int what = msg.what;
                 Log.i(TAG, "checkUpdate, handleMessage, what: " + what);
+                if (msg.obj != null && msg.obj instanceof String) {
+                    Log.i(TAG, "checkUpdate, handleMessage, msg obj: " + msg.obj);
+                }
                 switch (what){
                     case NEW_VERSION://url
                         if (mUpdateChecker != null) {

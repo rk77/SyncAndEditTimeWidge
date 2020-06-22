@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">commonLib</string>
+    <string name="rk_file">rk_file</string>
+    <string name="no_soft_find">sorry, on file!</string>
 </resources>
