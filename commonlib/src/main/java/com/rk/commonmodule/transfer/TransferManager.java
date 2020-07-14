@@ -277,8 +277,19 @@ public class TransferManager {
         return Looper.getMainLooper().getThread() == Thread.currentThread();
     }
 
-    public void receive() {
-        mStatus = STATUS.BYZY;
+    public byte[] receive() {
+        if (isMainThread()) {
+            throw new SecurityException();
+        }
+        byte[] recvDatas = null;
+        if (mStatus == STATUS.IDLE) {
+            mStatus = STATUS.BYZY;
+            recvDatas = mChannel.channelReceive();
+            mStatus = STATUS.IDLE;
+        } else {
+            Log.i(TAG, "receive, not send, because of channel buzy");
+        }
+        return recvDatas;
     }
 
     public void setChannelParams() {
