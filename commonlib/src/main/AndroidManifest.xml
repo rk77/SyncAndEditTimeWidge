@@ -31,6 +31,14 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name="com.rk.commonlib.service.SoundPlayerService"
+            >
+            <intent-filter>
+                <action android:name="android.intent.service.sound_player"/>
+            </intent-filter>
+        </service>
+
         <provider
             android:name=".files.RkFileProvider"
             android:authorities="${applicationId}.providerrk"
