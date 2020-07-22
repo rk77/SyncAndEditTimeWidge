@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (mBoundService != null) {
-                    mBoundService.play(SoundPlayerService.SOUND_TYPE.FAIL);
+                    mBoundService.play(R.raw.wait_for_analysis);
                 }
             }
         });

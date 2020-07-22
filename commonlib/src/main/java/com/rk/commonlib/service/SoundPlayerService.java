@@ -10,6 +10,7 @@ import android.util.Log;
 
 import com.rk.commonlib.R;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +24,8 @@ public class SoundPlayerService extends Service {
     private SoundPool mSoundPool;
     private Map<Integer, Integer> mSoundMap;
     private final IBinder mBinder = new LocalBinder();
+
+    ArrayList<Integer> mSoundIds = new ArrayList<>();
 
     public class LocalBinder extends Binder {
         public SoundPlayerService getService() {
@@ -44,6 +47,8 @@ public class SoundPlayerService extends Service {
         mSoundMap = new HashMap<Integer, Integer>();
         mSoundMap.put(0, mSoundPool.load(this, R.raw.read_success, 1));
         mSoundMap.put(1, mSoundPool.load(this, R.raw.read_fail, 1));
+        mSoundIds.add(R.raw.read_success);
+        mSoundIds.add(R.raw.read_fail);
     }
 
     @Override
@@ -63,6 +68,7 @@ public class SoundPlayerService extends Service {
             mSoundMap.clear();
             mSoundMap = null;
         }
+        mSoundIds.clear();
 
     }
 
@@ -85,5 +91,22 @@ public class SoundPlayerService extends Service {
             }
         }
 
+    }
+
+    private int load(int soundId) {
+        Log.i(TAG, "load, sound id: " + soundId);
+        if (mSoundIds.contains(soundId)) {
+            Log.i(TAG, "load, contain sound id: " + soundId);
+            return mSoundIds.indexOf(soundId);
+        }
+        mSoundMap.put(mSoundMap.size(), mSoundPool.load(this, soundId, 1));
+        mSoundIds.add(soundId);
+        return (mSoundMap.size() - 1);
+    }
+
+    public void play(int soundId) {
+        int index = load(soundId);
+        Log.i(TAG, "play, index: " + index);
+        mSoundPool.play(mSoundMap.get(index), 1, 1, 0, 0, 1);
     }
 }
