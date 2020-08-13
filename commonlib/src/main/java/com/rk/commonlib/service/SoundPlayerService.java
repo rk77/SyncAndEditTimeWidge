@@ -25,6 +25,17 @@ public class SoundPlayerService extends Service {
     private Map<Integer, Integer> mSoundMap;
     private final IBinder mBinder = new LocalBinder();
 
+    private SoundPool.OnLoadCompleteListener mLoadListener = new SoundPool.OnLoadCompleteListener() {
+        @Override
+        public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
+            Log.i(TAG, "onLoadComplete, sampleId: " + sampleId + ", status: " + status);
+            if (mSoundPool != null && mSoundMap != null) {
+                mSoundPool.play(mSoundMap.get(sampleId - 1), 1, 1, 0, 0, 1);
+            }
+            mSoundPool.setOnLoadCompleteListener(null);
+        }
+    };
+
     ArrayList<Integer> mSoundIds = new ArrayList<>();
 
     public class LocalBinder extends Binder {
@@ -61,6 +72,7 @@ public class SoundPlayerService extends Service {
     public void onDestroy() {
         Log.i(TAG, "onDestroy");
         if (mSoundPool != null) {
+            mSoundPool.setOnLoadCompleteListener(null);
             mSoundPool.release();
             mSoundPool = null;
         }
@@ -93,20 +105,16 @@ public class SoundPlayerService extends Service {
 
     }
 
-    private int load(int soundId) {
-        Log.i(TAG, "load, sound id: " + soundId);
+    public void play(int soundId) {
+
+        Log.i(TAG, "play, soundId: " + soundId);
         if (mSoundIds.contains(soundId)) {
             Log.i(TAG, "load, contain sound id: " + soundId);
-            return mSoundIds.indexOf(soundId);
+            mSoundPool.play(mSoundMap.get(mSoundIds.indexOf(soundId)), 1, 1, 0, 0, 1);
+            return;
         }
+        mSoundPool.setOnLoadCompleteListener(mLoadListener);
         mSoundMap.put(mSoundMap.size(), mSoundPool.load(this, soundId, 1));
         mSoundIds.add(soundId);
-        return (mSoundMap.size() - 1);
-    }
-
-    public void play(int soundId) {
-        int index = load(soundId);
-        Log.i(TAG, "play, index: " + index);
-        mSoundPool.play(mSoundMap.get(index), 1, 1, 0, 0, 1);
     }
 }
