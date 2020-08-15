@@ -41,7 +41,7 @@ public class RappleAnimationView extends View {
 
     private void init() {
         Log.i(TAG, "init");
-        setBackgroundColor(Color.WHITE);
+        setBackgroundColor(Color.TRANSPARENT);
         mPaint = new Paint();
         mColor = Color.BLUE;
         mStrokeWidth = 30;
@@ -68,6 +68,9 @@ public class RappleAnimationView extends View {
         int h = getHeight();
         int diameter = Math.min(getWidth(), getHeight());
         int radius = diameter / 2;
+        if (radius > diameter / 2 - mBy * mStrokeWidth) {
+            radius = diameter / 2 - mBy * mStrokeWidth;
+        }
         //mPaint.setColor(Color.argb(mAlpha, 0, 0, 255));
         //canvas.drawCircle(getWidth() / 2, getHeight() / 2,diameter / 2, mPaint);
         if (mDiff0 > 0) {
