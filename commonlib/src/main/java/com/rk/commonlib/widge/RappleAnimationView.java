@@ -16,7 +16,11 @@ public class RappleAnimationView extends View {
     private Paint mPaint;
     private int mColor;
     private int mStrokeWidth;
-    private int mDiff = 0;
+    private int mDiff0 = 0;
+    private int mDiff1 = 0;
+    private int mDiff2 = 0;
+    private int mAlpha = 255;
+    private boolean stop = true;
 
     public RappleAnimationView(Context context) {
         this(context, null);
@@ -37,12 +41,11 @@ public class RappleAnimationView extends View {
 
     private void init() {
         Log.i(TAG, "init");
-        setBackgroundColor(Color.RED);
+        setBackgroundColor(Color.WHITE);
         mPaint = new Paint();
         mColor = Color.BLUE;
-        mStrokeWidth = 10;
+        mStrokeWidth = 30;
         mPaint.setAntiAlias(true);
-        mPaint.setColor(mColor);
         mPaint.setStrokeWidth(mStrokeWidth);
         mPaint.setStyle(Paint.Style.STROKE);
     }
@@ -65,39 +68,129 @@ public class RappleAnimationView extends View {
         int h = getHeight();
         int diameter = Math.min(getWidth(), getHeight());
         int radius = diameter / 2;
+        //mPaint.setColor(Color.argb(mAlpha, 0, 0, 255));
         //canvas.drawCircle(getWidth() / 2, getHeight() / 2,diameter / 2, mPaint);
+        if (mDiff0 > 0) {
+            int alpha = 255 - (255  * mDiff0) / (mBy * mStrokeWidth);
+            if (alpha < 0) {
+                alpha = 0;
+            }
 
-        RectF rectF = new RectF(w / 2 - (radius + mDiff), h / 2 - (radius + mDiff), w / 2 + radius + mDiff, h / 2 + radius + mDiff);
-
-        canvas.drawArc(rectF, 0, 360, true, mPaint);
-
+            mPaint.setColor(Color.argb(alpha, 195, 195, 195));
+            Log.i(TAG, "onDraw, alpha: " + (255 - (255 * mDiff0) / (mBy * mStrokeWidth)) + ", mDiff: " + mDiff0);
+            RectF rectF0 = new RectF(w / 2 - (radius + mDiff0), h / 2 - (radius + mDiff0), w / 2 + radius + mDiff0, h / 2 + radius + mDiff0);
+            canvas.drawArc(rectF0, 0, 360, true, mPaint);
+        }
+        if (mDiff1 > 0) {
+            //mPaint.setColor(Color.YELLOW);
+            int alpha = 255 - (255  * mDiff1) / (mBy * mStrokeWidth);
+            if (alpha < 0) {
+                alpha = 0;
+            }
+            mPaint.setColor(Color.argb(alpha, 195, 195, 195));
+            RectF rectF1 = new RectF(w / 2 - (radius + mDiff1), h / 2 - (radius + mDiff1), w / 2 + radius + mDiff1, h / 2 + radius + mDiff1);
+            canvas.drawArc(rectF1, 0, 360, true, mPaint);
+        }
+        if (mDiff2 > 0) {
+            //mPaint.setColor(Color.BLUE);
+            int alpha = 255 - (255  * mDiff2) / (mBy * mStrokeWidth);
+            if (alpha < 0) {
+                alpha = 0;
+            }
+            mPaint.setColor(Color.argb(alpha, 195, 195, 195));
+            RectF rectF2 = new RectF(w / 2 - (radius + mDiff2), h / 2 - (radius + mDiff2), w / 2 + radius + mDiff2, h / 2 + radius + mDiff2);
+            canvas.drawArc(rectF2, 0, 360, true, mPaint);
+        }
 
     }
 
-    private boolean stop = true;
+    private int mBy = 3;
+
     public void startAnimation() {
-        if (stop) {
-            stop = false;
-        } else {
-            return;
-        }
-        while (true) {
-            Log.i(TAG, "startAnimation");
-            mDiff = mDiff + 2;
-            post(new Runnable() {
-                @Override
-                public void run() {
-                    invalidate();
+        stop = false;
+        mDiff0 = 1;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    Log.i(TAG, "startAnimation, stop: " + stop);
+                    if (stop) {
+                        break;
+                    }
+
+                    if (mDiff1 > mBy * mStrokeWidth) {
+                        mDiff1 = 0;
+                    } else if (mDiff0 >= mStrokeWidth) {
+                        mDiff1 = mDiff1 + 1;
+                    } else if (mDiff1 > 0) {
+                        mDiff1 = mDiff1 + 1;
+                    }
+
+
+
+                    if (mDiff2 > mBy * mStrokeWidth) {
+                        mDiff2 = 0;
+                    } else if (mDiff1 == mStrokeWidth) {
+                        mDiff2 = 0;
+                    } else if (mDiff1 > mStrokeWidth){
+                        mDiff2 = mDiff2 + 1;
+                    } else if (mDiff2 > 0) {
+                        mDiff2 = mDiff2 + 1;
+                    }
+
+                    if (mDiff0 >= mBy * mStrokeWidth) {
+                        mDiff0 = 0;
+                    } else if (mDiff2 == mStrokeWidth) {
+                        mDiff0 = 0;
+                    } else if (mDiff2 > mStrokeWidth) {
+                        mDiff0 = mDiff0 + 1;
+                    } else if (mDiff0 > 0) {
+                        mDiff0 = mDiff0 + 1;
+                    }
+
+                    if (mDiff0 == mStrokeWidth) {
+                        mDiff1 = 0;
+                    }
+                    if (mDiff1 == mStrokeWidth) {
+                        mDiff2 = 0;
+                    }
+                    if (mDiff2 == mStrokeWidth) {
+                        mDiff0 = 0;
+                    }
+
+                    Log.i(TAG, "startAnimation, mDiff0: " + mDiff0 + ", mDiff1: " + mDiff1 + ", mDiff2: " + mDiff2);
+
+                    //mAlpha = mAlpha - 255 / (2 * mStrokeWidth);
+
+                    post(new Runnable() {
+                        @Override
+                        public void run() {
+                            invalidate();
+                        }
+                    });
+                    try {
+                        Thread.sleep(20);
+                    } catch (Exception e) {
+
+                    }
                 }
-            });
-            if (stop) {
-                break;
             }
-        }
+        }).start();
 
     }
 
     public void stop() {
+        Log.i(TAG, "stopAnimation");
+        mDiff0 = 0;
+        mDiff1 = 0;
+        mDiff2 = 0;
         stop = true;
+        mAlpha = 255;
+        post(new Runnable() {
+            @Override
+            public void run() {
+                invalidate();
+            }
+        });
     }
 }
