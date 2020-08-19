@@ -42,35 +42,38 @@ public class BluetoothInstance {
         return InstanceHolder.INSTANCE;
     }
 
-    public void startScan(Activity activity) {
+    public boolean startScan(Activity activity) {
         if (mBluetoothAdapter == null) {
             Toast.makeText(sContext, "Not Support BLE！", Toast.LENGTH_LONG).show();
-            return;
+            return false;
         }
 
         if (!mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             activity.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-            return;
+            return false;
         }
 
         if (!isLocationOpen(sContext)) {
-            Log.i(TAG, "onClick, Build.VERSION.SDK_INT: " + Build.VERSION.SDK_INT);
+            Log.i(TAG, "startScan, Build.VERSION.SDK_INT: " + Build.VERSION.SDK_INT);
             if (Build.VERSION.SDK_INT >= 23) {
                 Intent enableLocate = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
                 activity.startActivityForResult(enableLocate, REQUEST_ENABLE_LACATION);
-                return;
+                return false;
             }
         } else {
             dynamicRequestPermission(activity);
         }
         mBluetoothAdapter.startDiscovery();
+        return true;
     }
 
-    public void stopScan(Activity activity) {
+    public boolean stopScan(Activity activity) {
         if (mBluetoothAdapter != null) {
             mBluetoothAdapter.cancelDiscovery();
+            return true;
         }
+        return false;
     }
 
     /**
@@ -82,7 +85,7 @@ public class BluetoothInstance {
         return manager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
-    private void dynamicRequestPermission(Activity activity) {
+    public static void dynamicRequestPermission(Activity activity) {
         Log.i(TAG, "dynamicRequestPermission");
         //Android6.0需要动态申请权限
         if (ContextCompat.checkSelfPermission(sContext, Manifest.permission.ACCESS_COARSE_LOCATION)
