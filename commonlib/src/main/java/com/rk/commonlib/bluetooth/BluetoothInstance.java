@@ -31,10 +31,28 @@ public class BluetoothInstance {
     public static final int REQUEST_ENABLE_LACATION = 2;
     public static final int REQUEST_ACCESS_COARSE_LOCATION = 3;
 
+    public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
+    public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
+
     private static Context sContext;
     private BluetoothAdapter mBluetoothAdapter;
     private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
+
+    private ILeScanVallback mLeScanListener;
+
+    public interface ILeScanVallback {
+        void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord);
+    }
+
+    private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+        @Override
+        public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
+            if (mLeScanListener != null) {
+                mLeScanListener.onLeScan(device, rssi, scanRecord);
+            }
+        }
+    };
 
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @Override
@@ -119,6 +137,41 @@ public class BluetoothInstance {
             return true;
         }
         return false;
+    }
+
+    public void setLeScanListener(ILeScanVallback listener) {
+        mLeScanListener = listener;
+    }
+
+    public boolean scanLeDevice(final boolean enable, Activity activity) {
+        if (enable) {
+            if (mBluetoothAdapter == null) {
+                Toast.makeText(sContext, "Not Support BLE！", Toast.LENGTH_LONG).show();
+                return false;
+            }
+
+            if (!mBluetoothAdapter.isEnabled()) {
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                activity.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+                return false;
+            }
+
+            if (!isLocationOpen(sContext)) {
+                Log.i(TAG, "startScan, Build.VERSION.SDK_INT: " + Build.VERSION.SDK_INT);
+                if (Build.VERSION.SDK_INT >= 23) {
+                    Intent enableLocate = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    activity.startActivityForResult(enableLocate, REQUEST_ENABLE_LACATION);
+                    return false;
+                }
+            } else {
+                dynamicRequestPermission(activity);
+            }
+            mBluetoothAdapter.startLeScan(mLeScanCallback);
+            return true;
+        } else {
+            mBluetoothAdapter.stopLeScan(mLeScanCallback);
+            return false;
+        }
     }
 
     /**
