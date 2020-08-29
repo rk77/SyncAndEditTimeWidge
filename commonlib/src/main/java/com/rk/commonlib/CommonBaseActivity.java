@@ -1,12 +1,17 @@
 package com.rk.commonlib;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
+import com.rk.commonlib.bluetooth.BluetoothInstance;
 import com.rk.commonlib.widge.LoadingDialog;
 
 public abstract class CommonBaseActivity extends Activity {
@@ -39,11 +44,21 @@ public abstract class CommonBaseActivity extends Activity {
 
     }
 
+    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            handleBleBroadcast(intent);
+        }
+    };
+
+    protected abstract void handleBleBroadcast(Intent intent);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(getLayoutId());
         mUiHandler = new UiHandler(Looper.getMainLooper());
+        registerReceiver(mBroadcastReceiver, makeGattUpdateIntentFilter());
         handleIntent();
         initView();
         initEvent();
@@ -72,6 +87,9 @@ public abstract class CommonBaseActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (mBroadcastReceiver != null) {
+            unregisterReceiver(mBroadcastReceiver);
+        }
         super.onDestroy();
     }
 
@@ -91,5 +109,17 @@ public abstract class CommonBaseActivity extends Activity {
             mLoadingDialog.cancel();
         }
 
+    }
+
+    private static IntentFilter makeGattUpdateIntentFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BluetoothInstance.ACTION_GATT_CONNECTED);
+        intentFilter.addAction(BluetoothInstance.ACTION_GATT_DISCONNECTED);
+        intentFilter.addAction(BluetoothInstance.ACTION_GATT_SERVICES_DISCOVERED);
+        intentFilter.addAction(BluetoothInstance.ACTION_GATT_CHARACTERISTIC_READ);
+        intentFilter.addAction(BluetoothInstance.ACTION_GATT_CHARACTERISTIC_WRITE);
+        intentFilter.addAction(BluetoothInstance.ACTION_GATT_DESCRIPTOR_READ);
+        intentFilter.addAction(BluetoothInstance.ACTION_GATT_DESCRIPTOR_WRITE);
+        return intentFilter;
     }
 }
