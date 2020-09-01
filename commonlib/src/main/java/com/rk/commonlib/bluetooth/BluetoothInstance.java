@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 
 public class BluetoothInstance {
     private static final String TAG = BluetoothInstance.class.getSimpleName();
@@ -59,9 +60,8 @@ public class BluetoothInstance {
     private BluetoothGattService mCommunicationService;
     private BluetoothGattCharacteristic mWriteCharacteristic;
     private BluetoothGattCharacteristic mNotifyCharacteristic;
-    private BluetoothGattDescriptor mCCCD;
 
-    private static final int MTU = 247;
+    private static final int MTU = 274;
     private static final long WAIT_TIMEOUT = 3000;
 
     private static Context sContext;
@@ -137,8 +137,9 @@ public class BluetoothInstance {
             super.onCharacteristicWrite(gatt, characteristic, status);
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 try {
+                    Log.i("AX", "send succ chara: " + characteristic);
                     Log.i(TAG, "onCharacteristicWrite, UUID: " + characteristic.getUuid().toString()
-                            + ", read data: " + DataConvertUtils.convertByteArrayToString(characteristic.getValue(), false));
+                            + ", write data: " + DataConvertUtils.convertByteArrayToString(characteristic.getValue(), false));
                 } catch (Exception e) {
                     Log.e(TAG, "onCharacteristicWrite, error: " + e.getMessage());
                 }
@@ -312,6 +313,7 @@ public class BluetoothInstance {
             return false;
         }
 
+
         // Previously connected device.  Try to reconnect.
         if (mBluetoothDeviceAddress != null && address.equals(mBluetoothDeviceAddress) && mBluetoothGatt != null) {
             Log.d(TAG, "connect, Trying to use an existing mBluetoothGatt for connection.");
@@ -329,13 +331,18 @@ public class BluetoothInstance {
         }
         // We want to directly connect to the device, so we are setting the autoConnect
         // parameter to false.
-        mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback);
+        /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback, BluetoothDevice.TRANSPORT_LE);
+        } else {*/
+            mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback);
+        //}
+
         Log.d(TAG, "connect, Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
         mNotifyCharacteristic = null;
         mWriteCharacteristic = null;
         mCommunicationService = null;
-        mCCCD = null;
+
         return true;
     }
 
@@ -354,6 +361,9 @@ public class BluetoothInstance {
             return;
         }
         mBluetoothGatt.close();
+        mNotifyCharacteristic = null;
+        mWriteCharacteristic = null;
+        mCommunicationService = null;
         mBluetoothGatt = null;
     }
 
@@ -424,6 +434,7 @@ public class BluetoothInstance {
             Log.i(TAG, "getServicesAndCharacteristics, service uuid: " + service.getUuid().toString());
             if (SERVICE_COMMUNICATION_UUID.equals(service.getUuid().toString())) {
                 mCommunicationService = service;
+                Log.i("AX", "mCommunicationService: " + mCommunicationService);
             }
             List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
             for (BluetoothGattCharacteristic characteristic : characteristics) {
@@ -434,30 +445,21 @@ public class BluetoothInstance {
                 } else if (CHARACTERISTIC_NOTIFY_UUID.equals(characteristic.getUuid().toString())) {
                     mNotifyCharacteristic = characteristic;
                 }
-                List<BluetoothGattDescriptor> descriptors = characteristic.getDescriptors();
-                for (BluetoothGattDescriptor descriptor : descriptors) {
-                    Log.i(TAG, "getServicesAndCharacteristics, descriptor uuid: " + descriptor.getUuid().toString());
-                    if (DESCRIPTOR_CCCD_UUID.equals(descriptor.getUuid().toString())) {
-                        mCCCD = descriptor;
-                    }
-                }
             }
-        }
-    }
-
-    public void enableNotifyDescriptor() {
-        Log.i(TAG, "enableNotifyDescriptor");
-        if (mCCCD != null && mBluetoothGatt != null) {
-            mCCCD.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            mBluetoothGatt.writeDescriptor(mCCCD);
         }
     }
 
     public void enableCharacteristicNotify() {
         Log.i(TAG, "enableCharacteristicNotify");
         if (mBluetoothGatt != null && mNotifyCharacteristic != null) {
-            mBluetoothGatt.setCharacteristicNotification(mNotifyCharacteristic, true);
-            setMtu();
+            boolean succ = mBluetoothGatt.setCharacteristicNotification(mNotifyCharacteristic, true);
+            BluetoothGattDescriptor descriptor = mNotifyCharacteristic.getDescriptor(
+                    UUID.fromString(DESCRIPTOR_CCCD_UUID));
+            if (succ) {
+                descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                mBluetoothGatt.writeDescriptor(descriptor);
+            }
+            Log.i(TAG, "enableCharacteristicNotify, succ: " + succ);
         }
     }
 
@@ -478,10 +480,10 @@ public class BluetoothInstance {
         }
         mReceivedFrame.clear();
 
-        int sendTime = frame.length / MTU + 1;
+        int sendTime = frame.length / (MTU - 3) + 1;
         for (int i = 0; i < sendTime; i++) {
-            int begin = i * MTU;
-            int end = (i + 1) * MTU - 1;
+            int begin = i * (MTU - 3);
+            int end = (i + 1) * (MTU - 3) - 1;
             if (end > frame.length - 1) {
                 end = frame.length - 1;
             }
@@ -491,6 +493,7 @@ public class BluetoothInstance {
                         + ", sub frame: " + DataConvertUtils.convertByteArrayToString(subFrame, false));
                 mWriteCharacteristic.setValue(subFrame);
                 mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
+                Log.i("AX", "send chara: " + mWriteCharacteristic);
                 synchronized (mWriteSync) {
                     try {
                         mWriteSync.wait(WAIT_TIMEOUT);

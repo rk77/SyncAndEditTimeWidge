@@ -258,7 +258,7 @@ public class Protocol698Frame {
 
             if (data != null && data.length >= 2) {
                 int length = data[0] & 0x0F;
-                if (length + 1 == data.length - 1) {
+                if (length + 1 + 1 == data.length) {
                     this.addressLength = length + 1;
                     if ((data[0] & 0x20) == 0x00) {
                         this.hasExLogicAddress = false;
@@ -267,9 +267,18 @@ public class Protocol698Frame {
                         } else {
                             this.logicAddress = 1;
                         }
+                        this.address = new byte[this.addressLength];
+                        for (int i = 0; i < address.length; i++) {
+                            this.address[i] = data[1 + i];
+                        }
 
                     } else {
                         this.hasExLogicAddress = true;
+                        this.logicAddress = data[1];
+                        this.address = new byte[this.addressLength - 1];
+                        for (int i = 0; i < address.length; i++) {
+                            this.address[i] = data[2 + i];
+                        }
                     }
 
                     switch (data[0] & 0xC0) {
