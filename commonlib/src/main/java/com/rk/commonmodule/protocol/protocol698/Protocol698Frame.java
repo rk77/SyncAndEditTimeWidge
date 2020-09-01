@@ -1,5 +1,6 @@
 package com.rk.commonmodule.protocol.protocol698;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.rk.commonmodule.utils.DataConvertUtils;
@@ -1025,6 +1026,56 @@ public class Protocol698Frame {
                         this.data[2] = (byte) (value & 0xFF);
                     }
                     break;
+                case VISIBLE_STRING_TYPE:
+                    //TODO:
+                    if (obj != null && obj instanceof String) {
+                        String s = (String) obj;
+                        this.data = new byte[2 + s.length()];
+                        this.data[0] = (byte) 10;
+                        this.data[1] = (byte) (s.length());
+                        for (int i = 0; i < s.length(); i++) {
+                            this.data[i + 2] =(byte)(s.charAt(i));
+                        }
+                    }
+                    if (obj == null || TextUtils.isEmpty((String)obj)) {
+                        this.data = new byte[6];
+                        this.data[0] = (byte) 10;
+                        this.data[1] = (byte) 4;
+                        for (int i = 0; i < 4; i++) {
+                            this.data[2 + i] = (byte)0;
+                        }
+                    }
+                    break;
+                case STRUCTURE_TYPE:
+                    //TODO:
+                    if (obj != null && obj instanceof ArrayList) {
+                        ArrayList<Data> array = (ArrayList<Data>) obj;
+                        if (array.size() > 0) {
+                            int length = 0;
+                            for (int i = 0; i < array.size(); i++) {
+                                Data item = array.get(i);
+                                if (item.data != null) {
+                                    length = length + item.data.length;
+                                }
+                            }
+                            length = length + 1 + 1;
+                            this.data = new byte[length];
+                            this.data[0] = 2;
+                            this.data[1] = (byte) array.size();
+                            int pos = 2;
+
+                            for (int i = 0; i < array.size(); i++) {
+                                Data item = array.get(i);
+                                if (item.data != null) {
+                                    for (int j = 0; j < item.data.length; j++) {
+                                        this.data[pos++] = item.data[j];
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                    break;
             }
         }
 
@@ -1071,7 +1122,41 @@ public class Protocol698Frame {
                                 }
                             }
                         }
-
+                        break;
+                    case 2:
+                        this.type = Data_Type.STRUCTURE_TYPE;
+                        ArrayList<Byte> bytes2 = new ArrayList<>();
+                        bytes2.add((byte)2);
+                        if (begin + 1 <= frame.length - 1) {
+                            int size = frame[begin + 1];
+                            bytes2.add((byte)size);
+                            if (size > 0) {
+                                ArrayList<Data> dataArrayList = new ArrayList<>(size);
+                                int pos = begin + 2;
+                                int i = 0;
+                                for (i = 0; i < size; i++) {
+                                    Data data = new Data(frame, pos);
+                                    if (data.data == null) {
+                                        break;
+                                    }
+                                    for (int j = 0; j < data.data.length; j++) {
+                                        bytes2.add(data.data[j]);
+                                    }
+                                    dataArrayList.add(data);
+                                    pos = pos + data.data.length;
+                                }
+                                if (i == size) {
+                                    this.obj = dataArrayList;
+                                    this.data = new byte[bytes2.size()];
+                                    for (int k = 0; k < bytes2.size(); k++) {
+                                        this.data[k] = bytes2.get(k);
+                                    }
+                                } else {
+                                    this.data = null;
+                                    this.obj = null;
+                                }
+                            }
+                        }
                         break;
                     case 5:
                         this.type = Data_Type.DOUBLE_LONG_TYPE;
@@ -1111,6 +1196,28 @@ public class Protocol698Frame {
                         }
                         this.obj = value;
                         break;
+                    case 10:
+                        this.type = Data_Type.VISIBLE_STRING_TYPE;
+                        if (begin + 1 <= frame.length - 1) {
+                            int size = frame[begin + 1];
+                            this.data = new byte[1 + 1 + size];
+                            this.data[0] = (byte) 10;
+                            this.data[1] = (byte) size;
+                            for (int i = 0; i < size; i++) {
+                                if (begin + 2 + i <= frame.length - 1) {
+                                    this.data[2 + i] = frame[begin + 2 + i];
+                                } else {
+                                    this.data = null;
+                                    break;
+                                }
+                            }
+                            if (this.data != null) {
+                                String s = DataConvertUtils.getByteArray2AsciiString(
+                                        DataConvertUtils.getSubByteArray(this.data, 2, this.data.length - 1));
+                                this.obj = s;
+                            }
+                        }
+                        break;
                     case 18:
                         this.type = Data_Type.LONG_UNSIGNED_TYPE;
                         this.data = new byte[3];
@@ -1145,6 +1252,7 @@ public class Protocol698Frame {
             }
         }
     }
+
 
     public static class A_RecordRow {
         public ArrayList<Data> dataArrayList;

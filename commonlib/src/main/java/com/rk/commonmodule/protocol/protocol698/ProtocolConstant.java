@@ -14,6 +14,16 @@ public class ProtocolConstant {
     public final static String A_RECORD_ROW_KEY = "A_RECORD_ROW_KEY";
     public final static String RCSD_KEY = "RCSD_KEY";
 
+    public final static String FAC_CODE_KEY = "FAC_CODE_KEY";
+    public final static String FAC_SW_VERSION_KEY = "FAC_SW_VERSION_KEY";
+    public final static String FAC_SW_VERSION_DATE_KEY = "FAC_SW_VERSION_DATE_KEY";
+    public final static String FAC_HW_VERSION_KEY = "FAC_HW_VERSION_KEY";
+    public final static String FAC_HW_VERSION_DATE_KEY = "FAC_HW_VERSION_DATE_KEY";
+    public final static String FAC_EX_INFO = "FAC_EX_INFO";
+
+
+    //厂商代码（size(4)）+ 软件版本号（size(4)）+软件版本日期（size(6)）+硬件版本号（size(4)）+硬件版本日期（size(6)）+厂商扩展信息（size(8)
+
 
 
     public final static class LINK_APDU {

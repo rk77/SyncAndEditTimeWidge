@@ -650,6 +650,10 @@ public enum Protocol698 {
                                                 //break;
                                         }
                                         break;
+                                    case 2: //structure
+                                        Protocol698Frame.Data data = new Protocol698Frame.Data(apduFrame, 8);
+                                        map.put("data", data);
+                                        return map;
                                 }
                             }
 

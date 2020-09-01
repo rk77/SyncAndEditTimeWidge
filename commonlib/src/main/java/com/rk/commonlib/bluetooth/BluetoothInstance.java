@@ -23,7 +23,13 @@ import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.rk.commonmodule.protocol.protocol698.Protocol698Frame;
+import com.rk.commonmodule.protocol.protocol698.ProtocolConstant;
+import com.rk.commonmodule.utils.DataConvertUtils;
+
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 public class BluetoothInstance {
@@ -44,13 +50,19 @@ public class BluetoothInstance {
     public final static String ACTION_GATT_DESCRIPTOR_READ = "com.rk.commonlib.bluetooth.ACTION_GATT_DESCRIPTOR_READ";
     public final static String ACTION_GATT_DESCRIPTOR_WRITE = "com.rk.commonlib.bluetooth.ACTION_GATT_DESCRIPTOR_WRITE";
 
+    public final static String ACTION_GATT_MTU_WRITE = "com.rk.commonlib.bluetooth.ACTION_GATT_MTU_WRITE";
+
     private final static String SERVICE_COMMUNICATION_UUID = "6e400001-b5a3-f393-e0a9-e50e24dc4179";
     private final static String CHARACTERISTIC_WRITE_UUID = "6e400002-b5a3-f393-e0a9-e50e24dc4179";
     private final static String CHARACTERISTIC_NOTIFY_UUID = "6e400003-b5a3-f393-e0a9-e50e24dc4179";
-    private final static String DESCRIPTOR_UUID = "00002902-0000-1000-8000-00805f9b34fb";
+    private final static String DESCRIPTOR_CCCD_UUID = "00002902-0000-1000-8000-00805f9b34fb";
     private BluetoothGattService mCommunicationService;
     private BluetoothGattCharacteristic mWriteCharacteristic;
     private BluetoothGattCharacteristic mNotifyCharacteristic;
+    private BluetoothGattDescriptor mCCCD;
+
+    private static final int MTU = 247;
+    private static final long WAIT_TIMEOUT = 3000;
 
     private static Context sContext;
     private BluetoothAdapter mBluetoothAdapter;
@@ -90,6 +102,8 @@ public class BluetoothInstance {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Log.i(TAG, "onServicesDiscovered");
                 broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
+                //getServicesAndCharacteristics();
+
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
             }
@@ -103,11 +117,36 @@ public class BluetoothInstance {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             Log.i(TAG, "onCharacteristicChanged");
+            byte[] recvFrame = characteristic.getValue();
+            Log.i(TAG, "onCharacteristicChanged, recvFrame: " + DataConvertUtils.convertByteArrayToString(recvFrame, false));
+            if (mReceivedFrame != null && recvFrame != null && recvFrame.length > 0) {
+                for (int i = 0; i < recvFrame.length; i++) {
+                    mReceivedFrame.add(recvFrame[i]);
+                }
+            }
+
+            if (isReceivedDone(mReceivedFrame)) {
+                synchronized (mReadSync) {
+                    mReadSync.notify();
+                }
+            }
         }
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicWrite(gatt, characteristic, status);
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                try {
+                    Log.i(TAG, "onCharacteristicWrite, UUID: " + characteristic.getUuid().toString()
+                            + ", read data: " + DataConvertUtils.convertByteArrayToString(characteristic.getValue(), false));
+                } catch (Exception e) {
+                    Log.e(TAG, "onCharacteristicWrite, error: " + e.getMessage());
+                }
+                synchronized (mWriteSync) {
+                    mWriteSync.notify();
+                }
+
+            }
         }
 
         @Override
@@ -117,7 +156,18 @@ public class BluetoothInstance {
 
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-            super.onDescriptorWrite(gatt, descriptor, status);
+            Log.i(TAG, "onDescriptorWrite");
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                broadcastUpdate(ACTION_GATT_DESCRIPTOR_WRITE, descriptor);
+            }
+        }
+
+        @Override
+        public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+            Log.i(TAG, "onMtuChanged, mtu: " + mtu + ", set successfully: " + (status == BluetoothGatt.GATT_SUCCESS));
+            if (mCommunicationService != null) {
+                broadcastUpdate(ACTION_GATT_MTU_WRITE);
+            }
         }
 
         private void broadcastUpdate(final String action) {
@@ -138,6 +188,7 @@ public class BluetoothInstance {
 
         private void broadcastUpdate(final String action, final BluetoothGattDescriptor descriptor) {
             final Intent intent = new Intent(action);
+            intent.putExtra("descriptor", descriptor.getValue());
             if (sContext != null) {
                 sContext.sendBroadcast(intent);
             }
@@ -281,6 +332,10 @@ public class BluetoothInstance {
         mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback);
         Log.d(TAG, "connect, Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
+        mNotifyCharacteristic = null;
+        mWriteCharacteristic = null;
+        mCommunicationService = null;
+        mCCCD = null;
         return true;
     }
 
@@ -382,9 +437,246 @@ public class BluetoothInstance {
                 List<BluetoothGattDescriptor> descriptors = characteristic.getDescriptors();
                 for (BluetoothGattDescriptor descriptor : descriptors) {
                     Log.i(TAG, "getServicesAndCharacteristics, descriptor uuid: " + descriptor.getUuid().toString());
+                    if (DESCRIPTOR_CCCD_UUID.equals(descriptor.getUuid().toString())) {
+                        mCCCD = descriptor;
+                    }
                 }
             }
         }
+    }
+
+    public void enableNotifyDescriptor() {
+        Log.i(TAG, "enableNotifyDescriptor");
+        if (mCCCD != null && mBluetoothGatt != null) {
+            mCCCD.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            mBluetoothGatt.writeDescriptor(mCCCD);
+        }
+    }
+
+    public void enableCharacteristicNotify() {
+        Log.i(TAG, "enableCharacteristicNotify");
+        if (mBluetoothGatt != null && mNotifyCharacteristic != null) {
+            mBluetoothGatt.setCharacteristicNotification(mNotifyCharacteristic, true);
+            setMtu();
+        }
+    }
+
+    public void setMtu() {
+        Log.i(TAG, "setMtu");
+        mBluetoothGatt.requestMtu(MTU);
+    }
+
+    private Object mWriteSync = new Object();
+    private Object mReadSync = new Object();
+
+    private ArrayList<Byte> mReceivedFrame = new ArrayList<>();
+
+    public synchronized byte[] sendAndReceiveSync(byte[] frame) {
+        Log.i(TAG, "sendAndReceiveSync, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
+        if (frame == null) {
+            return null;
+        }
+        mReceivedFrame.clear();
+
+        int sendTime = frame.length / MTU + 1;
+        for (int i = 0; i < sendTime; i++) {
+            int begin = i * MTU;
+            int end = (i + 1) * MTU - 1;
+            if (end > frame.length - 1) {
+                end = frame.length - 1;
+            }
+            if (mWriteCharacteristic != null && mBluetoothGatt != null) {
+                byte[] subFrame = DataConvertUtils.getSubByteArray(frame, begin, end);
+                Log.i(TAG, "sendAndReceiveSync, total: " + frame.length + ", begin: " + begin + ", end: " + end
+                        + ", sub frame: " + DataConvertUtils.convertByteArrayToString(subFrame, false));
+                mWriteCharacteristic.setValue(subFrame);
+                mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
+                synchronized (mWriteSync) {
+                    try {
+                        mWriteSync.wait(WAIT_TIMEOUT);
+                    } catch (Exception e) {
+                        Log.e(TAG, "sendAndReceiveSync, wait for writing error: " + e.getMessage());
+                    }
+                }
+            }
+        }
+        Log.i(TAG, "sendAndReceiveSync, send done.");
+
+        // wait for finishing receiving message
+        synchronized (mReadSync) {
+            try {
+                mReadSync.wait(WAIT_TIMEOUT);
+            } catch (Exception e) {
+                Log.e(TAG, "sendAndReceiveSync, wait for reading error: " + e.getMessage());
+            }
+        }
+        Log.i(TAG, "sendAndReceiveSync, receive done.");
+        byte[] recvFrame = null;
+        if (mReceivedFrame != null && mReceivedFrame.size() > 0) {
+            recvFrame = new byte[mReceivedFrame.size()];
+            for (int i = 0; i < recvFrame.length; i++) {
+                recvFrame[i] = mReceivedFrame.get(i);
+            }
+        }
+        return recvFrame;
+
+    }
+
+    private boolean isReceivedDone(ArrayList<Byte> frame) {
+        if (frame != null && frame.size() > 0) {
+            byte[] tmpFrame = new byte[frame.size()];
+            for (int i = 0; i < tmpFrame.length; i++) {
+                tmpFrame[i] = frame.get(i);
+            }
+            return verify698Frame(tmpFrame);
+        }
+        return false;
+    }
+
+    public boolean verify698Frame(byte[] frame) {
+        int beginPos;
+        if (frame == null || frame.length < 12) {
+            return false;
+        }
+
+        for (beginPos = 0; beginPos < frame.length; beginPos++) {
+            if (frame[beginPos] == 0x68) {
+                break;
+            }
+        }
+        if (beginPos == frame.length) {
+            return false;
+        }
+
+        if (beginPos + 3 >= (frame.length - 1)) {
+            return false;
+        }
+
+        int lengthPos0, lengthPos1;
+        lengthPos0 = beginPos + 1;
+        lengthPos1 = lengthPos0 + 1;
+
+        byte[] lengthData = new byte[2];
+        lengthData[0] = frame[lengthPos0];
+        lengthData[1] = frame[lengthPos1];
+        int frameLength = 0;
+
+        Protocol698Frame.Length_Area length_area = new Protocol698Frame.Length_Area(lengthData);
+
+        switch (length_area.frame_unit) {
+            case BYTE_UNIT:
+                frameLength = length_area.length;
+                break;
+            case KBYTE_UNIT:
+                frameLength = length_area.length * 1024;
+                break;
+        }
+        Log.i(TAG, "verify698Frame, frame length: " + frameLength);
+        if (frameLength == 0) {
+            return false;
+        }
+
+        int ctrlAreaPos = lengthPos1 + 1;
+
+        if (ctrlAreaPos + 1 >= (frame.length - 1)) {
+            return false;
+        }
+
+        int addressAreaBeginPos = ctrlAreaPos + 1;
+
+        int addrLength = (frame[addressAreaBeginPos] & 0x0F) + 1;
+
+        Log.i(TAG, "verify698Frame, serve address length: " + addrLength + ", address begin position: " + addressAreaBeginPos);
+
+        if ((addressAreaBeginPos + addrLength + 1) >= (frame.length - 1)) {
+            return false;
+        }
+        int addressAreaEndPos = addressAreaBeginPos + addrLength + 1;
+
+        if ((addressAreaEndPos + 1 + 1) >= (frame.length - 1)) {
+            return false;
+        }
+
+        int mHCsPos0 = addressAreaEndPos + 1;
+        int mHCsPos1 = addressAreaEndPos + 2;
+
+        byte[] hCs = new byte[2];
+        hCs[0] = frame[mHCsPos0];
+        hCs[1] = frame[mHCsPos1];
+
+        boolean verifyHCs = verifyCs(ProtocolConstant.INIT_FCS, DataConvertUtils.getSubByteArray(frame, lengthPos0, addressAreaEndPos), hCs);
+        if (!verifyHCs) {
+            return false;
+        }
+
+        if (mHCsPos1 + 1 >= frame.length - 1) {
+            return false;
+        }
+
+        int mApduBegin = mHCsPos1 + 1;
+
+        int mApduEnd = beginPos + frameLength - 1 - 1;
+
+        if (mApduEnd < mApduBegin) {
+            return false;
+        }
+
+        if (mApduEnd + 1 + 1 >= frame.length - 1) {
+            return false;
+        }
+        int mFCsPos0 = mApduEnd + 1;
+        int mFCsPos1 = mApduEnd + 2;
+
+        byte[] fCs = new byte[2];
+        fCs[0] = frame[mFCsPos0];
+        fCs[1] = frame[mFCsPos1];
+
+        boolean verifyFCs = verifyCs(ProtocolConstant.INIT_FCS, DataConvertUtils.getSubByteArray(frame, lengthPos0, mApduEnd), fCs);
+        if (!verifyFCs) {
+            return false;
+        }
+
+        if (mFCsPos1 + 1 > frame.length - 1) {
+            return false;
+        }
+
+        int mEndPos = mFCsPos1 + 1;
+
+        if (frame[mEndPos] != 0x16) {
+            return false;
+        }
+        Log.i(TAG, "verify698Frame, verfiy OK.");
+        return true;
+
+    }
+
+    public boolean verifyCs(int initCs, byte[] data, byte[] cs) {
+        Log.i(TAG, "verifyCs, data: " + DataConvertUtils.convertByteArrayToString(data, false)
+                + ", verified cs: " + DataConvertUtils.convertByteArrayToString(cs, false));
+        if (data != null) {
+            for (int i = 0; i < data.length; i++) {
+                initCs = (((initCs & 0xFFFF) >> 8) ^ ProtocolConstant.FCS_TAB[((initCs & 0xFFFF) ^ data[i]) & 0xFF]) & 0xFFFF;
+            }
+            initCs = initCs ^ 0xFFFF;
+            if (cs != null) {
+                if (cs.length == 2) {
+                    byte cs0 = (byte) (initCs & 0xFF);
+                    byte cs1 = (byte) ((initCs >> 8) & 0xFF);
+                    Log.i(TAG, "verifyCs, cs0: " + DataConvertUtils.convertByteToString(cs0)
+                            + ", cs1: " + DataConvertUtils.convertByteToString(cs1));
+                    if (cs0 == cs[0] && cs1 == cs[1]) {
+                        return true;
+                    }
+                } else {
+                    return false;
+                }
+
+            } else {
+                return false;
+            }
+
+        }
+        return false;
     }
 
 

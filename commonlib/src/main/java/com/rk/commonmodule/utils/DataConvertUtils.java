@@ -3,6 +3,7 @@ package com.rk.commonmodule.utils;
 import android.util.Log;
 
 import java.math.RoundingMode;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
@@ -190,6 +191,24 @@ public class DataConvertUtils {
             return "";
         }
 
+    }
+
+    public static String getByteArray2AsciiString(byte[] data){
+        String asciiString = "";
+        if (data != null && data.length > 0) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < data.length; i++) {
+                if (data[i] == (byte) 0) {
+                    sb.append("");
+                } else {
+                    char c = (char) data[i];
+                    sb.append(c);
+                }
+            }
+            return sb.toString();
+        } else {
+            return asciiString;
+        }
     }
 
 }

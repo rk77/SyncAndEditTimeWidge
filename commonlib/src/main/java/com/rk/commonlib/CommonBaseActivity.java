@@ -120,6 +120,7 @@ public abstract class CommonBaseActivity extends Activity {
         intentFilter.addAction(BluetoothInstance.ACTION_GATT_CHARACTERISTIC_WRITE);
         intentFilter.addAction(BluetoothInstance.ACTION_GATT_DESCRIPTOR_READ);
         intentFilter.addAction(BluetoothInstance.ACTION_GATT_DESCRIPTOR_WRITE);
+        intentFilter.addAction(BluetoothInstance.ACTION_GATT_MTU_WRITE);
         return intentFilter;
     }
 }
