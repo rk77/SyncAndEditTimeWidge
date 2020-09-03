@@ -113,6 +113,41 @@ public class Protocol698Frame {
 
     }
 
+    public static class OMD {
+        public byte[] OI;
+        public byte methodId;
+        public byte operationMode;
+        public byte[] data;
+
+        public OMD(byte[] data) {
+            if (data != null && data.length >= 4) {
+                this.data = data;
+                this.OI = new byte[2];
+                for (int i = 0; i < 2; i++) {
+                    this.OI[i] = data[i];
+                }
+                this.methodId = data[2];
+                this.operationMode = data[3];
+            }
+        }
+
+        public OMD(byte[] IO, byte methodId, byte operationMode) {
+            if (IO != null && IO.length == 2) {
+                this.OI = IO;
+                this.methodId = methodId;
+                this.operationMode = operationMode;
+
+                this.data = new byte[4];
+
+                for (int i = 0; i < 2; i++) {
+                    this.data[i] = IO[i];
+                }
+                this.data[2] = methodId;
+                this.data[3] = operationMode;
+            }
+        }
+    }
+
     public class TimeTag {
         public byte[] data;
         public DateTimeS sendTime;

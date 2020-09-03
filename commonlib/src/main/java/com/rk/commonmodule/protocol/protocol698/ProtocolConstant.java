@@ -4,6 +4,8 @@ public class ProtocolConstant {
     public final static String PIID_KEY = "PIID";
     public final static String PIID_ACD_KEY = "PIID_ACD_KEY";
     public final static String OAD_KEY = "OAD";
+    public final static String OMD_KEY = "OMD";
+    public final static String OMD_PARAM_KEY = "omd_param";
     public final static String OAD_ARRAY_KEY = "OAD_ARRAY_KEY";
     public final static String TIME_LABLE_KEY = "TIME_LABLE_KEY";
     public final static String DAR_KEY = "dar";
@@ -63,6 +65,17 @@ public class ProtocolConstant {
         public final static class SET_REQUEST {
             public final static int CLASS_ID = 6;
         }
+
+        //操作请求
+        public final static class ACTION_REQUEST {
+            public final static int CLASS_ID = 7;
+            public final static class ACTION_REQUEST_NORMAL {
+                public final static int CLASS_ID = 1;
+            }
+            public final static class ACTION_REQUEST_NORMAL_LIST {
+                public final static int CLASS_ID = 2;
+            }
+        }
     }
 
     public final static class SERVER_APDU {
@@ -100,6 +113,15 @@ public class ProtocolConstant {
         //设置响应
         public final static class SET_RESPONSE {
             public final static int CLASS_ID = 134;
+        }
+
+        //操作响应
+        public final static class ACTION_RESPONSE {
+            public final static int CLASS_ID = 135;
+            //操作一个对象方法的响应
+            public final static class ACTION_RESPONSE_NORMAL {
+                public final static int CLASS_ID = 1;
+            }
         }
     }
 

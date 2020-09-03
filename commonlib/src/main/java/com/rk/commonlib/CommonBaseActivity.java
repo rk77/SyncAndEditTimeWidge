@@ -7,9 +7,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.rk.commonlib.bluetooth.BluetoothInstance;
 import com.rk.commonlib.widge.LoadingDialog;
@@ -19,11 +21,11 @@ public abstract class CommonBaseActivity extends Activity {
 
     private LoadingDialog mLoadingDialog;
 
-    private UiHandler mUiHandler;
+    public UiHandler mUiHandler;
 
-    private class UiHandler extends Handler {
+    protected static final int SHOW_OR_DISMISS_LOADING_MSG = 0;
 
-        public static final int SHOW_OR_DISMISS_LOADING_MSG = 0;
+    protected class UiHandler extends Handler {
 
         public UiHandler(Looper looper) {
             super(looper);
@@ -37,12 +39,26 @@ public abstract class CommonBaseActivity extends Activity {
                     showLoading(isShow);
                     break;
                 default:
+                    handleUiMessage(msg);
                     break;
             }
 
         }
 
     }
+
+    protected class NonUiHandler extends Handler {
+        public NonUiHandler(Looper looper) {
+            super(looper);
+        }
+
+        public void handleMessage(Message msg) {
+            handleNonUiMessage(msg);
+        }
+    }
+
+    public NonUiHandler mNonUiHandler;
+    private HandlerThread mHandlerThread;
 
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -58,6 +74,9 @@ public abstract class CommonBaseActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(getLayoutId());
         mUiHandler = new UiHandler(Looper.getMainLooper());
+        mHandlerThread = new HandlerThread("Non_UI_Thread");
+        mHandlerThread.start();
+        mNonUiHandler = new NonUiHandler(mHandlerThread.getLooper());
         registerReceiver(mBroadcastReceiver, makeGattUpdateIntentFilter());
         handleIntent();
         initView();
@@ -68,6 +87,8 @@ public abstract class CommonBaseActivity extends Activity {
     protected abstract void handleIntent();
     protected abstract void initView();
     protected abstract void initEvent();
+    protected abstract void handleNonUiMessage(Message msg);
+    protected abstract void handleUiMessage(Message msg);
 
     @Override
     protected void onStart() {
@@ -82,6 +103,7 @@ public abstract class CommonBaseActivity extends Activity {
             mLoadingDialog.cancel();
         }
         mUiHandler.removeCallbacksAndMessages(null);
+        mNonUiHandler.removeCallbacksAndMessages(null);
         super.onStop();
     }
 
@@ -90,12 +112,15 @@ public abstract class CommonBaseActivity extends Activity {
         if (mBroadcastReceiver != null) {
             unregisterReceiver(mBroadcastReceiver);
         }
+        mHandlerThread.quitSafely();
+        mNonUiHandler = null;
+        mUiHandler = null;
         super.onDestroy();
     }
 
     protected void setLoadingVisible(boolean show) {
-        mUiHandler.removeMessages(UiHandler.SHOW_OR_DISMISS_LOADING_MSG);
-        mUiHandler.sendMessage(mUiHandler.obtainMessage(UiHandler.SHOW_OR_DISMISS_LOADING_MSG, show));
+        mUiHandler.removeMessages(SHOW_OR_DISMISS_LOADING_MSG);
+        mUiHandler.sendMessage(mUiHandler.obtainMessage(SHOW_OR_DISMISS_LOADING_MSG, show));
     }
 
     private void showLoading(boolean isShow) {
@@ -109,6 +134,21 @@ public abstract class CommonBaseActivity extends Activity {
             mLoadingDialog.cancel();
         }
 
+    }
+
+    protected void showToast(Object text) {
+        if (text == null) {
+            return;
+        }
+        if (text instanceof String) {
+            Toast.makeText(this, (String)text, Toast.LENGTH_SHORT).show();
+        } else if (text instanceof Integer) {
+            try {
+                Toast.makeText(this, getResources().getText((int) text), Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Log.e(TAG, "showToast, error: " + e.getMessage());
+            }
+        }
     }
 
     private static IntentFilter makeGattUpdateIntentFilter() {

@@ -1,5 +1,6 @@
 package com.rk.commonmodule.protocol.protocol698;
 
+import android.renderscript.Element;
 import android.util.Log;
 
 import com.rk.commonmodule.utils.DataConvertUtils;
@@ -10,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DAR_KEY;
 
 public class OopProtocolHelper {
 
@@ -1358,19 +1361,96 @@ public class OopProtocolHelper {
         return frame;
     }
 
-    public String[] parseFractoryVersionFrame(byte[] frame) {
+    /**
+     *
+     * @param frame, received oop frame
+     * @return String[], String[0]: server address, String[1]: software version, String[2]: software date,
+     *                   String[3]: hardware version, String[4]: hardware date.
+     */
+    public static String[] parseFractoryVersionFrame(byte[] frame) {
         if (frame == null || frame.length <= 0) {
             return null;
         }
         boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
-        Log.i(TAG, "parseFractoryVersionFrame, apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin + ", end: " + Protocol698.PROTOCOL_698.mApduEnd);
+        Log.i(TAG, "parseFractoryVersionFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
         if (isOK) {
-            final Map value = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+            Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
                     Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
+            String[] strings = new String[5];
+            Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(
+                    DataConvertUtils.getSubByteArray(frame, Protocol698.PROTOCOL_698.mAddressAreaBeginPos, Protocol698.PROTOCOL_698.mAddressAreaEndPos - 1));
+            strings[0] = DataConvertUtils.convertByteArrayToString(serv_addr.address, false);
+            if (map != null && map.containsKey("data")) {
+                Protocol698Frame.Data data = (Protocol698Frame.Data) map.get("data");
+                ArrayList<Protocol698Frame.Data> dataArrayList = (ArrayList<Protocol698Frame.Data>) data.obj;
+                if (dataArrayList != null && dataArrayList.size() > 0) {
+                    for (int i = 0; i < dataArrayList.size(); i++) {
+                        Protocol698Frame.Data item = dataArrayList.get(i);
+                        Log.i(TAG, "parseFractoryVersionFrame, item: " + item.obj);
+                        if (i >= 1 && i <= 4) {
+                            strings[i] = (String) item.obj;
+                        }
+                    }
 
-            Log.i(TAG, "getMeterProtocol, value: " + value);
+
+                }
+            }
+            return strings;
+
         }
         return null;
     }
+
+    public static byte[] makeResetFrame() {
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        byte[] IO = new byte[]{0x43, 0x00};
+        Protocol698Frame.OMD omd = new Protocol698Frame.OMD(IO, (byte) 1, (byte) 0);
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+        Map map = new HashMap();
+        map.put(ProtocolConstant.OMD_KEY, omd);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+        Protocol698Frame.Data data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.NULL_TYPE, null);
+        map.put(ProtocolConstant.OMD_PARAM_KEY, data);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.ACTION_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.ACTION_REQUEST.ACTION_REQUEST_NORMAL.CLASS_ID, map);
+        Log.i(TAG, "makeResetFrame, ctrlArea: " + DataConvertUtils.convertByteToString(ctrlArea.data));
+        Log.i(TAG, "makeResetFrame, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "makeResetFrame, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+
+        Log.i(TAG, "makeResetFrame, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
+        return frame;
+    }
+
+    public static boolean parseResetFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return false;
+        }
+        boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        Log.i(TAG, "parseResetFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
+        if (isOK) {
+            Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+                    Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
+            if (map != null && map.containsKey(DAR_KEY)) {
+                byte dar = (byte) map.get(DAR_KEY);
+                if (dar == (byte) 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+
+
+        }
+        return false;
+    }
+
 
 }

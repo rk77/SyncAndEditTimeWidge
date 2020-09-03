@@ -14,6 +14,9 @@ import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DATA_VER
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.GET_RECORD_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.OAD_ARRAY_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.OAD_KEY;
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.OMD_KEY;
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.OMD_PARAM_KEY;
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.PIID_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.RCSD_KEY;
 
 public enum Protocol698 {
@@ -248,6 +251,71 @@ public enum Protocol698 {
             case ProtocolConstant.CLIENT_APDU.RELEASE_REQUEST.CLASS_ID:
                 break;
             case ProtocolConstant.CLIENT_APDU.SET_REQUEST.CLASS_ID:
+                break;
+            case ProtocolConstant.CLIENT_APDU.ACTION_REQUEST.CLASS_ID:
+                byteArray.add((byte) ProtocolConstant.CLIENT_APDU.ACTION_REQUEST.CLASS_ID);
+                switch (second_id) {
+                    case ProtocolConstant.CLIENT_APDU.ACTION_REQUEST.ACTION_REQUEST_NORMAL.CLASS_ID:
+                        byteArray.add((byte) ProtocolConstant.CLIENT_APDU.ACTION_REQUEST.ACTION_REQUEST_NORMAL.CLASS_ID);
+
+                        //PIID
+                        if (map != null && map.containsKey(ProtocolConstant.PIID_KEY)) {
+                            Protocol698Frame.PIID piid = (Protocol698Frame.PIID) map.get(ProtocolConstant.PIID_KEY);
+                            if (piid != null) {
+                                byteArray.add(piid.data);
+                            } else {
+                                byteArray.add((byte)0x00); // set default priority and service number
+                            }
+
+                        } else {
+                            byteArray.add((byte)0x00); // set default priority and service number
+                        }
+                        //OMD
+                        if (map != null && map.containsKey(OMD_KEY) && map.get(OMD_KEY) != null) {
+                            Protocol698Frame.OMD omd = (Protocol698Frame.OMD) map.get(OMD_KEY);
+                            if (omd != null && omd.data != null) {
+                                for (int i = 0; i < omd.data.length; i++) {
+                                    byteArray.add(omd.data[i]);
+                                }
+                            } else {
+                                return null;
+                            }
+                        } else {
+                            return null;
+                        }
+                        //Data
+                        if (map != null && map.containsKey(OMD_PARAM_KEY) && map.get(OMD_PARAM_KEY) != null) {
+                            Protocol698Frame.Data data = (Protocol698Frame.Data) map.get(OMD_PARAM_KEY);
+                            if (data != null && data.data != null) {
+                                for (int i = 0; i < data.data.length; i++) {
+                                    byteArray.add(data.data[i]);
+                                }
+                            } else {
+                                return null;
+                            }
+                        } else {
+                            return null;
+                        }
+                        //TimeTag
+                        if (map != null && map.containsKey(ProtocolConstant.TIME_LABLE_KEY)) {
+                            Protocol698Frame.TimeTag timeTag = (Protocol698Frame.TimeTag) map.get(ProtocolConstant.TIME_LABLE_KEY);
+                            if (timeTag != null && timeTag.data != null) {
+                                for (int i = 0; i < timeTag.data.length; i++) {
+                                    byteArray.add(timeTag.data[i]);
+                                }
+                            } else {
+                                byteArray.add((byte) 0x00);
+                            }
+
+                        } else {
+                            byteArray.add((byte)0x00);
+                        }
+                        bytes = new byte[byteArray.size()];
+                        for (int i = 0; i < bytes.length; i++) {
+                            bytes[i] = byteArray.get(i);
+                        }
+                        return bytes;
+                }
                 break;
             case ProtocolConstant.SECURITY_APDU.SECURITY_REQUEST.CLASS_ID:
                 byteArray.add((byte) ProtocolConstant.SECURITY_APDU.SECURITY_REQUEST.CLASS_ID);
@@ -780,6 +848,33 @@ public enum Protocol698 {
                     }
                 }
                 return map;
+            case ProtocolConstant.SERVER_APDU.ACTION_RESPONSE.CLASS_ID:
+                if (1 > apduFrame.length - 1) {
+                    return null;
+                }
+                switch (((int) apduFrame[1]) & 0xFF) {
+                    case ProtocolConstant.SERVER_APDU.ACTION_RESPONSE.ACTION_RESPONSE_NORMAL.CLASS_ID:
+                        if (apduFrame.length < 3) {
+                            return null;
+                        }
+                        map.put(ProtocolConstant.PIID_ACD_KEY, new Protocol698Frame.PIID_ACD(apduFrame[2]));
+                        if (apduFrame.length < 7) {
+                            return null;
+                        }
+                        map.put(OMD_KEY, new Protocol698Frame.OAD(DataConvertUtils.getSubByteArray(apduFrame, 3, 6)));
+                        if (apduFrame.length < 8) {
+                            return null;
+                        }
+                        map.put(DAR_KEY, apduFrame[7]);
+                        if (apduFrame.length > 8) {
+                            Protocol698Frame.Data data = new Protocol698Frame.Data(apduFrame, 8);
+                            map.put("data", data);
+                        }
+                        return map;
+                    default:
+                        break;
+                }
+                break;
             default:
                 Log.i(TAG, "parseApud, no action: " + (((int) apduFrame[0]) & 0xFF));
                 break;
