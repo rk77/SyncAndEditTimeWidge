@@ -722,6 +722,11 @@ public enum Protocol698 {
                                         Protocol698Frame.Data data = new Protocol698Frame.Data(apduFrame, 8);
                                         map.put("data", data);
                                         return map;
+                                    default:
+                                        Protocol698Frame.Data data1 = new Protocol698Frame.Data(apduFrame, 8);
+                                        map.put("data", data1);
+                                        return map;
+
                                 }
                             }
 

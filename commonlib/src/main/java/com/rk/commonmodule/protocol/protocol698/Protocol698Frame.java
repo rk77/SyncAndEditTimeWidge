@@ -1071,7 +1071,6 @@ public class Protocol698Frame {
                     }
                     break;
                 case VISIBLE_STRING_TYPE:
-                    //TODO:
                     if (obj != null && obj instanceof String) {
                         String s = (String) obj;
                         this.data = new byte[2 + s.length()];
@@ -1091,7 +1090,6 @@ public class Protocol698Frame {
                     }
                     break;
                 case STRUCTURE_TYPE:
-                    //TODO:
                     if (obj != null && obj instanceof ArrayList) {
                         ArrayList<Data> array = (ArrayList<Data>) obj;
                         if (array.size() > 0) {
@@ -1118,6 +1116,42 @@ public class Protocol698Frame {
                             }
 
                         }
+                    }
+                    break;
+                case ENUM_TYPE:
+                    if (obj instanceof Byte) {
+                        this.data = new byte[2];
+                        this.data[0] = (byte) 22;
+                        this.data[1] = (byte) obj;
+                    }
+                    break;
+                case OCTET_STRING_TYPE:
+                    if (obj != null && obj instanceof byte[]) {
+                        try {
+                            byte[] d = (byte[]) obj;
+                            int size = d.length;
+                            if (size <= 127) {
+                                this.data = new byte[1 + 1 + size];
+                                this.data[0] = (byte) 9;
+                                this.data[1] = (byte) size;
+                                for (int i = 0; i < size; i++) {
+                                    this.data[2 + i] = d[i];
+                                }
+                            } else {
+                                //TODO:
+
+                            }
+
+                        } catch (Exception e) {
+                            Log.e(TAG, "OCTET_STRING_TYPE, error: " + e.getMessage());
+                        }
+                    }
+                    break;
+                case UNSIGNED_TYPE:
+                    if (obj instanceof Byte) {
+                        this.data = new byte[2];
+                        this.data[0] = (byte) 17;
+                        this.data[1] = (byte) obj;
                     }
                     break;
             }
@@ -1240,6 +1274,28 @@ public class Protocol698Frame {
                         }
                         this.obj = value;
                         break;
+                    case 9:
+                        this.type = Data_Type.OCTET_STRING_TYPE;
+                        if (begin + 1 <= frame.length - 1) {
+                            if ((frame[begin + 1] & 0x80) == 0x00) {
+                                int size = frame[begin + 1];
+                                if (begin + 1 + size <= frame.length - 1) {
+                                    this.data = new byte[1 + 1 + size];
+                                    this.data[0] = (byte) 9;
+                                    this.data[1] = (byte) size;
+                                    byte[] o = new byte[size];
+                                    for (int i = 0; i < size; i++) {
+                                        data[2 + i] = frame[begin + 1 + 1 + i];
+                                        o[i] = frame[begin + 1 + 1 + i];
+                                    }
+                                    this.obj = o;
+                                }
+                            } else {
+                                //TODO:
+                                int lengthSize = frame[9] & 0x7F;
+                            }
+                        }
+                        break;
                     case 10:
                         this.type = Data_Type.VISIBLE_STRING_TYPE;
                         if (begin + 1 <= frame.length - 1) {
@@ -1262,10 +1318,20 @@ public class Protocol698Frame {
                             }
                         }
                         break;
+                    case 17:
+                        this.type = Data_Type.UNSIGNED_TYPE;
+                        if (begin + 1 <= frame.length - 1) {
+                            this.data = new byte[2];
+                            this.data[0] = (byte) 17;
+                            this.data[1] = frame[begin + 1];
+                            byte o = frame[begin + 1];
+                            this.obj = o;
+                        }
+                        break;
                     case 18:
                         this.type = Data_Type.LONG_UNSIGNED_TYPE;
                         this.data = new byte[3];
-                        this.data[0] = 18;
+                        this.data[0] = (byte) 18;
                         int long_unsigned_value = 0;
                         if (begin + 2 <= frame.length - 1) {
                             long_unsigned_value = (long_unsigned_value | ((frame[begin + 1] & 0xFF) << 8)) & 0xFF00;
@@ -1276,6 +1342,15 @@ public class Protocol698Frame {
                             this.data = null;
                         }
                         this.obj = long_unsigned_value;
+                        break;
+                    case 22:
+                        this.type = Data_Type.ENUM_TYPE;
+                        if (begin + 1 <= frame.length - 1) {
+                            this.data = new byte[2];
+                            this.data[0] = (byte) 22;
+                            this.data[1] = frame[begin + 1];
+                            this.obj = frame[begin + 1];
+                        }
                         break;
                     case 28:
                         this.type = Data_Type.DATE_TIME_S_TYPE;
