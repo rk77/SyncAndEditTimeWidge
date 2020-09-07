@@ -119,7 +119,7 @@ public abstract class CommonBaseFragmentActivity extends FragmentActivity {
         super.onDestroy();
     }
 
-    protected void setLoadingVisible(boolean show) {
+    public void setLoadingVisible(boolean show) {
         mUiHandler.removeMessages(SHOW_OR_DISMISS_LOADING_MSG);
         mUiHandler.sendMessage(mUiHandler.obtainMessage(SHOW_OR_DISMISS_LOADING_MSG, show));
     }

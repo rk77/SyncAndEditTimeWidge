@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DAR_KEY;
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DATA_KEY;
 
 public class OopProtocolHelper {
 
@@ -1452,6 +1453,31 @@ public class OopProtocolHelper {
         return false;
     }
 
+    public static boolean parseSetResponseNormalFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return false;
+        }
+        boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        Log.i(TAG, "parseSetResponseNormalFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
+        if (isOK) {
+            Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+                    Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
+            if (map != null && map.containsKey(DAR_KEY)) {
+                byte dar = (byte) map.get(DAR_KEY);
+                if (dar == (byte) 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+
+
+        }
+        return false;
+    }
+
     public static byte[] makeWirelessNetParamFrame() {
 
         Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
@@ -1473,6 +1499,31 @@ public class OopProtocolHelper {
         byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
 
         Log.i(TAG, "makeWirelessNetParamFrame, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
+        return frame;
+    }
+
+    public static byte[] makeSetWirelessNetParamFrame(Protocol698Frame.Data data) {
+
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        Protocol698Frame.OAD oad = new Protocol698Frame.OAD(new byte[] {(byte) 0x45, (byte) 0x00, (byte) 0x02, (byte) 0x00});
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+        Map map = new HashMap();
+        map.put(ProtocolConstant.OAD_KEY, oad);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+        map.put(ProtocolConstant.DATA_KEY, data);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.SET_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.SET_REQUEST.SET_REQUEST_NORMAL.CLASS_ID, map);
+        Log.i(TAG, "makeSetWirelessNetParamFrame, ctrlArea: " + DataConvertUtils.convertByteToString(ctrlArea.data));
+        Log.i(TAG, "makeSetWirelessNetParamFrame, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "makeSetWirelessNetParamFrame, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+
+        Log.i(TAG, "makeSetWirelessNetParamFrame, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
         return frame;
     }
 

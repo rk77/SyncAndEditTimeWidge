@@ -4,6 +4,7 @@ public class ProtocolConstant {
     public final static String PIID_KEY = "PIID";
     public final static String PIID_ACD_KEY = "PIID_ACD_KEY";
     public final static String OAD_KEY = "OAD";
+    public final static String DATA_KEY = "data";
     public final static String OMD_KEY = "OMD";
     public final static String OMD_PARAM_KEY = "omd_param";
     public final static String OAD_ARRAY_KEY = "OAD_ARRAY_KEY";
@@ -64,6 +65,17 @@ public class ProtocolConstant {
 
         public final static class SET_REQUEST {
             public final static int CLASS_ID = 6;
+            public final static class SET_REQUEST_NORMAL {
+                public final static int CLASS_ID = 1;
+            }
+
+            public final static class SET_REQUEST_NORMAL_LIST {
+                public final static int CLASS_ID = 2;
+            }
+
+            public final static class SET_THEN_GET_REQUEST_NORMAL_LIST {
+                public final static int CLASS_ID = 3;
+            }
         }
 
         //操作请求
@@ -113,6 +125,17 @@ public class ProtocolConstant {
         //设置响应
         public final static class SET_RESPONSE {
             public final static int CLASS_ID = 134;
+            public final static class SET_RESPONSE_NORMAL {
+                public final static int CLASS_ID = 1;
+            }
+
+            public final static class SET_RESPONSE_NORMAL_LIST {
+                public final static int CLASS_ID = 2;
+            }
+
+            public final static class SET_THEN_GET_RESPONSE_NORMAL_LIST {
+                public final static int CLASS_ID = 3;
+            }
         }
 
         //操作响应

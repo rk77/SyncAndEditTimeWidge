@@ -138,10 +138,8 @@ public class Protocol698Frame {
                 this.operationMode = operationMode;
 
                 this.data = new byte[4];
-
-                for (int i = 0; i < 2; i++) {
-                    this.data[i] = IO[i];
-                }
+                this.data[0] = IO[0];
+                this.data[1] = IO[1];
                 this.data[2] = methodId;
                 this.data[3] = operationMode;
             }

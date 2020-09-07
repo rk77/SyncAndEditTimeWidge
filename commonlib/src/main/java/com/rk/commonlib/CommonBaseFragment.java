@@ -1,6 +1,7 @@
 package com.rk.commonlib;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -9,6 +10,7 @@ import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -80,6 +82,11 @@ public abstract class CommonBaseFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
     public void onStop() {
         super.onStop();
         mNonUIHandler.removeCallbacksAndMessages(null);
@@ -91,4 +98,5 @@ public abstract class CommonBaseFragment extends Fragment {
         super.onDestroy();
         mHandlerThread.quitSafely();
     }
+
 }
