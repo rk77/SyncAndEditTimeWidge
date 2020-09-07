@@ -744,6 +744,8 @@ public enum Protocol698 {
                                                     map.put("array", array);
                                                     break;
                                                 default:
+                                                    Protocol698Frame.Data data = new Protocol698Frame.Data(apduFrame, 8);
+                                                    map.put(DATA_KEY, data);
                                                     Log.i(TAG, "default parse oad：" + oadString);
                                                     break;
 

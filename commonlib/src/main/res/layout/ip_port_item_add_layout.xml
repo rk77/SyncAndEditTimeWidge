@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/first_ip_and_port"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        >
+
+        <com.rk.commonlib.widge.IpEditWidge
+            android:id="@+id/ip"
+            android:layout_width="0dp"
+            android:layout_weight="4"
+            android:layout_height="wrap_content"
+            app:editNumber="4"
+            app:borderColor="#FFFF0000"
+            />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=":"
+            />
+
+        <EditText
+            android:id="@+id/port"
+            android:layout_width="0dp"
+            android:layout_weight="1.3"
+            android:layout_height="wrap_content"
+            android:maxLength="4"
+            android:background="@color/gray_bg"
+            android:padding="0dp"
+            android:textSize="16dp"
+            android:inputType="numberDecimal"
+            android:singleLine="true" />
+
+        <ImageButton
+            android:id="@+id/add"
+            android:layout_width="0dp"
+            android:layout_weight="1.5"
+            android:layout_height="18dp"
+            android:paddingLeft="12dp"
+            android:src="@android:drawable/ic_menu_add" />
+
+        <ImageButton
+            android:id="@+id/remove"
+            android:layout_width="0dp"
+            android:layout_weight="1.5"
+            android:layout_height="16dp"
+            android:paddingLeft="12dp"
+            android:src="@android:drawable/ic_menu_delete" />
+    </LinearLayout>
+
+</LinearLayout>

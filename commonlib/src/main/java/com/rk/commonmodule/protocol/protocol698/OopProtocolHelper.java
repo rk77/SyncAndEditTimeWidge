@@ -1527,6 +1527,55 @@ public class OopProtocolHelper {
         return frame;
     }
 
+    public static byte[] makeMasterNetParamForWirelessFrame() {
+
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        Protocol698Frame.OAD oad = new Protocol698Frame.OAD(new byte[] {(byte) 0x45, (byte) 0x00, (byte) 0x03, (byte) 0x00});
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+        Map map = new HashMap();
+        map.put(ProtocolConstant.OAD_KEY, oad);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.GET_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.GET_REQUEST.GET_REQUEST_NORMAL.CLASS_ID, map);
+        Log.i(TAG, "makeMasterNetParamForWirelessFrame, ctrlArea: " + DataConvertUtils.convertByteToString(ctrlArea.data));
+        Log.i(TAG, "makeMasterNetParamForWirelessFrame, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "makeMasterNetParamForWirelessFrame, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+
+        Log.i(TAG, "makeMasterNetParamForWirelessFrame, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
+        return frame;
+    }
+
+    public static byte[] makeSetMasterNetParamForWirelessFrame(Protocol698Frame.Data data) {
+
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        Protocol698Frame.OAD oad = new Protocol698Frame.OAD(new byte[] {(byte) 0x45, (byte) 0x00, (byte) 0x02, (byte) 0x00});
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+        Map map = new HashMap();
+        map.put(ProtocolConstant.OAD_KEY, oad);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+        map.put(ProtocolConstant.DATA_KEY, data);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.SET_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.SET_REQUEST.SET_REQUEST_NORMAL.CLASS_ID, map);
+        Log.i(TAG, "makeSetMasterNetParamForWirelessFrame, ctrlArea: " + DataConvertUtils.convertByteToString(ctrlArea.data));
+        Log.i(TAG, "makeSetMasterNetParamForWirelessFrame, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "makeSetMasterNetParamForWirelessFrame, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+
+        Log.i(TAG, "makeSetMasterNetParamForWirelessFrame, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
+        return frame;
+    }
+
     public final static String WORK_MODE_KEY = "work_mode";
     public final static String ONLINE_WAY_KEY = "online_way";
     public final static String LINK_WAY_KEY = "link_way";
@@ -1644,6 +1693,71 @@ public class OopProtocolHelper {
         byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
         Log.i(TAG, "makeRequestNormalFrame, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
         return frame;
+    }
+
+    public static ArrayList<String> parseMasterNetParamForWirelessFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        ArrayList<String> resultMap = new ArrayList<>();
+        boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        Log.i(TAG, "parseMasterNetParamForWirelessFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
+        if (isOK) {
+            Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+                    Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
+            if (map != null && map.containsKey(DATA_KEY)) {
+                Protocol698Frame.Data data = (Protocol698Frame.Data) map.get(DATA_KEY);
+                if (data != null && data.data != null && data.type == Protocol698Frame.Data_Type.ARRAY_TYPE) {
+                    ArrayList<Protocol698Frame.Data> dataArrayList = (ArrayList< Protocol698Frame.Data>) data.obj;
+                    if (dataArrayList == null || dataArrayList.size() <= 0) {
+                        return null;
+                    }
+                    Log.i(TAG, "parseMasterNetParamForWirelessFrame, size:" + dataArrayList.size() );
+
+                    for (int i = 0; i < dataArrayList.size(); i++) {
+                        Protocol698Frame.Data item = dataArrayList.get(i);
+                        if (item == null || item.data == null || item.type != Protocol698Frame.Data_Type.STRUCTURE_TYPE || item.obj == null) {
+                            return null;
+                        }
+
+                        ArrayList<Protocol698Frame.Data> ip_and_port = (ArrayList<Protocol698Frame.Data>) item.obj;
+
+                        if (ip_and_port == null || ip_and_port.size() < 2) {
+                            resultMap.add("");
+                            continue;
+                        }
+
+                        StringBuilder sb = new StringBuilder();
+                        Protocol698Frame.Data ip = ip_and_port.get(0);
+                        if (ip == null || ip.obj == null || ((byte[]) (ip.obj)).length != 4) {
+                            sb.append("0.0.0.0");
+                        } else {
+                            byte[] ip_items = (byte[]) ip.obj;
+                            Log.i(TAG, "parseMasterNetParamForWirelessFrame, ip_items: " + DataConvertUtils.convertByteArrayToString(ip_items, false));
+                            sb.append(String.valueOf(ip_items[0] & 0xFF)).append(".").append(String.valueOf(ip_items[1] & 0xFF)).append(".")
+                                    .append(String.valueOf(ip_items[2] & 0xFF)).append(".").append(String.valueOf(ip_items[3] & 0xFF));
+                        }
+                        sb.append(":");
+                        Protocol698Frame.Data port = ip_and_port.get(1);
+                        if (port == null || port.obj == null) {
+                            sb.append("0");
+                        } else {
+                            Log.i(TAG, "parseMasterNetParamForWirelessFrame, port: " + port.obj);
+                            sb.append(String.valueOf((int) port.obj));
+                        }
+                        resultMap.add(sb.toString());
+                    }
+                }
+                return resultMap;
+            } else {
+                Log.i(TAG, "parseMasterNetParamForWirelessFrame, return null");
+                return null;
+            }
+
+
+        }
+        return null;
+
     }
 
 

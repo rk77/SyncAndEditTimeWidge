@@ -3,4 +3,16 @@
     <declare-styleable name="XiMiClock">
         <attr name="animation" format="boolean"/>
     </declare-styleable>
+
+    <declare-styleable name="IPEditText">
+        <attr name="textLength" format="integer" />
+        <attr name="IPtextSize" format="dimension" />
+        <attr name="IPtextColor" format="color" />
+        <attr name="borderColor" format="color" />
+        <attr name="borderWidth" format="dimension" />
+        <attr name="pointColor" format="color" />
+        <attr name="pointWidth" format="dimension" />
+        <attr name="editNumber" format="integer" />
+    </declare-styleable>
+
 </resources>
