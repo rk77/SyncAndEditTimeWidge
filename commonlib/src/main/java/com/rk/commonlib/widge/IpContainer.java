@@ -155,10 +155,12 @@ public class IpContainer extends LinearLayout {
                 String ip = ipWidge.getIp();
                 String port = portWidge.getText().toString();
                 if (TextUtils.isEmpty(port)) {
-                    port = "0";
+                    //port = "0";
+                    break;
                 }
                 if (TextUtils.isEmpty(ip)) {
-                    ip = "0.0.0.0";
+                    //ip = "0.0.0.0";
+                    break;
                 }
                 StringBuilder sb = new StringBuilder();
                 sb.append(ip).append(":").append(port);
@@ -174,6 +176,7 @@ public class IpContainer extends LinearLayout {
             return;
         }
         int count = mIpEditWidgeList.size();
+        Log.i(TAG, "setAllIpAndPort, ip size: " + ips.size() + ", widge count: " + count);
         if (count > ips.size()) {
             for (int i = 0; i < count - ips.size(); i++) {
                 LinearLayout item = mIpEditWidgeList.get(mIpEditWidgeList.size() - 1);
@@ -187,12 +190,14 @@ public class IpContainer extends LinearLayout {
         }
         for (int i = 0; i < ips.size(); i++) {
             String ip_port_item = ips.get(i);
-            if (ip_port_item == null || ip_port_item.split(":") == null || ip_port_item.split(":").length == 2) {
+            if (ip_port_item == null || ip_port_item.split(":") == null || ip_port_item.split(":").length != 2) {
                 continue;
             }
 
             String ip = ip_port_item.split(":")[0];
             String port = ip_port_item.split(":")[1];
+
+            Log.i(TAG, "setAllIpAndPort, [" + i + "] ip: " + ip + ", port: " + port);
 
             LinearLayout ipAndPortWidge = mIpEditWidgeList.get(i);
             IpEditWidge ipWidge = ipAndPortWidge.findViewById(R.id.ip);

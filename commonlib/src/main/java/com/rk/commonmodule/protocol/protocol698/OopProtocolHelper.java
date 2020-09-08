@@ -1558,7 +1558,7 @@ public class OopProtocolHelper {
                 0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
         Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
 
-        Protocol698Frame.OAD oad = new Protocol698Frame.OAD(new byte[] {(byte) 0x45, (byte) 0x00, (byte) 0x02, (byte) 0x00});
+        Protocol698Frame.OAD oad = new Protocol698Frame.OAD(new byte[] {(byte) 0x45, (byte) 0x00, (byte) 0x03, (byte) 0x00});
         Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
         Map map = new HashMap();
         map.put(ProtocolConstant.OAD_KEY, oad);
