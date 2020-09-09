@@ -2,4 +2,43 @@
     <string name="app_name">commonLib</string>
     <string name="rk_file">rk_file</string>
     <string name="no_soft_find">sorry, on file!</string>
+
+    <string-array name="baut_rate">
+        <item>300</item>
+        <item>600</item>
+        <item>1200</item>
+        <item>2400</item>
+        <item>4800</item>
+        <item>7200</item>
+        <item>9600</item>
+        <item>19200</item>
+        <item>38400</item>
+        <item>57600</item>
+        <item>115200</item>
+        <item>自适应</item>
+    </string-array>
+
+    <string-array name="protocol_type">
+        <item>未知</item>
+        <item>DL/T 645-1997</item>
+        <item>DL/T 645-2007</item>
+        <item>DL/T 698.45</item>
+        <item>CJ/T 188-2004</item>
+    </string-array>
+
+    <string-array name="line_connect_type">
+        <item>未知</item>
+        <item>单相</item>
+        <item>三相三线</item>
+        <item>三相四线</item>
+    </string-array>
+
+    <string-array name="channel_type">
+        <item>交流采用</item>
+        <item>RS485-I</item>
+        <item>RS485-II</item>
+        <item>载波</item>
+        <item>无效</item>
+    </string-array>
+
 </resources>

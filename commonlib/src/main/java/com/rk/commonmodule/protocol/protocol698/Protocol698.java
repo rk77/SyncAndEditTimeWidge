@@ -201,6 +201,7 @@ public enum Protocol698 {
                         return bytes;
                     case ProtocolConstant.CLIENT_APDU.GET_REQUEST.GET_REQUEST_RECORD.CLASS_ID:
                         byteArray.add((byte) ProtocolConstant.CLIENT_APDU.GET_REQUEST.GET_REQUEST_RECORD.CLASS_ID);
+                        //PIID
                         if (map != null && map.containsKey(ProtocolConstant.PIID_KEY)) {
                             Protocol698Frame.PIID piid = (Protocol698Frame.PIID) map.get(ProtocolConstant.PIID_KEY);
                             if (piid != null) {
@@ -212,6 +213,7 @@ public enum Protocol698 {
                             byteArray.add((byte)0x00); // set default priority and service number
                         }
 
+                        //GetRecord
                         if (map != null && map.containsKey(GET_RECORD_KEY) && map.get(GET_RECORD_KEY) != null) {
                             Protocol698Frame.GetRecord getRecord = (Protocol698Frame.GetRecord) map.get(GET_RECORD_KEY);
                             if (getRecord != null && getRecord.data != null) {
@@ -225,6 +227,7 @@ public enum Protocol698 {
                             return null;
                         }
 
+                        //TimeTag
                         if (map != null && map.containsKey(ProtocolConstant.TIME_LABLE_KEY)) {
                             Protocol698Frame.TimeTag timeTag = (Protocol698Frame.TimeTag) map.get(ProtocolConstant.TIME_LABLE_KEY);
                             if (timeTag != null && timeTag.data != null) {
@@ -244,7 +247,6 @@ public enum Protocol698 {
                             bytes[i] = byteArray.get(i);
                         }
                         return bytes;
-
                 }
                 break;
             case ProtocolConstant.CLIENT_APDU.CONNECT_REQUEST.CLASS_ID:

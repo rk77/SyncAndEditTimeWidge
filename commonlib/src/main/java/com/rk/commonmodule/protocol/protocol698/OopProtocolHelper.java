@@ -1760,5 +1760,57 @@ public class OopProtocolHelper {
 
     }
 
+    public final static String CONFIG_SERIAL_NUM_KEY = "CONFIG_SERIAL_NUM";
+    public final static String COMMU_ADDRESS_KEY = "COMMU_ADDRESS";
+    public final static String USER_TYPE_KEY = "USER_TYPE";
+    public final static String COMMU_PASSWORD_KEY = "COMMU_PASSWORD";
+    public final static String RATE_CNT_KEY = "RATE_CNT";
+    public final static String RATE_VOLTAGE_KEY = "RATE_VOLTAGE";
+    public final static String RATE_CURRENT_KEY = "RATE_CURRENT";
+    public final static String COLLECTOR_ADDRESS_KEY = "COLLECTOR_ADDRESS";
+    public final static String ASSET_NUM_KEY = "ASSET_NUM";
+
+    public final static String PORT_TYPE_KEY = "PORT_TYPE";
+    public final static String BAUD_RATE_KEY = "BAUD_RATE";
+    public final static String PROTOCOL_TYPE_KEY = "PROTOCOL_TYPE";
+    public final static String LINE_CONNECT_TYPE_KEY = "LINE_CONNECT_TYPE";
+
+    public static byte[] makeGetArchiveFrame(int begin, int end, int interval) {
+        if (end < 0 || begin < 0 || end < begin || interval < 0) {
+            return null;
+        }
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+
+        Protocol698Frame.OAD oad = new Protocol698Frame.OAD(new byte[]{(byte) 0x60, (byte) 0x00, (byte) 0x02, (byte) 0x00});
+
+        Protocol698Frame.OAD selector_oad = new Protocol698Frame.OAD(new byte[]{(byte) 0x60, (byte) 0x01, (byte) 0x02, (byte) 0x00});
+        Protocol698Frame.Data beginData = new Protocol698Frame.Data(Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE, begin);
+        Protocol698Frame.Data endData = new Protocol698Frame.Data(Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE, end);
+        Protocol698Frame.Data intervalData = new Protocol698Frame.Data(Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE, interval);
+        Protocol698Frame.Selector2 selector2 = new Protocol698Frame.Selector2(selector_oad, beginData, endData,intervalData);
+
+        Protocol698Frame.RSD rsd = new Protocol698Frame.RSD(2, selector2);
+
+        Protocol698Frame.RCSD rcsd = new Protocol698Frame.RCSD(null);
+
+        Protocol698Frame.GetRecord getRecord = new Protocol698Frame.GetRecord(oad, rsd, rcsd);
+        Map map = new HashMap();
+        map.put(ProtocolConstant.GET_RECORD_KEY, getRecord);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.GET_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.GET_REQUEST.GET_REQUEST_RECORD.CLASS_ID, map);
+        Log.i(TAG, "makeGetArchiveFrame, ctrlArea: " + DataConvertUtils.convertByteToString(ctrlArea.data));
+        Log.i(TAG, "makeGetArchiveFrame, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "makeGetArchiveFrame, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+        Log.i(TAG, "makeGetArchiveFrame, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
+        return frame;
+    }
+
 
 }

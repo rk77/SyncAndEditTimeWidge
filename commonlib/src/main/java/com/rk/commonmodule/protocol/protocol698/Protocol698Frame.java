@@ -544,6 +544,7 @@ public class Protocol698Frame {
 
         public RSD(int type, Object obj) {
             this.type = type;
+            this.obj = obj;
             switch (type) {
                 case 0:
                     data = new byte[1];
@@ -552,6 +553,11 @@ public class Protocol698Frame {
                 case 1:
                     break;
                 case 2:
+                    if (obj != null && obj instanceof Selector2) {
+                        this.data = new byte[1 + ((Selector2) obj).data.length];
+                        this.data[0] = (byte) (type & 0xFF);
+                        System.arraycopy(((Selector2) obj).data, 0, this.data, 1, ((Selector2) obj).data.length);
+                    }
                     break;
                 case 3:
                     break;
@@ -579,16 +585,21 @@ public class Protocol698Frame {
 
         }
 
-        public RSD(byte[] data) {
-            this.data = data;
+        public RSD(byte[] data, int begin) {
             if (data != null && data.length > 0) {
-                switch (data[0] & 0xFF) {
+                switch (data[begin] & 0xFF) {
                     case 0:
                         this.type = 0;
                         break;
                     case 1:
                         break;
                     case 2:
+                        this.type = 2;
+                        Selector2 selector2 = new Selector2(data, begin + 1);
+                        if (selector2.data != null && selector2.data.length > 0) {
+                            this.obj = selector2;
+
+                        }
                         break;
                     case 3:
                         break;
@@ -604,14 +615,72 @@ public class Protocol698Frame {
                         break;
                     case 9:
                         this.type = 9;
-                        if (data.length >= 2) {
-                            this.obj = new Selector9(data[1]);
+                        if (begin + 1 + 1 <= data.length - 1) {
+                            this.obj = new Selector9(data, begin + 1);
+                            this.data = new byte[2];
+                            this.data[0] = 9;
+                            this.data[1] = data[begin + 1];
                         }
                         break;
                     case 10:
                         break;
                 }
             }
+        }
+    }
+
+    public static class Selector2 {
+        public OAD oad;
+        public Data begin;
+        public Data end;
+        public Data interval;
+        public byte[] data;
+        public Selector2(OAD oad, Data begin, Data end, Data interval) {
+            this.oad = oad;
+            this.begin = begin;
+            this.end = end;
+            this.interval = interval;
+
+            if (oad  != null && oad.data != null && begin != null && begin.data != null
+                    && end != null && end.data != null && interval != null && interval.data != null) {
+                this.data = new byte[oad.data.length + begin.data.length + end.data.length + interval.data.length];
+                System.arraycopy(oad.data, 0, this.data, 0, oad.data.length);
+                System.arraycopy(begin.data, 0, this.data, oad.data.length, begin.data.length);
+                System.arraycopy(end.data, 0, this.data, oad.data.length + begin.data.length, end.data.length);
+                System.arraycopy(interval.data, 0, this.data, oad.data.length + begin.data.length + end.data.length, interval.data.length);
+            }
+
+        }
+
+        public Selector2(byte[] data, int begin) {
+            if (data == null || data.length <= 0) {
+                return;
+            }
+            if (begin + 3 > data.length - 1) {
+                return;
+            }
+            this.oad = new OAD(DataConvertUtils.getSubByteArray(data, begin, begin + 3));
+
+            Data beginData = new Data(data, begin + 4);
+            if (beginData.data == null || beginData.data.length <= 0) {
+                return;
+            }
+            this.begin = beginData;
+
+            Data endData = new Data(data, begin + 4 + beginData.data.length);
+            if (endData.data == null || endData.data.length <= 0) {
+                return;
+            }
+            this.end = endData;
+
+            Data intervalData = new Data(data, begin + 4 + beginData.data.length + end.data.length);
+            if (intervalData.data == null || intervalData.data.length <= 0) {
+                return;
+            }
+            this.interval = intervalData;
+
+            this.data = new byte[4 + beginData.data.length + endData.data.length + intervalData.data.length];
+            this.data = DataConvertUtils.getSubByteArray(data, begin, begin + this.data.length - 1);
         }
     }
 
@@ -624,9 +693,9 @@ public class Protocol698Frame {
 
         }
 
-        public Selector9(byte data) {
-            this.data = data;
-            this.last = data & 0xFF;
+        public Selector9(byte[] data, int begin) {
+            this.data = data[begin];
+            this.last = data[begin] & 0xFF;
         }
     }
 
@@ -651,30 +720,32 @@ public class Protocol698Frame {
                     OAD oadItem = oadArrayList.get(i);
                     if (oadItem != null && oadItem.data != null && oadItem.data.length > 0) {
                         for (int j = 0; j < oadItem.data.length; j++) {
-                            bytes.add(oad.data[i]);
+                            bytes.add(oad.data[j]);
                         }
                     }
                 }
             }
 
-            data = new byte[bytes.size()];
+            this.data = new byte[bytes.size()];
             for (int i = 0; i < data.length; i++) {
-                data[i] = bytes.get(i);
+                this.data[i] = bytes.get(i);
             }
         }
 
-        public ROAD(byte[] data) {
-            this.data = data;
+        public ROAD(byte[] data, int begin) {
+            //this.data = data;
 
-            if (data != null && data.length >= 5) {
-                this.oad = new OAD(DataConvertUtils.getSubByteArray(data, 0, 3));
-                int road_length = data[4];
+            if (data != null && begin + 3 <= data.length - 1) {
+                this.oad = new OAD(DataConvertUtils.getSubByteArray(data, begin, begin + 3));
+                int road_length = data[begin + 4];
 
                 if (road_length > 0) {
                     for (int i = 1; i <= road_length - 1; i++) {
-                        this.oadArrayList.add(new OAD(DataConvertUtils.getSubByteArray(data, i * 4 + 1, i * 4 + 4)));
+                        this.oadArrayList.add(new OAD(DataConvertUtils.getSubByteArray(data, i * 4 + 1 + begin, i * 4 + 4 + begin)));
                     }
                 }
+                this.data = new byte[4 + 1 + 4 * road_length];
+                this.data = DataConvertUtils.getSubByteArray(data, begin, begin + this.data.length - 1);
             }
         }
     }
@@ -689,7 +760,7 @@ public class Protocol698Frame {
             this.object = object;
             switch (type) {
                 case 0:
-                    if (object instanceof OAD) {
+                    if (object != null && object instanceof OAD) {
                         OAD src = (OAD) object;
                         if (src.data != null && src.data.length > 0) {
                             this.data = new byte[1 + src.data.length];
@@ -721,19 +792,31 @@ public class Protocol698Frame {
             }
         }
 
-        public CSD(byte[] data) {
+        public CSD(byte[] data, int begin) {
             if (data != null && data.length > 0) {
-                this.data = data;
-                this.type = data[0];
+                //this.data = data;
+                this.type = data[begin];
                 switch (this.type) {
                     case 0:
                         if (data.length >= 5) {
-                            this.object = new OAD(DataConvertUtils.getSubByteArray(data, 1, 4));
+                            this.object = new OAD(DataConvertUtils.getSubByteArray(data, begin, begin + 3));
+                            if (((OAD) this.object).data == null) {
+                                return;
+                            }
+                            this.data = new byte[1 + ((OAD) this.object).data.length];
+                            this.data = DataConvertUtils.getSubByteArray(data, begin, begin + this.data.length - 1);
                         }
                         break;
                     case 1:
                         if (data.length >= 5) {
-                            this.object = new ROAD(DataConvertUtils.getSubByteArray(data, 1, data.length - 1));
+                            //this.object = new ROAD(DataConvertUtils.getSubByteArray(data, 1, data.length - 1));
+                            ROAD road = new ROAD(data, begin + 1);
+                            if (road.data == null || road.data.length <= 0) {
+                                return;
+                            }
+                            this.object = road;
+                            this.data = new byte[1 + road.data.length];
+                            this.data = DataConvertUtils.getSubByteArray(data, begin, begin + this.data.length -1);
                         }
                         break;
                 }
@@ -764,6 +847,9 @@ public class Protocol698Frame {
                 for (int i = 0; i < this.data.length; i++) {
                     this.data[i] = bytes.get(i);
                 }
+            } else {
+                this.data = new byte[1];
+                this.data[0] = 0;
             }
 
         }
@@ -773,25 +859,27 @@ public class Protocol698Frame {
                 if (frame[begin] == 0) {
                     this.data = new byte[1];
                     this.data[0] = 0;
+                    this.length = 0;
                 } else {
                     int cnt = frame[begin];
                     int pos = begin + 1;
-                    int i = 0;
-                    for (i = 0; i < cnt; i++) {
-                        int csdLength = calcCsdLength(frame, pos);
-                        if (csdLength > 0) {
-                            CSD csd = new CSD(DataConvertUtils.getSubByteArray(frame, pos, pos + csdLength - 1));
+                    for (int i = 0; i < cnt; i++) {
+                        //int csdLength = calcCsdLength(frame, pos);
+                        CSD csd = new CSD(frame, pos);
+                        if (csd.data != null && csd.data.length > 0) {
                             this.csdArrayList.add(csd);
-                            pos = pos + csdLength;
+                            pos = csd.data.length + pos;
                         } else {
                             break;
                         }
                     }
-                    if (i == cnt) {
+                    if (csdArrayList.size() == cnt) {
                         this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
+                        this.length = cnt;
                     } else {
                         this.data = null;
                         this.csdArrayList.clear();
+                        this.length = 0;
                     }
 
                 }
@@ -1427,9 +1515,73 @@ public class Protocol698Frame {
                             this.data[j] = bytes.get(j);
                         }
                     }
-
                 }
             }
+        }
+    }
+
+    public static class SequenceOfA_RecordRow {
+        public int length = 0;
+        public ArrayList<A_RecordRow> a_recordRows;
+        public byte[] data;
+
+        public SequenceOfA_RecordRow(ArrayList<A_RecordRow> a_recordRows) {
+            if (a_recordRows != null && a_recordRows.size() > 0) {
+                this.length = a_recordRows.size();
+                this.a_recordRows = a_recordRows;
+
+                ArrayList<Byte> byteArrayList = new ArrayList<>();
+                int i = 0;
+                for (i = 0; i < a_recordRows.size(); i++) {
+                    A_RecordRow item = a_recordRows.get(i);
+                    if (item == null || item.data == null || item.data.length <= 0) {
+                        break;
+                    }
+                    for (int j = 0; j < item.data.length; j++) {
+                        byteArrayList.add(item.data[j]);
+                    }
+                }
+                if (i == a_recordRows.size()) {
+                    data = new byte[byteArrayList.size()];
+                    for (int k = 0; k < data.length; k++) {
+                        data[k] = byteArrayList.get(k);
+                    }
+
+                } else {
+                    this.length = 0;
+                    this.a_recordRows = null;
+                    data = null;
+                }
+
+            }
+        }
+
+        public SequenceOfA_RecordRow(byte[] frame, int begin, int columeSize) {
+            if (frame == null || begin > frame.length - 1) {
+                return;
+            }
+            int size = frame[begin];
+            this.a_recordRows = new ArrayList<>();
+            int pos = begin + 1;
+            int i = 0;
+            for (i = 0; i < size; i++) {
+                A_RecordRow a_recordRow = new A_RecordRow(frame, pos, columeSize);
+                if (a_recordRow.data == null || a_recordRow.data.length <= 0) {
+                    break;
+                }
+                this.a_recordRows.add(a_recordRow);
+                pos = pos + a_recordRow.data.length;
+            }
+
+            if (i == size) {
+                this.length = size;
+                this.data = DataConvertUtils.getSubByteArray(frame, begin + 1, pos - 1);
+            } else {
+                this.length = 0;
+                this.a_recordRows = null;
+                this.data = null;
+            }
+
         }
     }
 
