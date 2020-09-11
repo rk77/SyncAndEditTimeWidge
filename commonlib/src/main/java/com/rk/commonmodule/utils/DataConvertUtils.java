@@ -161,6 +161,16 @@ public class DataConvertUtils {
         return (df.format((float)a/b));
     }
 
+    public static String InterDivToString(int a, int b, int reserveBit) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("0").append(".");
+        for (int i = 0; i < reserveBit; i++) {
+            sb.append("0");
+        }
+        DecimalFormat df=new DecimalFormat(sb.toString());
+        return (df.format((float)a/b));
+    }
+
     public static String StringReserveBit(String a, int reserveBit) {
         StringBuilder sb = new StringBuilder();
         sb.append("0.");

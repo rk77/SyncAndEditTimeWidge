@@ -1,243 +1,423 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/round_corner_bg"
+    android:orientation="vertical"
+    android:clipChildren="true"
     >
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        >
+        android:background="@drawable/top_round_corner_blue_bg"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:orientation="horizontal">
+
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="配置序号:"
+            android:layout_weight="4.5"
             android:minWidth="8dp"
             android:singleLine="true"
-            />
+            android:text="配置序号:"
+            android:textColor="@android:color/white"
+            android:textSize="16dp" />
+
         <EditText
             android:id="@+id/config_serial_num"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="2"
             android:minWidth="8dp"
             android:singleLine="true"
-            />
+            android:background="#FF2196F3"
+            android:padding="0dp"
+            android:textColor="@android:color/white"
+            android:inputType="numberDecimal"
+            android:textSize="16dp" />
 
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        >
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="通信地址:"
+            android:layout_weight="4.5"
             android:minWidth="8dp"
             android:singleLine="true"
-            />
+            android:text="通信地址:"
+            android:textColor="@android:color/white"
+            android:textSize="16dp" />
+
         <EditText
             android:id="@+id/commu_address"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="6"
             android:minWidth="8dp"
             android:singleLine="true"
-            />
+            android:textColor="@android:color/white"
+            android:background="#FF2196F3"
+            android:padding="0dp"
+            android:digits="ABCDEFabcdef0123456789"
+            android:layout_marginRight="5dp"
+            android:textSize="16dp" />
 
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         >
-        <TextView
-            android:layout_width="wrap_content"
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="端口:"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <Spinner
-            android:id="@+id/port_type"
-            android:layout_width="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="5dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="6.5"
+                android:singleLine="true"
+                android:text="端口:"
+                android:textSize="16dp" />
+
+            <Spinner
+                android:id="@+id/port_type"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="10.5"
+                android:gravity="left"
+                android:paddingLeft="0dp"
+                android:entries="@array/channel_type" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:entries="@array/channel_type"
-            />
-        <TextView
-            android:layout_width="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="5dp"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="6.5"
+                android:gravity="left"
+                android:layout_height="wrap_content"
+                android:minWidth="8dp"
+                android:singleLine="true"
+                android:text="波特率:"
+                android:textSize="16dp" />
+
+            <Spinner
+                android:id="@+id/baud_rate"
+                android:layout_width="0dp"
+                android:layout_weight="10.5"
+                android:layout_height="wrap_content"
+                android:entries="@array/baut_rate" />
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="波特率:"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <Spinner
-            android:id="@+id/baud_rate"
-            android:layout_width="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="5dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="6.5"
+                android:gravity="left"
+                android:layout_height="wrap_content"
+                android:minWidth="8dp"
+                android:singleLine="true"
+                android:text="规约类型:"
+                android:textSize="16dp" />
+
+            <Spinner
+                android:id="@+id/protocol_type"
+                android:layout_width="0dp"
+                android:layout_weight="10.5"
+                android:layout_height="wrap_content"
+                android:entries="@array/protocol_type" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:entries="@array/baut_rate"
-            />
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="5dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="6.5"
+                android:gravity="left"
+                android:layout_height="wrap_content"
+                android:minWidth="8dp"
+                android:singleLine="true"
+                android:text="接线方式:"
+                android:textSize="16dp" />
+
+            <Spinner
+                android:id="@+id/line_connect_type"
+                android:layout_width="0dp"
+                android:layout_weight="10.5"
+                android:layout_height="wrap_content"
+                android:entries="@array/line_connect_type" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="5dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="6.5"
+                android:gravity="left"
+                android:layout_height="wrap_content"
+                android:minWidth="8dp"
+                android:singleLine="true"
+                android:text="用户类型:"
+                android:textSize="16dp" />
+
+            <EditText
+                android:id="@+id/user_type"
+                android:layout_width="0dp"
+                android:layout_weight="10.5"
+                android:layout_height="wrap_content"
+                android:background="@color/gray_bg"
+                android:minWidth="8dp"
+                android:padding="0dp"
+                android:singleLine="true"
+                android:textSize="16dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="5dp"
+            android:orientation="horizontal"
+            >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="8dp"
+                android:singleLine="true"
+                android:text="通信密码:"
+                android:textSize="16dp" />
+
+            <EditText
+                android:id="@+id/commu_password"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="@color/gray_bg"
+                android:minWidth="8dp"
+                android:padding="0dp"
+                android:singleLine="true"
+                android:textSize="16dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="5dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="8dp"
+                android:singleLine="true"
+                android:text="费率个数:"
+                android:textSize="16dp" />
+
+            <EditText
+                android:id="@+id/rate_cnt"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="@color/gray_bg"
+                android:minWidth="8dp"
+                android:padding="0dp"
+                android:singleLine="true"
+                android:textSize="16dp" />
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="5dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1.3"
+                android:layout_height="wrap_content"
+                android:minWidth="8dp"
+                android:singleLine="true"
+                android:text="额定电压(V):"
+                android:textSize="16dp" />
+
+            <EditText
+                android:id="@+id/rated_voltage"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="@color/gray_bg"
+                android:minWidth="8dp"
+                android:padding="0dp"
+                android:singleLine="true"
+                android:textSize="16dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1.3"
+                android:layout_height="wrap_content"
+                android:minWidth="8dp"
+                android:singleLine="true"
+                android:text="额定电流(A):"
+                android:textSize="16dp" />
+
+            <EditText
+                android:id="@+id/rated_current"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="@color/gray_bg"
+                android:minWidth="8dp"
+                android:padding="0dp"
+                android:singleLine="true"
+                android:textSize="16dp" />
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="5dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="5.5"
+                android:layout_height="wrap_content"
+                android:minWidth="8dp"
+                android:singleLine="true"
+                android:text="采集器地址:"
+                android:textSize="16dp" />
+
+            <EditText
+                android:id="@+id/collector_address"
+                android:layout_width="0dp"
+                android:layout_weight="7"
+                android:layout_height="wrap_content"
+                android:background="@color/gray_bg"
+                android:minWidth="8dp"
+                android:padding="0dp"
+                android:singleLine="true"
+                android:textSize="16dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="3.5"
+                android:layout_height="wrap_content"
+                android:minWidth="8dp"
+                android:singleLine="true"
+                android:text="资产号:"
+                android:textSize="16dp" />
+
+            <EditText
+                android:id="@+id/asset_num"
+                android:layout_width="0dp"
+                android:layout_weight="5"
+                android:layout_height="wrap_content"
+                android:background="@color/gray_bg"
+                android:minWidth="8dp"
+                android:padding="0dp"
+                android:singleLine="true"
+                android:textSize="16dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="15"
+                android:layout_height="wrap_content"
+                android:minWidth="8dp"
+                android:singleLine="true"
+                android:text="电压互感器变比:"
+                android:textSize="15dp" />
+
+            <EditText
+                android:id="@+id/voltage_transformer_ratio"
+                android:layout_width="0dp"
+                android:layout_weight="7"
+                android:layout_height="wrap_content"
+                android:background="@color/gray_bg"
+                android:minWidth="8dp"
+                android:padding="0dp"
+                android:singleLine="true"
+                android:textSize="16dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="15"
+                android:layout_height="wrap_content"
+                android:minWidth="8dp"
+                android:singleLine="true"
+                android:text="电流互感器变比:"
+                android:textSize="15dp" />
+
+            <EditText
+                android:id="@+id/current_transformer_ratio"
+                android:layout_width="0dp"
+                android:layout_weight="7"
+                android:layout_height="wrap_content"
+                android:background="@color/gray_bg"
+                android:minWidth="8dp"
+                android:padding="0dp"
+                android:singleLine="true"
+                android:textSize="16dp" />
+
+        </LinearLayout>
 
     </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        >
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="规约类型:"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <Spinner
-            android:id="@+id/protocol_type"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:entries="@array/protocol_type"
-            />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="接线方式:"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <Spinner
-            android:id="@+id/line_connect_type"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:entries="@array/line_connect_type"
-            />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        >
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="用户类型:"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <EditView
-            android:id="@+id/user_type"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="通信密码:"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <EditText
-            android:id="@+id/commu_password"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        >
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="费率个数:"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <EditView
-            android:id="@+id/rate_cnt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="额定电压(V):"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <EditText
-            android:id="@+id/rated_voltage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="额定电流(A):"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <EditText
-            android:id="@+id/rated_current"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        >
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="采集器地址:"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <EditView
-            android:id="@+id/collector_address"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="资产号:"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-        <EditText
-            android:id="@+id/asset_num"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="8dp"
-            android:singleLine="true"
-            />
-
-    </LinearLayout>
-
-
 
 </LinearLayout>

@@ -867,6 +867,7 @@ public enum Protocol698 {
                                     ArrayList<Protocol698Frame.A_RecordRow> a_recordRowArrayList = new ArrayList<>();
                                     int i = 0;
                                     int beginPos = 6 + rcsd.data.length + 1 + 1 + 1;
+                                    Log.i(TAG, "parseApdu, GET_RESPONSE_RECORD, beginPos: " + beginPos);
                                     for (i = 0; i < size; i++) {
                                         Protocol698Frame.A_RecordRow a_recordRow = new Protocol698Frame.A_RecordRow(apduFrame, beginPos, columeSize);
                                         if (a_recordRow.data == null) {
@@ -884,7 +885,7 @@ public enum Protocol698 {
                                     } else {
                                         Log.i(TAG, "parsApdu， GET_RESPONSE_RECORD， a_recordRow list is null");
                                     }
-                                    map.put(ProtocolConstant.A_RECORD_ROW_KEY, a_recordRowArrayList);
+                                    map.put(ProtocolConstant.A_RECORD_ROW_LIST_KEY, a_recordRowArrayList);
                                     return map;
                                 }
 

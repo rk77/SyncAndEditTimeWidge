@@ -333,6 +333,55 @@ public class Protocol698Frame {
             }
 
         }
+
+        public SERV_ADDR(byte[] data, int begin) {
+            //this.data = data;
+
+            if (data != null && data.length >= 2) {
+                int length = data[begin] & 0x0F;
+                if (length + 1 <= data.length) {
+                    this.addressLength = length;
+                    this.data = DataConvertUtils.getSubByteArray(data, begin, begin + length);
+                    if ((data[begin] & 0x20) == 0x00) {
+                        this.hasExLogicAddress = false;
+                        if ((data[begin] & 0x10) == 0x00) {
+                            this.logicAddress = 0;
+                        } else {
+                            this.logicAddress = 1;
+                        }
+                        this.address = new byte[this.addressLength - 1];
+                        for (int i = 0; i < address.length; i++) {
+                            this.address[i] = data[begin + 2 + i];
+                        }
+
+                    } else {
+                        this.hasExLogicAddress = true;
+                        this.logicAddress = data[begin + 1];
+                        this.address = new byte[this.addressLength];
+                        for (int i = 0; i < address.length; i++) {
+                            this.address[i] = data[begin + 1 + i];
+                        }
+                    }
+
+                    switch (data[begin] & 0xC0) {
+                        case 0x00:
+                            address_type = ADDRESS_TYPE.SINGLE;
+                            break;
+                        case 0x40:
+                            address_type = ADDRESS_TYPE.WILDCARD;
+                            break;
+                        case 0x80:
+                            address_type = ADDRESS_TYPE.GROUP;
+                            break;
+                        case 0xC0:
+                            address_type = ADDRESS_TYPE.BROADCAST;
+                            break;
+                    }
+                }
+
+            }
+
+        }
     }
 
     public static class AddressArea {
@@ -1108,7 +1157,7 @@ public class Protocol698Frame {
                     }
                     break;
                 case ARRAY_TYPE:
-                    if (obj instanceof ArrayList) {
+                    if (obj != null && obj instanceof ArrayList) {
                         ArrayList<Data> array = (ArrayList<Data>) obj;
                         if (array.size() > 0) {
                             int length = 0;
@@ -1133,7 +1182,15 @@ public class Protocol698Frame {
                                 }
                             }
 
+                        } else {
+                            this.data = new byte[2];
+                            this.data[0] = (byte) 1;
+                            this.data[1] = (byte) 0;
                         }
+                    } else {
+                        this.data = new byte[2];
+                        this.data[0] = (byte) 1;
+                        this.data[1] = (byte) 0;
                     }
                     break;
                 case DOUBLE_LONG_TYPE:
@@ -1240,6 +1297,38 @@ public class Protocol698Frame {
                         this.data[1] = (byte) obj;
                     }
                     break;
+                case TSA_TYPE:
+                    if (obj != null && obj instanceof SERV_ADDR) {
+                        SERV_ADDR addr = (SERV_ADDR) obj;
+                        if (addr.data == null || addr.data.length <= 0) {
+                            return;
+                        }
+                        this.data = new byte[1 + addr.data.length];
+                        for (int i = 0; i < this.data.length; i++) {
+                            if (i == 0) {
+                                this.data[i] = (byte) 85;
+                                continue;
+                            }
+                            this.data[i] = addr.data[i - 1];
+                        }
+                    }
+                    break;
+                case OAD_TYPE:
+                    if (obj != null && obj instanceof OAD) {
+                        OAD oad = (OAD) obj;
+                        if (oad.data == null || oad.data.length <= 0) {
+                            return;
+                        }
+                        this.data = new byte[1 + oad.data.length];
+                        for (int i = 0; i < this.data.length; i++) {
+                            if (i == 0) {
+                                this.data[i] = (byte) 85;
+                                continue;
+                            }
+                            this.data[i] = oad.data[i - 1];
+                        }
+                    }
+                    break;
             }
         }
 
@@ -1284,6 +1373,11 @@ public class Protocol698Frame {
                                     this.data = null;
                                     this.obj = null;
                                 }
+                            } else {
+                                this.data = new byte[bytes.size()];
+                                for (int k = 0; k < bytes.size(); k++) {
+                                    this.data[k] = bytes.get(k);
+                                }
                             }
                         }
                         break;
@@ -1293,21 +1387,23 @@ public class Protocol698Frame {
                         bytes2.add((byte)2);
                         if (begin + 1 <= frame.length - 1) {
                             int size = frame[begin + 1];
+                            Log.i(TAG, "Data, STRUCTURE_TYPE, size: " + size);
                             bytes2.add((byte)size);
                             if (size > 0) {
                                 ArrayList<Data> dataArrayList = new ArrayList<>(size);
                                 int pos = begin + 2;
                                 int i = 0;
                                 for (i = 0; i < size; i++) {
-                                    Data data = new Data(frame, pos);
-                                    if (data.data == null) {
+                                    Data new_data = new Data(frame, pos);
+                                    if (new_data.data == null) {
+                                        Log.i(TAG, "Data, STRUCTURE_TYPE, break, i: " + i);
                                         break;
                                     }
-                                    for (int j = 0; j < data.data.length; j++) {
-                                        bytes2.add(data.data[j]);
+                                    for (int j = 0; j < new_data.data.length; j++) {
+                                        bytes2.add(new_data.data[j]);
                                     }
-                                    dataArrayList.add(data);
-                                    pos = pos + data.data.length;
+                                    dataArrayList.add(new_data);
+                                    pos = pos + new_data.data.length;
                                 }
                                 if (i == size) {
                                     this.obj = dataArrayList;
@@ -1451,6 +1547,36 @@ public class Protocol698Frame {
                             }
                         } else {
                             this.data = null;
+                        }
+                        break;
+                    case 81:
+                        this.type = Data_Type.OAD_TYPE;
+                        OAD oad = new OAD(DataConvertUtils.getSubByteArray(frame, begin + 1, begin + 1 + 3));
+                        if (oad.data != null && oad.data.length == 4) {
+                            this.obj = oad;
+                            this.data = new byte[1 + oad.data.length];
+                            for (int i = 0; i < this.data.length; i++) {
+                                if (i == 0) {
+                                    this.data[i] = (byte) 81;
+                                    continue;
+                                }
+                                this.data[i] = oad.data[i - 1];
+                            }
+                        }
+                        break;
+                    case 85:
+                        this.type = Data_Type.TSA_TYPE;
+                        SERV_ADDR addr = new SERV_ADDR(frame, begin + 1);
+                        if (addr.data != null && addr.data.length > 0 && addr.address != null && addr.address.length > 0) {
+                            this.obj = addr;
+                            this.data = new byte[1 + addr.data.length];
+                            for (int i = 0; i < this.data.length; i++) {
+                                if (i == 0) {
+                                    this.data[i] = (byte) 85;
+                                    continue;
+                                }
+                                this.data[i] = addr.data[i - 1];
+                            }
                         }
                         break;
                 }

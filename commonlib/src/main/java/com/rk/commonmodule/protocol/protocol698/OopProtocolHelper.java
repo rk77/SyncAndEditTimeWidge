@@ -1,8 +1,13 @@
 package com.rk.commonmodule.protocol.protocol698;
 
 import android.renderscript.Element;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.Spinner;
 
+import com.rk.commonlib.R;
 import com.rk.commonmodule.utils.DataConvertUtils;
 import com.rk.commonmodule.utils.MeterProtocolDetector;
 
@@ -12,8 +17,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.ARRAY_TYPE;
+import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE;
+import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.OCTET_STRING_TYPE;
+import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.STRUCTURE_TYPE;
+import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.UNSIGNED_TYPE;
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.A_RECORD_ROW_KEY;
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.A_RECORD_ROW_LIST_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DAR_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DATA_KEY;
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.RCSD_KEY;
 
 public class OopProtocolHelper {
 
@@ -1769,6 +1782,8 @@ public class OopProtocolHelper {
     public final static String RATE_CURRENT_KEY = "RATE_CURRENT";
     public final static String COLLECTOR_ADDRESS_KEY = "COLLECTOR_ADDRESS";
     public final static String ASSET_NUM_KEY = "ASSET_NUM";
+    public final static String VOLTAGE_TRANSFORMER_RATIO_KEY = "VOLTAGE_TRANSFORMER_RATIO";
+    public final static String CURRENT_TRANSFORMER_RATIO_KEY = "CURRENT_TRANSFORMER_RATIO";
 
     public final static String PORT_TYPE_KEY = "PORT_TYPE";
     public final static String BAUD_RATE_KEY = "BAUD_RATE";
@@ -1810,6 +1825,405 @@ public class OopProtocolHelper {
         byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
         Log.i(TAG, "makeGetArchiveFrame, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
         return frame;
+    }
+
+    public static ArrayList<Map> parseArchiveFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        ArrayList<Map> resultMap = new ArrayList<>();
+        boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        Log.i(TAG, "parseArchiveFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
+        if (isOK) {
+            Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+                    Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
+            if (map == null) {
+                Log.i(TAG, "1");
+                return null;
+            }
+            if ( map.containsKey(DAR_KEY)) {
+                resultMap.add(map);
+            } else if (map.containsKey(A_RECORD_ROW_LIST_KEY)){
+                ArrayList<Protocol698Frame.A_RecordRow> a_recordRowArrayList = (ArrayList<Protocol698Frame.A_RecordRow>) map.get(A_RECORD_ROW_LIST_KEY);
+
+                if (a_recordRowArrayList == null || a_recordRowArrayList.size() <= 0) {
+                    Log.i(TAG, "2");
+                    return null;
+                }
+
+                Protocol698Frame.RCSD rcsd = (Protocol698Frame.RCSD) map.get(RCSD_KEY);
+                if (rcsd == null || rcsd.csdArrayList == null || rcsd.csdArrayList.size() <= 0) {
+                    Log.i(TAG, "3");
+                    return null;
+                }
+
+                int columeCnt = rcsd.csdArrayList.size();
+
+                int rowCnt = a_recordRowArrayList.size();
+                Log.i(TAG, "parseArchiveFrame, row count: " + rowCnt + ", colume count: " + columeCnt);
+                for (int i = 0; i < rowCnt; i++) {
+                    Protocol698Frame.A_RecordRow a_recordRow = a_recordRowArrayList.get(i);
+                    if (a_recordRow == null || a_recordRow.data == null || a_recordRow.data.length <= 0) {
+                        Log.i(TAG, "11");
+                        continue;
+                    }
+
+                    ArrayList<Protocol698Frame.Data> columeDatas = a_recordRow.dataArrayList;
+                    if (columeDatas == null || columeDatas.size() <= 0 || columeDatas.size() != columeCnt) {
+                        Log.i(TAG, "12");
+                        continue;
+                    }
+
+                    Protocol698Frame.Data item = columeDatas.get(0); //only one colume
+                    if (item == null || item.data == null || item.data.length <= 0 || item.type != Protocol698Frame.Data_Type.STRUCTURE_TYPE) {
+                        Log.i(TAG, "13");
+                        continue;
+                    }
+                    ArrayList<Protocol698Frame.Data> dataList = (ArrayList<Protocol698Frame.Data>) item.obj;
+                    if (dataList == null || dataList.size() != 4) {
+                        Log.i(TAG, "14");
+                        continue;
+                    }
+
+                    Map parsedMap = new HashMap();
+                    Protocol698Frame.Data  configNumData = dataList.get(0);
+                    if (configNumData != null && configNumData.type == Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE) {
+                        parsedMap.put(CONFIG_SERIAL_NUM_KEY, String.valueOf(((int)configNumData.obj) & 0xFFFF));
+                    }
+
+                    Protocol698Frame.Data basicObjectData = dataList.get(1);
+                    if (basicObjectData != null && basicObjectData.type == Protocol698Frame.Data_Type.STRUCTURE_TYPE) {
+                        ArrayList<Protocol698Frame.Data> basicObjectList = (ArrayList<Protocol698Frame.Data>) basicObjectData.obj;
+                        if (basicObjectList == null || basicObjectList.size() != 10) {
+                            Log.i(TAG, "15");
+                            continue;
+                        }
+                        Protocol698Frame.Data commu_address = basicObjectList.get(0);
+                        if (commu_address == null || commu_address.data == null || commu_address.data.length <= 0 || commu_address.type != Protocol698Frame.Data_Type.TSA_TYPE) {
+                            Log.i(TAG, "16");
+                            continue;
+                        }
+                        Protocol698Frame.SERV_ADDR serv_addr = (Protocol698Frame.SERV_ADDR) commu_address.obj;
+                        parsedMap.put(COMMU_ADDRESS_KEY, DataConvertUtils.convertByteArrayToString(serv_addr.address, false));
+
+                        Protocol698Frame.Data baudRateData = basicObjectList.get(1);
+                        if (baudRateData == null || baudRateData.data == null || baudRateData.type != Protocol698Frame.Data_Type.ENUM_TYPE) {
+                            Log.i(TAG, "17");
+                            continue;
+                        }
+                        byte baudRate = (byte) baudRateData.obj;
+                        if (baudRate == (byte) 0xFF) {
+                            baudRate = (byte) 11;
+                        }
+                        parsedMap.put(BAUD_RATE_KEY, baudRate);
+
+                        Protocol698Frame.Data protocolTypeData = basicObjectList.get(2);
+                        if (protocolTypeData == null || protocolTypeData.data == null || protocolTypeData.type != Protocol698Frame.Data_Type.ENUM_TYPE) {
+                            Log.i(TAG, "18");
+                            continue;
+                        }
+                        byte protocolType = (byte) protocolTypeData.obj;
+                        parsedMap.put(PROTOCOL_TYPE_KEY, protocolType);
+
+                        Protocol698Frame.Data portData = basicObjectList.get(3);
+                        if (portData == null || portData.data == null || portData.type != Protocol698Frame.Data_Type.OAD_TYPE) {
+                            Log.i(TAG, "19");
+                            continue;
+                        }
+                        Protocol698Frame.OAD port_oad = (Protocol698Frame.OAD) portData.obj;
+                        parsedMap.put(PORT_TYPE_KEY, DataConvertUtils.convertByteArrayToString(port_oad.data, false));
+
+
+                        Protocol698Frame.Data commuPasswordData = basicObjectList.get(4);
+                        if (commuPasswordData == null || commuPasswordData.data == null || commuPasswordData.type != Protocol698Frame.Data_Type.OCTET_STRING_TYPE) {
+                            Log.i(TAG, "20");
+                            continue;
+                        }
+                        byte[] commuPassword = (byte[]) commuPasswordData.obj;
+                        parsedMap.put(COMMU_PASSWORD_KEY, DataConvertUtils.convertByteArrayToString(commuPassword, false));
+
+                        Protocol698Frame.Data rateCntData = basicObjectList.get(5);
+                        if (rateCntData == null || rateCntData.data == null || rateCntData.type != UNSIGNED_TYPE) {
+                            Log.i(TAG, "21");
+                            continue;
+                        }
+                        byte rateCnt = (byte) rateCntData.obj;
+                        parsedMap.put(RATE_CNT_KEY, String.valueOf(rateCnt));
+
+                        Protocol698Frame.Data userTypeData = basicObjectList.get(6);
+                        if (userTypeData == null || userTypeData.data == null || userTypeData.type != UNSIGNED_TYPE) {
+                            Log.i(TAG, "22");
+                            continue;
+                        }
+                        byte userType = (byte) userTypeData.obj;
+                        parsedMap.put(USER_TYPE_KEY, String.valueOf(userType));
+
+                        Protocol698Frame.Data lineConnectTypeData = basicObjectList.get(7);
+                        if (lineConnectTypeData == null || lineConnectTypeData.data == null || lineConnectTypeData.type != Protocol698Frame.Data_Type.ENUM_TYPE) {
+                            Log.i(TAG, "23");
+                            continue;
+                        }
+                        byte lineConnectType = (byte) lineConnectTypeData.obj;
+                        parsedMap.put(LINE_CONNECT_TYPE_KEY, lineConnectType);
+
+                        Protocol698Frame.Data rateVoltageData = basicObjectList.get(8);
+                        if (rateVoltageData == null || rateVoltageData.data == null || rateVoltageData.type != Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE) {
+                            Log.i(TAG, "24");
+                            continue;
+                        }
+                        int rateVoltage = (int) rateVoltageData.obj;
+                        parsedMap.put(RATE_VOLTAGE_KEY, rateVoltage == 0xFFFF ? "" : DataConvertUtils.InterDivToString(rateVoltage, 10, 1));
+
+                        Protocol698Frame.Data rateCurrentData = basicObjectList.get(9);
+                        if (rateCurrentData == null || rateCurrentData.data == null || rateCurrentData.type != Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE) {
+                            Log.i(TAG, "25");
+                            continue;
+                        }
+                        int rateCurrent = (int) rateCurrentData.obj;
+                        parsedMap.put(RATE_CURRENT_KEY, rateCurrent == 0xFFFF ? "" : DataConvertUtils.InterDivToString(rateCurrent, 10, 1));
+
+                        Log.i(TAG, "parseArchiveFrame, voltage: " + rateVoltage + ", current: " + rateCurrent);
+                    }
+
+                    Protocol698Frame.Data extendedObjectData = dataList.get(2);
+                    if (extendedObjectData != null && extendedObjectData.type == Protocol698Frame.Data_Type.STRUCTURE_TYPE) {
+                        ArrayList<Protocol698Frame.Data> extendedObjectList = (ArrayList<Protocol698Frame.Data>) extendedObjectData.obj;
+                        if (extendedObjectList == null || extendedObjectList.size() != 4) {
+                            Log.i(TAG, "26");
+                            continue;
+                        }
+                        Protocol698Frame.Data collector_address = extendedObjectList.get(0);
+                        if (collector_address == null || collector_address.data == null
+                                || collector_address.data.length <= 0 || collector_address.type != Protocol698Frame.Data_Type.TSA_TYPE) {
+                            Log.i(TAG, "27");
+                            continue;
+                        }
+                        Protocol698Frame.SERV_ADDR serv_addr = (Protocol698Frame.SERV_ADDR) collector_address.obj;
+                        parsedMap.put(COLLECTOR_ADDRESS_KEY, DataConvertUtils.convertByteArrayToString(serv_addr.address, false));
+
+                        Protocol698Frame.Data assetNumData = extendedObjectList.get(1);
+                        if (assetNumData == null || assetNumData.data == null || assetNumData.type != Protocol698Frame.Data_Type.OCTET_STRING_TYPE) {
+                            Log.i(TAG, "28");
+                            continue;
+                        }
+                        byte[] assetNum = (byte[]) assetNumData.obj;
+                        parsedMap.put(ASSET_NUM_KEY, DataConvertUtils.convertByteArrayToString(assetNum, false));
+
+                        Protocol698Frame.Data voltageTransformerRatioData = extendedObjectList.get(2);
+                        if (voltageTransformerRatioData == null || voltageTransformerRatioData.data == null || voltageTransformerRatioData.type != Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE) {
+                            Log.i(TAG, "29");
+                            continue;
+                        }
+                        int voltageTransformerRatio = (int) voltageTransformerRatioData.obj;
+                        parsedMap.put(VOLTAGE_TRANSFORMER_RATIO_KEY, voltageTransformerRatio == 0xFFFF ? "" : String.valueOf(voltageTransformerRatio));
+
+                        Protocol698Frame.Data currentTransformerRatioData = extendedObjectList.get(3);
+                        if (currentTransformerRatioData == null || currentTransformerRatioData.data == null || currentTransformerRatioData.type != Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE) {
+                            Log.i(TAG, "30");
+                            continue;
+                        }
+                        int currentTransformerRatio = (int) currentTransformerRatioData.obj;
+                        parsedMap.put(CURRENT_TRANSFORMER_RATIO_KEY, currentTransformerRatio == 0xFFFF ? "" : String.valueOf(currentTransformerRatio));
+
+                    }
+                    resultMap.add(parsedMap);
+                }
+            }
+            return resultMap;
+        }
+        Log.i(TAG, "4");
+        return null;
+
+    }
+
+
+    public Protocol698Frame.Data achiveViewToData(View itemView) {
+        EditText configSerialNum, commuAddress, userType, commuPassword, rateCnt, rateVoltage, rateCurrent, collectorAddress, assetNum;
+        EditText voltageTransformerRatio, currentTransformerRatio;
+        Spinner portType, baudRate, protocolType, lineConnectType;
+
+        configSerialNum = itemView.findViewById(R.id.config_serial_num);
+        commuAddress = itemView.findViewById(R.id.commu_address);
+        userType = itemView.findViewById(R.id.user_type);
+        commuPassword = itemView.findViewById(R.id.commu_password);
+        rateCnt = itemView.findViewById(R.id.rate_cnt);
+        rateVoltage = itemView.findViewById(R.id.rated_voltage);
+        rateCurrent = itemView.findViewById(R.id.rated_current);
+        collectorAddress = itemView.findViewById(R.id.collector_address);
+        assetNum = itemView.findViewById(R.id.asset_num);
+
+        voltageTransformerRatio = itemView.findViewById(R.id.voltage_transformer_ratio);
+        currentTransformerRatio = itemView.findViewById(R.id.current_transformer_ratio);
+
+        portType = itemView.findViewById(R.id.port_type);
+        baudRate = itemView.findViewById(R.id.baud_rate);
+        protocolType = itemView.findViewById(R.id.protocol_type);
+        lineConnectType = itemView.findViewById(R.id.line_connect_type);
+
+        String config_serial_num = configSerialNum.getText().toString();
+        if (TextUtils.isEmpty(config_serial_num)) {
+            return null;
+        }
+        Protocol698Frame.Data configSerialNumData = new Protocol698Frame.Data(Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE, Integer.parseInt(config_serial_num));
+
+        ArrayList<Protocol698Frame.Data> basicObjectDataList = new ArrayList<>();
+        String commu_address = commuAddress.getText().toString();
+        if (TextUtils.isEmpty(commu_address)) {
+            commu_address = "00FFFFFFFFFFFF";
+        } else {
+            commu_address = "00" + commu_address;
+        }
+        Protocol698Frame.SERV_ADDR servAddr = new Protocol698Frame.SERV_ADDR(
+                Protocol698Frame.ADDRESS_TYPE.SINGLE, false,
+                0, commu_address.length() / 2 + 1,
+                DataConvertUtils.convertHexStringToByteArray(commu_address, commu_address.length(), false));
+        Protocol698Frame.Data TSA = new Protocol698Frame.Data(Protocol698Frame.Data_Type.TSA_TYPE, servAddr);
+        basicObjectDataList.add(TSA);
+
+        int pos = baudRate.getSelectedItemPosition();
+        if (pos == -1) {
+            Log.i(TAG, "baudRate, pos = -1");
+            return null;
+        }
+        if (pos == 11) {
+            pos = 255;
+        }
+        Protocol698Frame.Data baud_rate_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.ENUM_TYPE, (byte) pos);
+        basicObjectDataList.add(baud_rate_data);
+
+        pos = protocolType.getSelectedItemPosition();
+        if (pos == -1) {
+            Log.i(TAG, "protocolType, pos = -1");
+            return null;
+        }
+        Protocol698Frame.Data protocol_type_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.ENUM_TYPE, (byte) pos);
+        basicObjectDataList.add(protocol_type_data);
+
+        pos = portType.getSelectedItemPosition();
+        if (pos == -1) {
+            Log.i(TAG, "portType, pos = -1");
+            return null;
+        }
+        byte[] oad_bytes = new byte[]{(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,};
+        switch (pos) {
+            case 0:
+                oad_bytes = new byte[]{(byte) 0xF2, (byte) 0x08, (byte) 0x02, (byte) 0x01};
+                break;
+            case 1:
+                oad_bytes = new byte[]{(byte) 0xF2, (byte) 0x01, (byte) 0x02, (byte) 0x01};
+                break;
+            case 2:
+                oad_bytes = new byte[]{(byte) 0xF2, (byte) 0x01, (byte) 0x02, (byte) 0x02};
+                break;
+            case 3:
+                oad_bytes = new byte[]{(byte) 0xF2, (byte) 0x09, (byte) 0x02, (byte) 0x01};
+                break;
+            default:
+                break;
+        }
+        Protocol698Frame.OAD port_oad = new Protocol698Frame.OAD(oad_bytes);
+        Protocol698Frame.Data port_oad_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.OAD_TYPE, port_oad);
+        basicObjectDataList.add(port_oad_data);
+
+        String comm_psd = commuPassword.getText().toString();
+        if (TextUtils.isEmpty(comm_psd)) {
+            comm_psd = "00";
+        }
+        byte[] comm_psd_byte_array = DataConvertUtils.convertHexStringToByteArray(comm_psd, comm_psd.length(), false);
+        Protocol698Frame.Data comm_psd_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.OCTET_STRING_TYPE, comm_psd_byte_array);
+        basicObjectDataList.add(comm_psd_data);
+
+        String rate_cnt = rateCnt.getText().toString();
+        if (TextUtils.isEmpty(rate_cnt)) {
+            rate_cnt = "0";
+        }
+        byte rate_cnt_byte = (byte) Integer.parseInt(rate_cnt);
+        Protocol698Frame.Data rate_cnt_data = new Protocol698Frame.Data(UNSIGNED_TYPE, rate_cnt_byte);
+        basicObjectDataList.add(rate_cnt_data);
+
+        String user_type = userType.getText().toString();
+        if (TextUtils.isEmpty(user_type)) {
+            user_type = "0";
+        }
+        byte user_type_byte = (byte) Integer.parseInt(user_type);
+        Protocol698Frame.Data user_type_data = new Protocol698Frame.Data(UNSIGNED_TYPE, user_type_byte);
+        basicObjectDataList.add(user_type_data);
+
+        pos = lineConnectType.getSelectedItemPosition();
+        if (pos == -1) {
+            Log.i(TAG, "lineConnectType, pos is -1");
+        }
+        Protocol698Frame.Data line_connect_type_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.ENUM_TYPE, (byte) pos);
+        basicObjectDataList.add(line_connect_type_data);
+
+        String rate_voltage = rateVoltage.getText().toString();
+        if (TextUtils.isEmpty(rate_voltage)) {
+            rate_voltage = "6553.5";
+        }
+        int rate_valtage_value = (int) (Float.valueOf(rate_voltage) * 10);
+        Protocol698Frame.Data rate_voltage_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, rate_valtage_value);
+        basicObjectDataList.add(rate_voltage_data);
+
+        String rate_current = rateCurrent.getText().toString();
+        if (TextUtils.isEmpty(rate_current)) {
+            rate_voltage = "6553.5";
+        }
+        int rate_current_value = (int) (Float.valueOf(rate_current) * 10);
+        Protocol698Frame.Data rate_current_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, rate_current_value);
+        basicObjectDataList.add(rate_current_data);
+
+        Protocol698Frame.Data basic_object_data = new Protocol698Frame.Data(STRUCTURE_TYPE, basicObjectDataList);
+
+        ArrayList<Protocol698Frame.Data> extended_object_data_array = new ArrayList<>();
+
+        String collector_address = collectorAddress.getText().toString();
+        if (TextUtils.isEmpty(collector_address)) {
+            collector_address = "00FFFFFFFFFFFF";
+        } else {
+            collector_address = "00" + commu_address;
+        }
+        Protocol698Frame.SERV_ADDR collectorServAddr = new Protocol698Frame.SERV_ADDR(
+                Protocol698Frame.ADDRESS_TYPE.SINGLE, false,
+                0, collector_address.length() / 2 + 1,
+                DataConvertUtils.convertHexStringToByteArray(collector_address, collector_address.length(), false));
+        Protocol698Frame.Data Collector_TSA = new Protocol698Frame.Data(Protocol698Frame.Data_Type.TSA_TYPE, collectorServAddr);
+        extended_object_data_array.add(Collector_TSA);
+
+        String asset_num = assetNum.getText().toString();
+        if (TextUtils.isEmpty(asset_num)) {
+            asset_num = "00";
+        }
+        Protocol698Frame.Data asset_num_data = new Protocol698Frame.Data(OCTET_STRING_TYPE,
+                DataConvertUtils.convertHexStringToByteArray(asset_num, asset_num.length(), false));
+        extended_object_data_array.add(asset_num_data);
+
+        String voltage_t_ratio = voltageTransformerRatio.getText().toString();
+        if (TextUtils.isEmpty(voltage_t_ratio)) {
+            voltage_t_ratio = "65535";
+        }
+        int voltage_t_ratio_value = Integer.parseInt(voltage_t_ratio);
+        Protocol698Frame.Data voltage_t_ratio_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, voltage_t_ratio_value);
+        extended_object_data_array.add(voltage_t_ratio_data);
+
+        String current_t_ratio = currentTransformerRatio.getText().toString();
+        if (TextUtils.isEmpty(current_t_ratio)) {
+            current_t_ratio = "65535";
+        }
+        int current_t_ratio_value = Integer.parseInt(current_t_ratio);
+        Protocol698Frame.Data current_t_ratio_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, current_t_ratio_value);
+        extended_object_data_array.add(current_t_ratio_data);
+        Protocol698Frame.Data extended_object_data = new Protocol698Frame.Data(STRUCTURE_TYPE, extended_object_data_array);
+
+        Protocol698Frame.Data annex_object_data = new Protocol698Frame.Data(ARRAY_TYPE, null);
+
+        ArrayList<Protocol698Frame.Data> collect_archive_config_unit_data_list = new ArrayList<>();
+        collect_archive_config_unit_data_list.add(configSerialNumData);
+        collect_archive_config_unit_data_list.add(basic_object_data);
+        collect_archive_config_unit_data_list.add(extended_object_data);
+        collect_archive_config_unit_data_list.add(annex_object_data);
+
+        Protocol698Frame.Data collect_archive_config_unit_data = new Protocol698Frame.Data(STRUCTURE_TYPE, collect_archive_config_unit_data_list);
+        return collect_archive_config_unit_data;
     }
 
 
