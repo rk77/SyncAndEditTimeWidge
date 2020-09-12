@@ -2166,7 +2166,7 @@ public class OopProtocolHelper {
 
         String rate_current = rateCurrent.getText().toString();
         if (TextUtils.isEmpty(rate_current)) {
-            rate_voltage = "6553.5";
+            rate_current = "6553.5";
         }
         int rate_current_value = (int) (Float.valueOf(rate_current) * 10);
         Protocol698Frame.Data rate_current_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, rate_current_value);
@@ -2226,5 +2226,136 @@ public class OopProtocolHelper {
         return collect_archive_config_unit_data;
     }
 
+    public Protocol698Frame.Data achiveMapToData(Map map) {
+
+        if (map == null) {
+            return null;
+        }
+        if (!map.containsKey(CONFIG_SERIAL_NUM_KEY) || map.get(CONFIG_SERIAL_NUM_KEY) == null) {
+            return null;
+        }
+        String config_serial_num = (String) map.get(CONFIG_SERIAL_NUM_KEY);
+        Protocol698Frame.Data configSerialNumData = new Protocol698Frame.Data(Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE, Integer.parseInt(config_serial_num));
+
+        ArrayList<Protocol698Frame.Data> basicObjectDataList = new ArrayList<>();
+
+        Protocol698Frame.SERV_ADDR servAddr = (Protocol698Frame.SERV_ADDR) map.get(COMMU_ADDRESS_KEY);
+        Protocol698Frame.Data TSA = new Protocol698Frame.Data(Protocol698Frame.Data_Type.TSA_TYPE, servAddr);
+        basicObjectDataList.add(TSA);
+
+        int pos = ((byte) map.get(BAUD_RATE_KEY)) & 0xFF;
+        if (pos == 11) {
+            pos = 255;
+        }
+        Protocol698Frame.Data baud_rate_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.ENUM_TYPE, (byte) pos);
+        basicObjectDataList.add(baud_rate_data);
+
+        pos = ((byte) map.get(PROTOCOL_TYPE_KEY)) & 0xFF;
+        Protocol698Frame.Data protocol_type_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.ENUM_TYPE, (byte) pos);
+        basicObjectDataList.add(protocol_type_data);
+
+        String oad_s = (String) map.get(PROTOCOL_TYPE_KEY);
+        byte[] oad_bytes = DataConvertUtils.convertHexStringToByteArray(oad_s, oad_s.length(), false);
+        Protocol698Frame.OAD port_oad = new Protocol698Frame.OAD(oad_bytes);
+        Protocol698Frame.Data port_oad_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.OAD_TYPE, port_oad);
+        basicObjectDataList.add(port_oad_data);
+
+        String comm_psd = (String) map.get(COMMU_PASSWORD_KEY);
+        if (TextUtils.isEmpty(comm_psd)) {
+            comm_psd = "00";
+        }
+        byte[] comm_psd_byte_array = DataConvertUtils.convertHexStringToByteArray(comm_psd, comm_psd.length(), false);
+        Protocol698Frame.Data comm_psd_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.OCTET_STRING_TYPE, comm_psd_byte_array);
+        basicObjectDataList.add(comm_psd_data);
+
+        String rate_cnt = (String) map.get(RATE_CNT_KEY);
+        if (TextUtils.isEmpty(rate_cnt)) {
+            rate_cnt = "0";
+        }
+        byte rate_cnt_byte = (byte) Integer.parseInt(rate_cnt);
+        Protocol698Frame.Data rate_cnt_data = new Protocol698Frame.Data(UNSIGNED_TYPE, rate_cnt_byte);
+        basicObjectDataList.add(rate_cnt_data);
+
+        String user_type = (String) map.get(USER_TYPE_KEY);
+        if (TextUtils.isEmpty(user_type)) {
+            user_type = "0";
+        }
+        byte user_type_byte = (byte) Integer.parseInt(user_type);
+        Protocol698Frame.Data user_type_data = new Protocol698Frame.Data(UNSIGNED_TYPE, user_type_byte);
+        basicObjectDataList.add(user_type_data);
+
+        pos = (byte) map.get("LINE_CONNECT_TYPE_KEY") & 0xFF;
+        Protocol698Frame.Data line_connect_type_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.ENUM_TYPE, (byte) pos);
+        basicObjectDataList.add(line_connect_type_data);
+
+        String rate_voltage = (String) map.get(RATE_VOLTAGE_KEY);
+        if (TextUtils.isEmpty(rate_voltage)) {
+            rate_voltage = "6553.5";
+        }
+        int rate_valtage_value = (int) (Float.valueOf(rate_voltage) * 10);
+        Protocol698Frame.Data rate_voltage_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, rate_valtage_value);
+        basicObjectDataList.add(rate_voltage_data);
+
+        String rate_current = (String) map.get(RATE_CURRENT_KEY);
+        if (TextUtils.isEmpty(rate_current)) {
+            rate_current = "6553.5";
+        }
+        int rate_current_value = (int) (Float.valueOf(rate_current) * 10);
+        Protocol698Frame.Data rate_current_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, rate_current_value);
+        basicObjectDataList.add(rate_current_data);
+
+        Protocol698Frame.Data basic_object_data = new Protocol698Frame.Data(STRUCTURE_TYPE, basicObjectDataList);
+
+        ArrayList<Protocol698Frame.Data> extended_object_data_array = new ArrayList<>();
+
+        String collector_address = (String) map.get(COLLECTOR_ADDRESS_KEY);
+        if (TextUtils.isEmpty(collector_address)) {
+            collector_address = "00FFFFFFFFFFFF";
+        } else {
+            collector_address = "00" + collector_address;
+        }
+        Protocol698Frame.SERV_ADDR collectorServAddr = new Protocol698Frame.SERV_ADDR(
+                Protocol698Frame.ADDRESS_TYPE.SINGLE, false,
+                0, collector_address.length() / 2 + 1,
+                DataConvertUtils.convertHexStringToByteArray(collector_address, collector_address.length(), false));
+        Protocol698Frame.Data Collector_TSA = new Protocol698Frame.Data(Protocol698Frame.Data_Type.TSA_TYPE, collectorServAddr);
+        extended_object_data_array.add(Collector_TSA);
+
+        String asset_num = (String) map.get(ASSET_NUM_KEY);
+        if (TextUtils.isEmpty(asset_num)) {
+            asset_num = "00";
+        }
+        Protocol698Frame.Data asset_num_data = new Protocol698Frame.Data(OCTET_STRING_TYPE,
+                DataConvertUtils.convertHexStringToByteArray(asset_num, asset_num.length(), false));
+        extended_object_data_array.add(asset_num_data);
+
+        String voltage_t_ratio = (String) map.get(VOLTAGE_TRANSFORMER_RATIO_KEY);
+        if (TextUtils.isEmpty(voltage_t_ratio)) {
+            voltage_t_ratio = "65535";
+        }
+        int voltage_t_ratio_value = Integer.parseInt(voltage_t_ratio);
+        Protocol698Frame.Data voltage_t_ratio_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, voltage_t_ratio_value);
+        extended_object_data_array.add(voltage_t_ratio_data);
+
+        String current_t_ratio = (String) map.get(CURRENT_TRANSFORMER_RATIO_KEY);
+        if (TextUtils.isEmpty(current_t_ratio)) {
+            current_t_ratio = "65535";
+        }
+        int current_t_ratio_value = Integer.parseInt(current_t_ratio);
+        Protocol698Frame.Data current_t_ratio_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, current_t_ratio_value);
+        extended_object_data_array.add(current_t_ratio_data);
+        Protocol698Frame.Data extended_object_data = new Protocol698Frame.Data(STRUCTURE_TYPE, extended_object_data_array);
+
+        Protocol698Frame.Data annex_object_data = new Protocol698Frame.Data(ARRAY_TYPE, null);
+
+        ArrayList<Protocol698Frame.Data> collect_archive_config_unit_data_list = new ArrayList<>();
+        collect_archive_config_unit_data_list.add(configSerialNumData);
+        collect_archive_config_unit_data_list.add(basic_object_data);
+        collect_archive_config_unit_data_list.add(extended_object_data);
+        collect_archive_config_unit_data_list.add(annex_object_data);
+
+        Protocol698Frame.Data collect_archive_config_unit_data = new Protocol698Frame.Data(STRUCTURE_TYPE, collect_archive_config_unit_data_list);
+        return collect_archive_config_unit_data;
+    }
 
 }

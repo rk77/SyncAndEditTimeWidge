@@ -11,6 +11,8 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 
+import org.litepal.LitePal;
+
 public class BaseApplication extends Application {
     private final static String TAG = BaseApplication.class.getSimpleName();
     private IBinder mBinder = new Binder();
@@ -41,6 +43,7 @@ public class BaseApplication extends Application {
         if (isPrimaryProcess()) {
             Intent intent = new Intent(this, WatchDogService.class);
             bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+            LitePal.initialize(this);
         }
 
     }
