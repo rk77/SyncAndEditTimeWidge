@@ -240,6 +240,8 @@ public class Protocol698Frame {
 
         public byte[] data;
 
+        public byte[] tsa;
+
         public SERV_ADDR(ADDRESS_TYPE address_type, boolean hasExLogicAddress, int logicAddress, int addressLength, byte[] address) {
             this.address_type = address_type;
             this.hasExLogicAddress = hasExLogicAddress;
@@ -278,8 +280,14 @@ public class Protocol698Frame {
                         break;
                 }
 
-                for (int i = 0; i < addressLength - 1; i++) {
+                for (int i = 0; i < addressLength; i++) {
                     data[i + 1] = address[i];
+                }
+
+                tsa = new byte[this.data.length + 1];
+                tsa[0] = (byte) this.data.length;
+                for (int i = 0; i < this.data.length; i++) {
+                    tsa[i + 1] = this.data[i];
                 }
 
             }
@@ -336,12 +344,21 @@ public class Protocol698Frame {
 
         public SERV_ADDR(byte[] data, int begin) {
             //this.data = data;
-
+            Log.i("AX", "SERV, frame: " + DataConvertUtils.convertByteArrayToString(data, false) + ", begin: " + begin);
             if (data != null && data.length >= 2) {
-                int length = data[begin] & 0x0F; //地址字节数
-                if (length + 1 <= data.length - 1 - begin + 1) {
-                    this.addressLength = length + 1; //地址域中长度
-                    this.data = DataConvertUtils.getSubByteArray(data, begin, begin + length);
+                int length = (data[begin] & 0x0F) + 1;
+                if (begin + length <= data.length - 1) {
+                    this.addressLength = length; //地址长度
+                    Log.i("AX", "SERV, address length: " + length);
+                    this.data = DataConvertUtils.getSubByteArray(data, begin, begin + this.addressLength);
+                    this.tsa = new byte[1 + this.data.length];
+                    for (int i = 0; i < this.tsa.length; i++) {
+                        if (i == 0) {
+                            this.tsa[i] = (byte) this.data.length;
+                            continue;
+                        }
+                        this.tsa[i] = this.data[i - 1];
+                    }
                     if ((data[begin] & 0x20) == 0x00) {
                         this.hasExLogicAddress = false;
                         if ((data[begin] & 0x10) == 0x00) {
@@ -349,14 +366,15 @@ public class Protocol698Frame {
                         } else {
                             this.logicAddress = 1;
                         }
-                        this.address = new byte[this.addressLength - 1 -1];
+                        this.address = new byte[this.addressLength];
                         for (int i = 0; i < address.length; i++) {
-                            this.address[i] = data[begin + 1 + 1 + i];
+                            this.address[i] = data[begin + 1 + i];
                         }
+                        Log.i("AX", "SERV, address: " + DataConvertUtils.convertByteArrayToString(this.address, false));
 
                     } else {
                         this.hasExLogicAddress = true;
-                        this.address = new byte[this.addressLength - 1];
+                        this.address = new byte[this.addressLength];
                         for (int i = 0; i < address.length; i++) {
                             this.address[i] = data[begin + 1 + i];
                         }
@@ -1297,18 +1315,18 @@ public class Protocol698Frame {
                     }
                     break;
                 case TSA_TYPE:
-                    if (obj != null && obj instanceof SERV_ADDR) {
-                        SERV_ADDR addr = (SERV_ADDR) obj;
-                        if (addr.data == null || addr.data.length <= 0) {
+                    if (obj != null && obj instanceof byte[]) {
+                        byte[] lengh_and_addr = (byte[]) obj;
+                        if (lengh_and_addr.length <= 0) {
                             return;
                         }
-                        this.data = new byte[1 + addr.data.length];
+                        this.data = new byte[1 + lengh_and_addr.length];
                         for (int i = 0; i < this.data.length; i++) {
                             if (i == 0) {
                                 this.data[i] = (byte) 85;
                                 continue;
                             }
-                            this.data[i] = addr.data[i - 1];
+                            this.data[i] = lengh_and_addr[i - 1];
                         }
                     }
                     break;
@@ -1398,6 +1416,8 @@ public class Protocol698Frame {
                                         Log.i(TAG, "Data, STRUCTURE_TYPE, break, i: " + i);
                                         break;
                                     }
+                                    Log.i(TAG, "Data, STRUCTURE_TYPE, data type:" + new_data.type
+                                            + ", data: " + DataConvertUtils.convertByteArrayToString(new_data.data, false));
                                     for (int j = 0; j < new_data.data.length; j++) {
                                         bytes2.add(new_data.data[j]);
                                     }
@@ -1565,18 +1585,40 @@ public class Protocol698Frame {
                         break;
                     case 85:
                         this.type = Data_Type.TSA_TYPE;
-                        SERV_ADDR addr = new SERV_ADDR(frame, begin + 1);
+                        if (begin + 1 <= frame.length - 1) {
+                            int length = frame[begin + 1];
+                            this.data = new byte[1 + 1 + length];
+                            this.data[0] = (byte) 85;
+                            this.data[1] = (byte) length;
+
+                            for (int i = 0; i < length; i++) {
+                                this.data[i + 2] = frame[begin + 1 + 1 + i];
+                            }
+
+                            this.obj = new byte[1 + length];
+                            for (int i = 0; i < ((byte[]) this.obj).length; i++) {
+                                ((byte[])this.obj)[i] = frame[begin + 1 + i];
+                            }
+                        }
+                        /*
+                        SERV_ADDR addr = new SERV_ADDR(frame, begin + 1 + 1);
                         if (addr.data != null && addr.data.length > 0 && addr.address != null && addr.address.length > 0) {
                             this.obj = addr;
-                            this.data = new byte[1 + addr.data.length];
+                            this.data = new byte[1 + addr.data.length + 1];
                             for (int i = 0; i < this.data.length; i++) {
                                 if (i == 0) {
                                     this.data[i] = (byte) 85;
                                     continue;
                                 }
-                                this.data[i] = addr.data[i - 1];
+
+                                if (i == 1) {
+                                    this.data[i] = (byte) this.data.length;
+                                    continue;
+                                }
+                                this.data[i] = addr.data[i - 2];
                             }
                         }
+                        */
                         break;
                 }
             }
@@ -1612,7 +1654,7 @@ public class Protocol698Frame {
             if (frame != null && begin <= frame.length - 1) {
                 ArrayList<Byte> bytes = new ArrayList<>();
                 int size = columeSize;
-                Log.i(TAG, "A_RecordRow, array size: " + size);
+                Log.i(TAG, "A_RecordRow, colume size: " + size);
                 if (size > 0) {
                     this.dataArrayList = new ArrayList<>(size);
                     int i = 0;

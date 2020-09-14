@@ -1904,7 +1904,9 @@ public class OopProtocolHelper {
                             Log.i(TAG, "16");
                             continue;
                         }
-                        Protocol698Frame.SERV_ADDR serv_addr = (Protocol698Frame.SERV_ADDR) commu_address.obj;
+                        byte[] serv_addr_byte = (byte[]) commu_address.obj;
+                        Log.i("AX", "tsa: " + DataConvertUtils.convertByteArrayToString(serv_addr_byte, false));
+                        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(serv_addr_byte, 1);
                         parsedMap.put(COMMU_ADDRESS_KEY, DataConvertUtils.convertByteArrayToString(serv_addr.address, false));
 
                         Protocol698Frame.Data baudRateData = basicObjectList.get(1);
@@ -1999,7 +2001,8 @@ public class OopProtocolHelper {
                             Log.i(TAG, "27");
                             continue;
                         }
-                        Protocol698Frame.SERV_ADDR serv_addr = (Protocol698Frame.SERV_ADDR) collector_address.obj;
+                        byte[] serv_addr_tsa = (byte[]) collector_address.obj;
+                        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(serv_addr_tsa, 1);
                         parsedMap.put(COLLECTOR_ADDRESS_KEY, DataConvertUtils.convertByteArrayToString(serv_addr.address, false));
 
                         Protocol698Frame.Data assetNumData = extendedObjectList.get(1);
