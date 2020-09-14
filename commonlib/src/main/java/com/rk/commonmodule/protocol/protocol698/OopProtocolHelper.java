@@ -10,6 +10,7 @@ import android.widget.Spinner;
 import com.rk.commonlib.R;
 import com.rk.commonmodule.utils.DataConvertUtils;
 import com.rk.commonmodule.utils.MeterProtocolDetector;
+import com.rk.module.ArchiveManageRow;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
@@ -2210,6 +2211,137 @@ public class OopProtocolHelper {
             current_t_ratio = "65535";
         }
         int current_t_ratio_value = Integer.parseInt(current_t_ratio);
+        Protocol698Frame.Data current_t_ratio_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, current_t_ratio_value);
+        extended_object_data_array.add(current_t_ratio_data);
+        Protocol698Frame.Data extended_object_data = new Protocol698Frame.Data(STRUCTURE_TYPE, extended_object_data_array);
+
+        Protocol698Frame.Data annex_object_data = new Protocol698Frame.Data(ARRAY_TYPE, null);
+
+        ArrayList<Protocol698Frame.Data> collect_archive_config_unit_data_list = new ArrayList<>();
+        collect_archive_config_unit_data_list.add(configSerialNumData);
+        collect_archive_config_unit_data_list.add(basic_object_data);
+        collect_archive_config_unit_data_list.add(extended_object_data);
+        collect_archive_config_unit_data_list.add(annex_object_data);
+
+        Protocol698Frame.Data collect_archive_config_unit_data = new Protocol698Frame.Data(STRUCTURE_TYPE, collect_archive_config_unit_data_list);
+        return collect_archive_config_unit_data;
+    }
+
+    public static Protocol698Frame.Data achiveRowToData(ArchiveManageRow archiveManageRow) {
+
+        if (archiveManageRow == null) {
+            return null;
+        }
+        if (archiveManageRow.getConfigSerialNum() == 0) {
+            return null;
+        }
+        String config_serial_num = String.valueOf(archiveManageRow.getConfigSerialNum());
+        Protocol698Frame.Data configSerialNumData = new Protocol698Frame.Data(Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE, Integer.parseInt(config_serial_num));
+
+        ArrayList<Protocol698Frame.Data> basicObjectDataList = new ArrayList<>();
+
+        String commu_address = archiveManageRow.getCommAddress();
+        if (TextUtils.isEmpty(commu_address)) {
+            commu_address = "00FFFFFFFFFFFF";
+        } else {
+            commu_address = "00" + commu_address;
+        }
+        Protocol698Frame.SERV_ADDR servAddr = new Protocol698Frame.SERV_ADDR(
+                Protocol698Frame.ADDRESS_TYPE.SINGLE, false,
+                0, commu_address.length() / 2 + 1,
+                DataConvertUtils.convertHexStringToByteArray(commu_address, commu_address.length(), false));
+        Log.i(TAG, "achiveRowToData, Commu servAddr: " + DataConvertUtils.convertByteArrayToString(servAddr.data, false));
+        Protocol698Frame.Data TSA = new Protocol698Frame.Data(Protocol698Frame.Data_Type.TSA_TYPE, servAddr);
+        Log.i(TAG, "achiveRowToData, Commu Addr: " + DataConvertUtils.convertByteArrayToString(TSA.data, false));
+        basicObjectDataList.add(TSA);
+
+        int pos = archiveManageRow.getBaudRateIndex() & 0xFF;
+        if (pos == 11) {
+            pos = 255;
+        }
+        Protocol698Frame.Data baud_rate_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.ENUM_TYPE, (byte) pos);
+        basicObjectDataList.add(baud_rate_data);
+
+        pos = ((byte) archiveManageRow.getProtocolTypeIndex()) & 0xFF;
+        Protocol698Frame.Data protocol_type_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.ENUM_TYPE, (byte) pos);
+        basicObjectDataList.add(protocol_type_data);
+
+        pos = archiveManageRow.getPortIndex();
+        String oad_s = null;
+        if (pos == 0) {
+            oad_s = "F2080201";
+        } else if (pos == 1) {
+            oad_s = "F2010201";
+        } else if (pos == 2) {
+            oad_s = "F2010202";
+        } else if (pos == 3) {
+            oad_s = "F2090201";
+        } else {
+            oad_s = "FFFFFFFF";
+        }
+        byte[] oad_bytes = DataConvertUtils.convertHexStringToByteArray(oad_s, oad_s.length(), false);
+        Protocol698Frame.OAD port_oad = new Protocol698Frame.OAD(oad_bytes);
+        Protocol698Frame.Data port_oad_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.OAD_TYPE, port_oad);
+        basicObjectDataList.add(port_oad_data);
+
+        String comm_psd = archiveManageRow.getCommPassword();
+        if (TextUtils.isEmpty(comm_psd)) {
+            comm_psd = "00";
+        }
+        byte[] comm_psd_byte_array = DataConvertUtils.convertHexStringToByteArray(comm_psd, comm_psd.length(), false);
+        Protocol698Frame.Data comm_psd_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.OCTET_STRING_TYPE, comm_psd_byte_array);
+        basicObjectDataList.add(comm_psd_data);
+
+        byte rate_cnt_byte = (byte) archiveManageRow.getRateCnt();
+        Protocol698Frame.Data rate_cnt_data = new Protocol698Frame.Data(UNSIGNED_TYPE, rate_cnt_byte);
+        basicObjectDataList.add(rate_cnt_data);
+
+        byte user_type_byte = (byte) archiveManageRow.getUserType();
+        Protocol698Frame.Data user_type_data = new Protocol698Frame.Data(UNSIGNED_TYPE, user_type_byte);
+        basicObjectDataList.add(user_type_data);
+
+        pos = archiveManageRow.getLineConnectTypeIndex() & 0xFF;
+        Protocol698Frame.Data line_connect_type_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.ENUM_TYPE, (byte) pos);
+        basicObjectDataList.add(line_connect_type_data);
+
+        int rate_valtage_value = archiveManageRow.getRateVoltage();
+        Protocol698Frame.Data rate_voltage_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, rate_valtage_value);
+        basicObjectDataList.add(rate_voltage_data);
+
+        int rate_current_value = archiveManageRow.getRateCurrent();
+        Protocol698Frame.Data rate_current_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, rate_current_value);
+        basicObjectDataList.add(rate_current_data);
+
+        Protocol698Frame.Data basic_object_data = new Protocol698Frame.Data(STRUCTURE_TYPE, basicObjectDataList);
+
+        ArrayList<Protocol698Frame.Data> extended_object_data_array = new ArrayList<>();
+
+        String collector_address = archiveManageRow.getCollectorAddress();
+        if (TextUtils.isEmpty(collector_address)) {
+            collector_address = "00FFFFFFFFFFFF";
+        } else {
+            collector_address = "00" + collector_address;
+        }
+        Protocol698Frame.SERV_ADDR collectorServAddr = new Protocol698Frame.SERV_ADDR(
+                Protocol698Frame.ADDRESS_TYPE.SINGLE, false,
+                0, collector_address.length() / 2 + 1,
+                DataConvertUtils.convertHexStringToByteArray(collector_address, collector_address.length(), false));
+        Protocol698Frame.Data Collector_TSA = new Protocol698Frame.Data(Protocol698Frame.Data_Type.TSA_TYPE, collectorServAddr);
+        extended_object_data_array.add(Collector_TSA);
+
+        String asset_num = archiveManageRow.getAssetNum();
+        if (TextUtils.isEmpty(asset_num)) {
+            asset_num = "00";
+        }
+        Protocol698Frame.Data asset_num_data = new Protocol698Frame.Data(OCTET_STRING_TYPE,
+                DataConvertUtils.convertHexStringToByteArray(asset_num, asset_num.length(), false));
+        extended_object_data_array.add(asset_num_data);
+
+        int voltage_t_ratio_value = archiveManageRow.getVoltageTransRatio();
+        Protocol698Frame.Data voltage_t_ratio_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, voltage_t_ratio_value);
+        extended_object_data_array.add(voltage_t_ratio_data);
+
+        int current_t_ratio_value = archiveManageRow.getCurrentTransRatio();
         Protocol698Frame.Data current_t_ratio_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, current_t_ratio_value);
         extended_object_data_array.add(current_t_ratio_data);
         Protocol698Frame.Data extended_object_data = new Protocol698Frame.Data(STRUCTURE_TYPE, extended_object_data_array);

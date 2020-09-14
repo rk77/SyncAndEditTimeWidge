@@ -278,7 +278,7 @@ public class Protocol698Frame {
                         break;
                 }
 
-                for (int i = 0; i < addressLength; i++) {
+                for (int i = 0; i < addressLength - 1; i++) {
                     data[i + 1] = address[i];
                 }
 
@@ -338,9 +338,9 @@ public class Protocol698Frame {
             //this.data = data;
 
             if (data != null && data.length >= 2) {
-                int length = data[begin] & 0x0F;
-                if (length + 1 <= data.length) {
-                    this.addressLength = length;
+                int length = data[begin] & 0x0F; //地址字节数
+                if (length + 1 <= data.length - 1 - begin + 1) {
+                    this.addressLength = length + 1; //地址域中长度
                     this.data = DataConvertUtils.getSubByteArray(data, begin, begin + length);
                     if ((data[begin] & 0x20) == 0x00) {
                         this.hasExLogicAddress = false;
@@ -349,15 +349,14 @@ public class Protocol698Frame {
                         } else {
                             this.logicAddress = 1;
                         }
-                        this.address = new byte[this.addressLength - 1];
+                        this.address = new byte[this.addressLength - 1 -1];
                         for (int i = 0; i < address.length; i++) {
-                            this.address[i] = data[begin + 2 + i];
+                            this.address[i] = data[begin + 1 + 1 + i];
                         }
 
                     } else {
                         this.hasExLogicAddress = true;
-                        this.logicAddress = data[begin + 1];
-                        this.address = new byte[this.addressLength];
+                        this.address = new byte[this.addressLength - 1];
                         for (int i = 0; i < address.length; i++) {
                             this.address[i] = data[begin + 1 + i];
                         }
