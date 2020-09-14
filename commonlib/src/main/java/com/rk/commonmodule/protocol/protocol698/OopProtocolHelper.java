@@ -2246,6 +2246,7 @@ public class OopProtocolHelper {
         String commu_address = archiveManageRow.getCommAddress();
         if (TextUtils.isEmpty(commu_address)) {
             commu_address = "FFFFFFFFFFFF";
+            return null;
         } else {
             commu_address = commu_address;
         }
@@ -2327,6 +2328,7 @@ public class OopProtocolHelper {
         String collector_address = archiveManageRow.getCollectorAddress();
         if (TextUtils.isEmpty(collector_address)) {
             collector_address = "FFFFFFFFFFFF";
+            return null;
         } else {
             collector_address = collector_address;
         }
@@ -2378,7 +2380,7 @@ public class OopProtocolHelper {
         for (int i = 0; i < list.size(); i++) {
             ArchiveManageRow item = list.get(i);
             Protocol698Frame.Data archive_unit = OopProtocolHelper.achiveRowToData(item);
-            if (archive_unit.data != null) {
+            if (archive_unit != null && archive_unit.data != null) {
                 struc_data_list.add(archive_unit);
             }
         }
