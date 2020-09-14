@@ -2245,16 +2245,16 @@ public class OopProtocolHelper {
 
         String commu_address = archiveManageRow.getCommAddress();
         if (TextUtils.isEmpty(commu_address)) {
-            commu_address = "00FFFFFFFFFFFF";
+            commu_address = "FFFFFFFFFFFF";
         } else {
-            commu_address = "00" + commu_address;
+            commu_address = commu_address;
         }
         Protocol698Frame.SERV_ADDR servAddr = new Protocol698Frame.SERV_ADDR(
                 Protocol698Frame.ADDRESS_TYPE.SINGLE, false,
-                0, commu_address.length() / 2 + 1,
+                0, commu_address.length() / 2,
                 DataConvertUtils.convertHexStringToByteArray(commu_address, commu_address.length(), false));
-        Log.i(TAG, "achiveRowToData, Commu servAddr: " + DataConvertUtils.convertByteArrayToString(servAddr.data, false));
-        Protocol698Frame.Data TSA = new Protocol698Frame.Data(Protocol698Frame.Data_Type.TSA_TYPE, servAddr);
+        Log.i(TAG, "achiveRowToData, Commu servAddr tsa: " + DataConvertUtils.convertByteArrayToString(servAddr.tsa, false));
+        Protocol698Frame.Data TSA = new Protocol698Frame.Data(Protocol698Frame.Data_Type.TSA_TYPE, servAddr.tsa);
         Log.i(TAG, "achiveRowToData, Commu Addr: " + DataConvertUtils.convertByteArrayToString(TSA.data, false));
         basicObjectDataList.add(TSA);
 
@@ -2291,7 +2291,12 @@ public class OopProtocolHelper {
         if (TextUtils.isEmpty(comm_psd)) {
             comm_psd = "00";
         }
-        byte[] comm_psd_byte_array = DataConvertUtils.convertHexStringToByteArray(comm_psd, comm_psd.length(), false);
+        int comm_pasd_length = comm_psd.length();
+        if (comm_pasd_length % 2 != 0) {
+            comm_pasd_length = comm_pasd_length + 1;
+        }
+        byte[] comm_psd_byte_array = DataConvertUtils.convertHexStringToByteArray(comm_psd, comm_pasd_length, false);
+        Log.i(TAG, "achiveRowToData, comm psd: " + comm_psd +", commu password: " + DataConvertUtils.convertByteArrayToString(comm_psd_byte_array, false));
         Protocol698Frame.Data comm_psd_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.OCTET_STRING_TYPE, comm_psd_byte_array);
         basicObjectDataList.add(comm_psd_data);
 
@@ -2321,23 +2326,27 @@ public class OopProtocolHelper {
 
         String collector_address = archiveManageRow.getCollectorAddress();
         if (TextUtils.isEmpty(collector_address)) {
-            collector_address = "00FFFFFFFFFFFF";
+            collector_address = "FFFFFFFFFFFF";
         } else {
-            collector_address = "00" + collector_address;
+            collector_address = collector_address;
         }
         Protocol698Frame.SERV_ADDR collectorServAddr = new Protocol698Frame.SERV_ADDR(
                 Protocol698Frame.ADDRESS_TYPE.SINGLE, false,
-                0, collector_address.length() / 2 + 1,
+                0, collector_address.length() / 2,
                 DataConvertUtils.convertHexStringToByteArray(collector_address, collector_address.length(), false));
-        Protocol698Frame.Data Collector_TSA = new Protocol698Frame.Data(Protocol698Frame.Data_Type.TSA_TYPE, collectorServAddr);
+        Protocol698Frame.Data Collector_TSA = new Protocol698Frame.Data(Protocol698Frame.Data_Type.TSA_TYPE, collectorServAddr.tsa);
         extended_object_data_array.add(Collector_TSA);
 
         String asset_num = archiveManageRow.getAssetNum();
         if (TextUtils.isEmpty(asset_num)) {
             asset_num = "00";
         }
+        int asset_num_length = asset_num.length();
+        if (asset_num_length % 2 != 0) {
+            asset_num_length = asset_num_length + 1;
+        }
         Protocol698Frame.Data asset_num_data = new Protocol698Frame.Data(OCTET_STRING_TYPE,
-                DataConvertUtils.convertHexStringToByteArray(asset_num, asset_num.length(), false));
+                DataConvertUtils.convertHexStringToByteArray(asset_num, asset_num_length, false));
         extended_object_data_array.add(asset_num_data);
 
         int voltage_t_ratio_value = archiveManageRow.getVoltageTransRatio();
@@ -2359,6 +2368,46 @@ public class OopProtocolHelper {
 
         Protocol698Frame.Data collect_archive_config_unit_data = new Protocol698Frame.Data(STRUCTURE_TYPE, collect_archive_config_unit_data_list);
         return collect_archive_config_unit_data;
+    }
+
+    public static byte[] makeAddBatchArchiveFrame(List<ArchiveManageRow> list) {
+        if (list == null || list.size() <= 0) {
+            return null;
+        }
+        ArrayList<Protocol698Frame.Data> struc_data_list = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            ArchiveManageRow item = list.get(i);
+            Protocol698Frame.Data archive_unit = OopProtocolHelper.achiveRowToData(item);
+            if (archive_unit.data != null) {
+                struc_data_list.add(archive_unit);
+            }
+        }
+
+        Log.i(TAG, "addBatchArchive, struct data list size: " + struc_data_list.size());
+        Protocol698Frame.Data struc_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.ARRAY_TYPE, struc_data_list);
+        Log.i(TAG, "addBatchArchive, archive_unit: " + DataConvertUtils.convertByteArrayToString(struc_data.data, false));
+
+        Protocol698Frame.OMD omd = new Protocol698Frame.OMD(new byte[]{(byte)0x60, (byte)0x00, (byte)0x80, (byte)0x00});
+
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+        Map map = new HashMap();
+        map.put(ProtocolConstant.OMD_KEY, omd);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+        Protocol698Frame.Data data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.NULL_TYPE, null);
+        map.put(ProtocolConstant.OMD_PARAM_KEY, struc_data);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.ACTION_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.ACTION_REQUEST.ACTION_REQUEST_NORMAL.CLASS_ID, map);
+        Log.i(TAG, "addBatchArchive, ctrlArea: " + DataConvertUtils.convertByteToString(ctrlArea.data));
+        Log.i(TAG, "addBatchArchive, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "addBatchArchive, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+
+        return frame;
     }
 
     public Protocol698Frame.Data achiveMapToData(Map map) {
@@ -2445,15 +2494,17 @@ public class OopProtocolHelper {
 
         String collector_address = (String) map.get(COLLECTOR_ADDRESS_KEY);
         if (TextUtils.isEmpty(collector_address)) {
-            collector_address = "00FFFFFFFFFFFF";
+            collector_address = "FFFFFFFFFFFF";
         } else {
-            collector_address = "00" + collector_address;
+            collector_address = collector_address;
         }
         Protocol698Frame.SERV_ADDR collectorServAddr = new Protocol698Frame.SERV_ADDR(
                 Protocol698Frame.ADDRESS_TYPE.SINGLE, false,
-                0, collector_address.length() / 2 + 1,
+                0, collector_address.length() / 2,
                 DataConvertUtils.convertHexStringToByteArray(collector_address, collector_address.length(), false));
-        Protocol698Frame.Data Collector_TSA = new Protocol698Frame.Data(Protocol698Frame.Data_Type.TSA_TYPE, collectorServAddr);
+        byte[] tsa_bytes = collectorServAddr.tsa;
+        Log.i("AX", "tsa_bytes: " + DataConvertUtils.convertByteArrayToString(tsa_bytes, false));
+        Protocol698Frame.Data Collector_TSA = new Protocol698Frame.Data(Protocol698Frame.Data_Type.TSA_TYPE, tsa_bytes);
         extended_object_data_array.add(Collector_TSA);
 
         String asset_num = (String) map.get(ASSET_NUM_KEY);

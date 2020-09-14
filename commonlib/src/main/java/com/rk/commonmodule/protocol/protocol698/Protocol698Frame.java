@@ -214,7 +214,7 @@ public class Protocol698Frame {
         public Length_Area(byte[] data) {
             this.data = data;
             if (data != null && data.length == 2) {
-                this.length = (data[1] & 0x3F) * 256 + data[0];
+                this.length = (data[1] & 0x3F) * 256 + (data[0] & 0xFF);
 
                 if ((data[1] & 0x40) == 0x00) {
                     this.frame_unit = FRAME_UNIT.BYTE_UNIT;
@@ -1339,7 +1339,7 @@ public class Protocol698Frame {
                         this.data = new byte[1 + oad.data.length];
                         for (int i = 0; i < this.data.length; i++) {
                             if (i == 0) {
-                                this.data[i] = (byte) 85;
+                                this.data[i] = (byte) 81;
                                 continue;
                             }
                             this.data[i] = oad.data[i - 1];
