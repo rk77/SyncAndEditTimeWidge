@@ -596,7 +596,7 @@ public class Protocol698Frame {
                         break;
 
                 }
-                this.delayTime = data[2] * 256 + data[1];
+                this.delayTime = data[2] * 256 + (data[1] & 0xFF);
 
             }
         }

@@ -702,7 +702,7 @@ public enum Protocol698 {
                                             if (9 + lengthSize <= apduFrame.length - 1) {
                                                 int length = 0;
                                                 for (int i = 0; i < lengthSize; i++) {
-                                                    length = length * 256 + apduFrame[10 + i];
+                                                    length = length * 256 + (apduFrame[10 + i] & 0xFF);
                                                 }
                                                 if (9 + lengthSize + length <= apduFrame.length - 1) {
                                                     map.put("value", DataConvertUtils.convertByteArrayToString(
@@ -757,7 +757,7 @@ public enum Protocol698 {
                                             if (9 + lengthSize <= apduFrame.length - 1) {
                                                 int length = 0;
                                                 for (int i = 0; i < lengthSize; i++) {
-                                                    length = length * 256 + apduFrame[10 + i];
+                                                    length = length * 256 + (apduFrame[10 + i] & 0xFF);
                                                 }
                                                 if (9 + lengthSize + length <= apduFrame.length - 1) {
                                                     //TODO:
@@ -995,7 +995,7 @@ public enum Protocol698 {
             if (begin + lengthSize <= frame.length - 1) {
                 int length = 0;
                 for (int i = 0; i < lengthSize; i++) {
-                    length = length * 256 + frame[begin + 1 + i];
+                    length = length * 256 + (frame[begin + 1 + i] & 0xFF);
                 }
                 if (begin + lengthSize + length <= frame.length - 1) {
                     return DataConvertUtils.getSubByteArray(frame, begin + lengthSize + 1, begin + lengthSize + length);
