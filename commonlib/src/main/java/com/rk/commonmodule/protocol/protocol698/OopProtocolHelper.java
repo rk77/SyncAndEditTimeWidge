@@ -2248,7 +2248,9 @@ public class OopProtocolHelper {
             commu_address = "FFFFFFFFFFFF";
             return null;
         } else {
-            commu_address = commu_address;
+            if (commu_address.length() % 2 != 0) {
+                commu_address = "0" + commu_address;
+            }
         }
         Protocol698Frame.SERV_ADDR servAddr = new Protocol698Frame.SERV_ADDR(
                 Protocol698Frame.ADDRESS_TYPE.SINGLE, false,
@@ -2330,7 +2332,9 @@ public class OopProtocolHelper {
             collector_address = "FFFFFFFFFFFF";
             return null;
         } else {
-            collector_address = collector_address;
+            if (collector_address.length() % 2 != 0) {
+                collector_address = "0" + collector_address;
+            }
         }
         Protocol698Frame.SERV_ADDR collectorServAddr = new Protocol698Frame.SERV_ADDR(
                 Protocol698Frame.ADDRESS_TYPE.SINGLE, false,

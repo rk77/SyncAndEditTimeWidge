@@ -234,6 +234,7 @@
                 android:minWidth="8dp"
                 android:padding="0dp"
                 android:singleLine="true"
+                android:digits="ABCDEFabcdef0123456789"
                 android:textSize="16dp" />
 
         </LinearLayout>
@@ -262,6 +263,7 @@
                 android:background="@color/gray_bg"
                 android:minWidth="8dp"
                 android:padding="0dp"
+                android:inputType="numberDecimal"
                 android:singleLine="true"
                 android:textSize="16dp" />
 
@@ -294,6 +296,7 @@
                 android:minWidth="8dp"
                 android:padding="0dp"
                 android:singleLine="true"
+                android:inputType="numberDecimal"
                 android:textSize="16dp" />
 
             <TextView
@@ -314,6 +317,7 @@
                 android:minWidth="8dp"
                 android:padding="0dp"
                 android:singleLine="true"
+                android:inputType="numberDecimal"
                 android:textSize="16dp" />
 
 
@@ -345,6 +349,7 @@
                 android:minWidth="8dp"
                 android:padding="0dp"
                 android:singleLine="true"
+                android:digits="ABCDEFabcdef0123456789"
                 android:textSize="16dp" />
 
             <TextView
@@ -354,6 +359,7 @@
                 android:minWidth="8dp"
                 android:singleLine="true"
                 android:text="资产号:"
+                android:digits="ABCDEFabcdef0123456789"
                 android:textSize="16dp" />
 
             <EditText
@@ -396,6 +402,7 @@
                 android:minWidth="8dp"
                 android:padding="0dp"
                 android:singleLine="true"
+                android:inputType="numberDecimal"
                 android:textSize="16dp" />
 
             <TextView
@@ -416,6 +423,7 @@
                 android:minWidth="8dp"
                 android:padding="0dp"
                 android:singleLine="true"
+                android:inputType="numberDecimal"
                 android:textSize="16dp" />
 
         </LinearLayout>

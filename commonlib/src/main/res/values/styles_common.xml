@@ -32,4 +32,15 @@
         <item name="android:textColor">@drawable/txt_select_selector</item>
     </style>
 
+    <style name="Tablayoutstyle" parent="Base.Widget.Design.TabLayout">
+        <item name="tabBackground">@android:color/transparent</item>
+        <item name="tabIndicatorColor">@color/blue</item>
+        <item name="tabIndicatorHeight">2dp</item>
+        <item name="tabSelectedTextColor">@color/blue</item>
+    </style>
+
+    <style name="tabLayout_style" parent="TextAppearance.Design.Tab">
+        <item name="android:textSize">16dp</item>
+    </style>
+
 </resources>
