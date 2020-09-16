@@ -2390,6 +2390,9 @@ public class OopProtocolHelper {
         }
 
         Log.i(TAG, "addBatchArchive, struct data list size: " + struc_data_list.size());
+        if (struc_data_list.size() <= 0) {
+            return null;
+        }
         Protocol698Frame.Data struc_data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.ARRAY_TYPE, struc_data_list);
         Log.i(TAG, "addBatchArchive, archive_unit: " + DataConvertUtils.convertByteArrayToString(struc_data.data, false));
 

@@ -1848,4 +1848,164 @@ public class Protocol698Frame {
             }
         }
     }
+
+    public static class Regin {
+        public int unit;
+        public Data beginData;
+        public Data endData;
+        public byte[] data;
+
+        public Regin(int unit, Data beginData, Data endData) {
+            if (unit >= 0 && unit <= 3 && beginData != null && beginData.data != null && endData != null && endData.data != null) {
+                this.unit = unit;
+                this.beginData = beginData;
+                this.endData = endData;
+                data = new byte[1 + beginData.data.length + endData.data.length];
+                data[0] = (byte) unit;
+                System.arraycopy(beginData.data, 0, data, 1, beginData.data.length);
+                System.arraycopy(endData.data, 0, data, 1 + beginData.data.length, endData.data.length);
+            }
+        }
+
+        public Regin(byte[] frame, int begin) {
+            if (frame == null || frame.length <= 0) {
+                return;
+            }
+
+            this.unit = frame[begin] & 0xFF;
+
+            Data beginData = new Data(frame, begin + 1);
+            if (beginData.data == null || beginData.data.length <= 0) {
+                return;
+            }
+            Data endData = new Data(frame, begin + 1 + beginData.data.length);
+            if (endData.data == null || endData.data.length <= 0) {
+                return;
+            }
+            this.beginData = beginData;
+            this.endData = endData;
+            this.data = new byte[1 + beginData.data.length + endData.data.length];
+            System.arraycopy(frame, begin, this.data, 0, this.data.length);
+        }
+    }
+
+    public static class MS {
+        public int type;
+        public ArrayList<Object> objectArrayList;
+        public byte[] data;
+
+        public MS(int type, ArrayList list) {
+            if (type >= 0 && type <= 7) {
+                this.type = type;
+                this.objectArrayList = list;
+
+                switch (type) {
+                    case 0:
+                        this.data = new byte[1];
+                        this.data[0] = (byte) 0;
+                        break;
+                    case 1:
+                        this.data = new byte[1];
+                        this.data[0] = (byte) 1;
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        if (list != null && list.size() > 0) {
+                            ArrayList<Byte> bytes = new ArrayList<>();
+                            bytes.add((byte) 4);
+                            bytes.add((byte) (list.size()));
+
+                            int cnt = 0;
+                            for (int i = 0; i < list.size(); i++) {
+                                Object item = list.get(i);
+                                if (item instanceof Integer) {
+                                    int value = (int) item;
+                                    bytes.add((byte)((value >> 8) & 0xFF));
+                                    bytes.add((byte)(value & 0xFF));
+                                    cnt = cnt + 1;
+                                }
+                            }
+
+                            bytes.add(1, (byte)cnt);
+
+                            this.data = new byte[bytes.size()];
+                            for (int i = 0; i < this.data.length; i++) {
+                                this.data[i] = bytes.get(i);
+                            }
+
+                        }
+                        break;
+                    case 5:
+                        break;
+                    case 6:
+                        break;
+                    case 7:
+                        break;
+                }
+            }
+
+        }
+
+        public MS(byte[] frame, int begin) {
+            if (frame == null || frame.length <= 0) {
+                return;
+            }
+
+            switch (frame[begin] & 0xFF) {
+                case 0:
+                    this.type = 0;
+                    this.data = new byte[1];
+                    this.data[0] = (byte) 0;
+                    break;
+                case 1:
+                    this.type = 1;
+                    this.data = new byte[1];
+                    this.data[0] = (byte) 1;
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    ArrayList<Byte> bytes = new ArrayList<>();
+                    this.type = 4;
+                    bytes.add((byte) 4);
+                    ArrayList<Object> integers = new ArrayList<>();
+                    if (begin + 1 > frame.length - 1) {
+                        return;
+                    }
+                    int cnt = frame[begin + 1] & 0xFF;
+                    bytes.add((byte) cnt);
+                    if (begin + 1 + cnt * 2 > frame.length - 1) {
+                        return;
+                    }
+                    for (int i = 0; i < cnt; i++) {
+                        byte b_0 = frame[begin + 1 + 2 * i + 1];
+                        byte b_1 = frame[begin + 1 + 2 * i + 2];
+                        bytes.add(b_0);
+                        bytes.add(b_1);
+                        int value = 0x0000 | ((b_0 << 8) & 0xFF00);
+                        value = value | (b_1 & 0x00FF);
+                        integers.add(value);
+                    }
+                    this.objectArrayList = integers;
+
+                    this.data = new byte[bytes.size()];
+                    for (int i = 0; i < this.data.length; i++) {
+                        this.data[i] = bytes.get(i);
+                    }
+                    break;
+                case 5:
+                    break;
+                case 6:
+                    break;
+                case 7:
+                    break;
+            }
+
+        }
+    }
 }
