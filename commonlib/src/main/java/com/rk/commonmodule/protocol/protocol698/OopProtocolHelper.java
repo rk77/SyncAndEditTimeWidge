@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.ARRAY_TYPE;
+import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.CSD_TYPE;
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE;
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.OCTET_STRING_TYPE;
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.STRUCTURE_TYPE;
@@ -27,6 +28,7 @@ import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.A_RECORD
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.A_RECORD_ROW_LIST_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DAR_KEY;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.DATA_KEY;
+import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.EVENT_RECORD_MAP;
 import static com.rk.commonmodule.protocol.protocol698.ProtocolConstant.RCSD_KEY;
 
 public class OopProtocolHelper {
@@ -2551,6 +2553,131 @@ public class OopProtocolHelper {
 
         Protocol698Frame.Data collect_archive_config_unit_data = new Protocol698Frame.Data(STRUCTURE_TYPE, collect_archive_config_unit_data_list);
         return collect_archive_config_unit_data;
+    }
+
+    public static byte[] makeReadPowerFrame(int last, ArrayList<Integer> serial_num_list) {
+        Protocol698Frame.OAD oad = new Protocol698Frame.OAD(new byte[]{(byte)0x60, (byte)0x12, (byte)0x03, (byte)0x00});
+
+        Protocol698Frame.MS ms = new Protocol698Frame.MS(4, serial_num_list);
+        Protocol698Frame.Selector10 selector10 = new Protocol698Frame.Selector10(last, ms);
+        Protocol698Frame.RSD rsd = new Protocol698Frame.RSD(10, selector10);
+
+        ArrayList<Protocol698Frame.CSD> csds = new ArrayList<>();
+
+        Protocol698Frame.OAD target_serv_addr_oad = new Protocol698Frame.OAD(new byte[]{(byte)0x20, (byte)0x2A, (byte)0x02, (byte)0x00});
+        Protocol698Frame.CSD target_serv_addr_csd = new Protocol698Frame.CSD(0, target_serv_addr_oad);
+        csds.add(target_serv_addr_csd);
+
+        Protocol698Frame.OAD collect_start_time_tag_oad = new Protocol698Frame.OAD(new byte[]{(byte)0x60, (byte)0x40, (byte)0x02, (byte)0x00});
+        Protocol698Frame.CSD collect_start_time_tag_csd = new Protocol698Frame.CSD(0, collect_start_time_tag_oad);
+        csds.add(collect_start_time_tag_csd);
+
+        Protocol698Frame.OAD collect_succ_time_tag_oad = new Protocol698Frame.OAD(new byte[]{(byte)0x60, (byte)0x41, (byte)0x02, (byte)0x00});
+        Protocol698Frame.CSD collect_succ_time_tag_csd = new Protocol698Frame.CSD(0, collect_succ_time_tag_oad);
+        csds.add(collect_succ_time_tag_csd);
+
+        Protocol698Frame.OAD collect_store_time_tag_oad = new Protocol698Frame.OAD(new byte[]{(byte)0x60, (byte)0x42, (byte)0x02, (byte)0x00});
+        Protocol698Frame.CSD collect_store_time_tag_csd = new Protocol698Frame.CSD(0, collect_store_time_tag_oad);
+        csds.add(collect_store_time_tag_csd);
+
+        Protocol698Frame.OAD day_freezing_oad = new Protocol698Frame.OAD(new byte[]{(byte)0x50, (byte)0x04, (byte)0x02, (byte)0x00});
+        ArrayList<Protocol698Frame.OAD> read_power_oad_list = new ArrayList<>();
+        Protocol698Frame.OAD positive_power_oad = new Protocol698Frame.OAD(new byte[]{(byte)0x00, (byte)0x10, (byte)0x02, (byte)0x00});
+        Protocol698Frame.OAD negative_power_oad = new Protocol698Frame.OAD(new byte[]{(byte)0x00, (byte)0x20, (byte)0x02, (byte)0x00});
+        read_power_oad_list.add(positive_power_oad);
+        read_power_oad_list.add(negative_power_oad);
+        Protocol698Frame.ROAD day_freezing_road = new Protocol698Frame.ROAD(day_freezing_oad, read_power_oad_list);
+        Protocol698Frame.CSD day_freeezing_csd = new Protocol698Frame.CSD(1, day_freezing_road);
+        csds.add(day_freeezing_csd);
+
+        Protocol698Frame.RCSD rcsd = new Protocol698Frame.RCSD(csds);
+
+        Protocol698Frame.GetRecord getRecord = new Protocol698Frame.GetRecord(oad, rsd, rcsd);
+        Log.i(TAG, "makeReadPowerFrame, getRecord: " + DataConvertUtils.convertByteArrayToString(getRecord.data, false));
+
+
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+        Map map = new HashMap();
+        map.put(ProtocolConstant.GET_RECORD_KEY, getRecord);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.GET_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.GET_REQUEST.GET_REQUEST_RECORD.CLASS_ID, map);
+        Log.i(TAG, "makeReadPowerFrame, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "makeReadPowerFrame, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+        return frame;
+
+    }
+
+    public static byte[] makeEventReadFrame(String event_oad_string, int last) {
+        Protocol698Frame.OAD oad = new Protocol698Frame.OAD(DataConvertUtils.convertHexStringToByteArray(event_oad_string, event_oad_string.length(), false));
+
+        Protocol698Frame.Selector9 selector9 = new Protocol698Frame.Selector9(last);
+        Protocol698Frame.RSD rsd = new Protocol698Frame.RSD(9, selector9);
+
+        ArrayList<Protocol698Frame.CSD> csds = new ArrayList<>();
+
+        for (Map.Entry<String, String> entry : EVENT_RECORD_MAP.entrySet()) {
+            //System.out.println("Key: "+ entry.getKey()+ " Value: "+entry.getValue());
+            String oad_s = entry.getValue();
+            Protocol698Frame.OAD oad_new = new Protocol698Frame.OAD(DataConvertUtils.convertHexStringToByteArray(oad_s, oad_s.length(), false));
+            Protocol698Frame.CSD csd_new = new Protocol698Frame.CSD(0, oad_new);
+            csds.add(csd_new);
+        }
+
+        Protocol698Frame.RCSD rcsd = new Protocol698Frame.RCSD(csds);
+
+        Protocol698Frame.GetRecord getRecord = new Protocol698Frame.GetRecord(oad, rsd, rcsd);
+        Log.i(TAG, "makeEventReadFrame, getRecord: " + DataConvertUtils.convertByteArrayToString(getRecord.data, false));
+
+
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+        Map map = new HashMap();
+        map.put(ProtocolConstant.GET_RECORD_KEY, getRecord);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.GET_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.GET_REQUEST.GET_REQUEST_RECORD.CLASS_ID, map);
+        Log.i(TAG, "makeEventReadFrame, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "makeEventReadFrame, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+        return frame;
+
+    }
+
+
+    public static ArrayList<Protocol698Frame.A_RecordRow> parseEventReadFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        ArrayList<Map> resultMap = new ArrayList<>();
+        boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        Log.i(TAG, "parseEventReadFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
+        if (isOK) {
+            Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+                    Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
+            if (map == null) {
+                Log.i(TAG, "1");
+                return null;
+            }
+            if (map.containsKey(DAR_KEY)) {
+                return null;
+            } else if (map.containsKey(A_RECORD_ROW_LIST_KEY)) {
+                ArrayList<Protocol698Frame.A_RecordRow> a_recordRowArrayList = (ArrayList<Protocol698Frame.A_RecordRow>) map.get(A_RECORD_ROW_LIST_KEY);
+                return a_recordRowArrayList;
+
+            }
+        }
+        return null;
     }
 
 }

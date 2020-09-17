@@ -646,6 +646,12 @@ public class Protocol698Frame {
                     }
                     break;
                 case 10:
+                    if (obj != null && obj instanceof Selector10) {
+                        Selector10 src = ((Selector10) obj);
+                        this.data = new byte[1 + src.data.length];
+                        this.data[0] = (byte)(10 & 0xFF);
+                        System.arraycopy(src.data, 0, this.data, 1, src.data.length);
+                    }
                     break;
             }
 
@@ -689,6 +695,13 @@ public class Protocol698Frame {
                         }
                         break;
                     case 10:
+                        this.type = 10;
+                        Selector10 selector10 = new Selector10(data, begin + 1);
+                        if (selector10.data == null || selector10.data.length <= 0) {
+                            return;
+                        }
+                        this.data = new byte[1 + selector10.data.length];
+                        System.arraycopy(data, begin, this.data, 0, this.data.length);
                         break;
                 }
             }
@@ -765,6 +778,36 @@ public class Protocol698Frame {
         }
     }
 
+    public static class Selector10 {
+        public int last;
+        public MS ms;
+        public byte[] data;
+        public Selector10(int last, MS ms) {
+            this.ms = ms;
+            this.last = last;
+            if (ms.data != null) {
+                this.data = new byte[1 + ms.data.length];
+                this.data[0] = (byte) last;
+                System.arraycopy(ms.data, 0, this.data, 1, ms.data.length);
+            }
+
+        }
+
+        public Selector10(byte[] data, int begin) {
+            if (data == null || data.length <= 0 || begin > data.length - 1) {
+                return;
+            }
+            this.last = data[begin] & 0xFF;
+            MS ms = new MS(data, begin + 1);
+            if (ms.data == null || ms.data.length <= 0) {
+                return;
+            }
+            this.ms = ms;
+            this.data = new byte[1 + ms.data.length];
+            System.arraycopy(data, begin, this.data, 0, this.data.length);
+        }
+    }
+
     public static class ROAD {
         public OAD oad;
         public ArrayList<OAD> oadArrayList = new ArrayList<>();
@@ -786,7 +829,7 @@ public class Protocol698Frame {
                     OAD oadItem = oadArrayList.get(i);
                     if (oadItem != null && oadItem.data != null && oadItem.data.length > 0) {
                         for (int j = 0; j < oadItem.data.length; j++) {
-                            bytes.add(oad.data[j]);
+                            bytes.add(oadItem.data[j]);
                         }
                     }
                 }
@@ -1916,15 +1959,17 @@ public class Protocol698Frame {
                         if (list != null && list.size() > 0) {
                             ArrayList<Byte> bytes = new ArrayList<>();
                             bytes.add((byte) 4);
-                            bytes.add((byte) (list.size()));
 
                             int cnt = 0;
                             for (int i = 0; i < list.size(); i++) {
                                 Object item = list.get(i);
                                 if (item instanceof Integer) {
                                     int value = (int) item;
+                                    Log.i(TAG, "MS, value: " + value);
                                     bytes.add((byte)((value >> 8) & 0xFF));
+                                    Log.i(TAG, "MS, byte 0: " + (byte)((value >> 8) & 0xFF));
                                     bytes.add((byte)(value & 0xFF));
+                                    Log.i(TAG, "MS, byte 1: " + (byte)(value & 0xFF));
                                     cnt = cnt + 1;
                                 }
                             }

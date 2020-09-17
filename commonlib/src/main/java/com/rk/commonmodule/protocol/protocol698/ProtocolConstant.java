@@ -1,5 +1,8 @@
 package com.rk.commonmodule.protocol.protocol698;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ProtocolConstant {
     public final static String PIID_KEY = "PIID";
     public final static String PIID_ACD_KEY = "PIID_ACD_KEY";
@@ -197,4 +200,47 @@ public class ProtocolConstant {
         0xf78f, 0xe606, 0xd49d, 0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330,
         0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
     };
+
+    public static final Map<String, String> TERMINAL_EVENT_MAP = new HashMap<String, String>() {{
+        put("终端初始化", "31000200");
+        put("终端版本变更", "31010200");
+        put("状态量变位", "31040200");
+        put("电能表时钟超差", "31050200");
+        put("终端停/上电", "31060200");
+        put("直流模拟量越上限", "31070200");
+        put("直流模拟量越下限", "31080200");
+        put("消息认证错误", "31090200");
+        put("设备故障记录", "310A0200");
+        put("电能表示度下降", "310B0200");
+        put("电能量超差", "310C0200");
+        put("电能表飞走", "310D0200");
+        put("电能表停走", "310E0200");
+        put("抄表失败", "310F0200");
+        put("月通信流里超限", "31100200");
+        put("发现未知电能表", "31110200");
+        put("跨台区电能表事件", "31120200");
+        put("终端对时事件", "31140200");
+        put("遥控跳闸记录", "31150200");
+        put("有功总电能量差动越限事件记录", "31160200");
+        put("输出回路开关接入状态变位记录", "31170200");
+        put("终端编程记录", "31180200");
+        put("终端电流回路异常事件", "31190200");
+        put("电能表在网状态切换事件", "311A0200");
+        put("终端对电表校时记录", "311B0200");
+        put("电能表数据变更监控记录", "311C0200");
+        put("通信模块变更事件", "30300200");
+    }};
+
+    public static final Map<String, String> EVENT_RECORD_MAP = new HashMap<String, String>() {{
+        put("事件记录序号", "20220200");
+        put("事件发生时间", "201E0200");
+        put("事件结束时间", "20200200");
+        put("事件发生源", "20240200");
+        put("事件上报状态", "33000200");
+    }};
+
+    public static final Map<String, String> CHANNEL_OAD_MAP = new HashMap<String, String>() {{
+        put("45000200", "公网通信模块1");
+        put("45100200", "以太网通信模块1");
+    }};
 }

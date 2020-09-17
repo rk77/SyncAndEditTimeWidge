@@ -491,11 +491,12 @@ public class BluetoothInstance {
                 byte[] subFrame = DataConvertUtils.getSubByteArray(frame, begin, end);
                 Log.i(TAG, "sendAndReceiveSync, total: " + frame.length + ", begin: " + begin + ", end: " + end
                         + ", sub frame: " + DataConvertUtils.convertByteArrayToString(subFrame, false));
-                mWriteCharacteristic.setValue(subFrame);
-                mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
-                Log.i("AX", "send chara: " + mWriteCharacteristic);
+
                 synchronized (mWriteSync) {
                     try {
+                        mWriteCharacteristic.setValue(subFrame);
+                        mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
+                        Log.i("AX", "send chara: " + mWriteCharacteristic);
                         mWriteSync.wait(WAIT_TIMEOUT);
                     } catch (Exception e) {
                         Log.e(TAG, "sendAndReceiveSync, wait for writing error: " + e.getMessage());
