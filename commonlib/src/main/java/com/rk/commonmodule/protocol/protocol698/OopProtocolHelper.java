@@ -1592,6 +1592,42 @@ public class OopProtocolHelper {
         return frame;
     }
 
+    public static byte[] makeSetRequestNormalFrame(Protocol698Frame.Data data, Protocol698Frame.OAD oad) {
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+        Map map = new HashMap();
+        map.put(ProtocolConstant.OAD_KEY, oad);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+        map.put(ProtocolConstant.DATA_KEY, data);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.SET_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.SET_REQUEST.SET_REQUEST_NORMAL.CLASS_ID, map);
+        Log.i(TAG, "makeSetRequestNormalFrame, ctrlArea: " + DataConvertUtils.convertByteToString(ctrlArea.data));
+        Log.i(TAG, "makeSetRequestNormalFrame, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "makeSetRequestNormalFrame, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+
+        Log.i(TAG, "makeSetRequestNormal, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
+        return frame;
+    }
+
+    public static byte[] makeSetAddressFrame(String address) {
+        if (TextUtils.isEmpty(address)) {
+            return null;
+        }
+        if (address.length() % 2 != 0) {
+            address = "0" + address;
+        }
+        byte[] oad_bytes = new byte[]{(byte)0x40, (byte)0x01, (byte)0x02, (byte)0x00};
+        Protocol698Frame.OAD oad = new Protocol698Frame.OAD(oad_bytes);
+        Protocol698Frame.Data data = new Protocol698Frame.Data(OCTET_STRING_TYPE, DataConvertUtils.convertHexStringToByteArray(address, address.length(), false));
+        return makeSetRequestNormalFrame(data, oad);
+    }
+
     public final static String WORK_MODE_KEY = "work_mode";
     public final static String ONLINE_WAY_KEY = "online_way";
     public final static String LINK_WAY_KEY = "link_way";
@@ -1709,6 +1745,26 @@ public class OopProtocolHelper {
         byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
         Log.i(TAG, "makeRequestNormalFrame, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
         return frame;
+    }
+
+    public static String parseAddressFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        ArrayList<String> resultMap = new ArrayList<>();
+        boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        Log.i(TAG, "parseAddressFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
+        if (isOK) {
+            Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+                    Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
+            if (map != null && map.containsKey("value") && map.get("value") != null) {
+                String address = (String) map.get("value");
+                Log.i(TAG, "parseAddressFrame, address: " + address);
+                return address;
+            }
+        }
+        return null;
+
     }
 
     public static ArrayList<String> parseMasterNetParamForWirelessFrame(byte[] frame) {
