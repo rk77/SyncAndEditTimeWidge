@@ -71,6 +71,8 @@ public class BluetoothInstance {
 
     private ILeScanVallback mLeScanListener;
 
+    private boolean mIsConnected = false;
+
     public interface ILeScanVallback {
         void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord);
     }
@@ -90,9 +92,11 @@ public class BluetoothInstance {
             String intentAction;
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 Log.i(TAG, "onConnectionStateChange, Connected to GATT server.");
+                mIsConnected = true;
                 broadcastUpdate(ACTION_GATT_CONNECTED);
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.i(TAG, "onConnectionStateChange, Disconnected from GATT server.");
+                mIsConnected = false;
                 broadcastUpdate(ACTION_GATT_DISCONNECTED);
             }
         }
@@ -334,7 +338,7 @@ public class BluetoothInstance {
         /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback, BluetoothDevice.TRANSPORT_LE);
         } else {*/
-            mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback);
+            mBluetoothGatt = device.connectGatt(sContext, true, mGattCallback);
         //}
 
         Log.d(TAG, "connect, Trying to create a new connection.");
@@ -365,6 +369,15 @@ public class BluetoothInstance {
         mWriteCharacteristic = null;
         mCommunicationService = null;
         mBluetoothGatt = null;
+        mIsConnected = false;
+        mBluetoothDeviceAddress = null;
+    }
+
+    public boolean isDeviceConnected(String deviceAddr) {
+        if (deviceAddr != null && deviceAddr.equals(mBluetoothDeviceAddress)) {
+            return mIsConnected;
+        }
+        return false;
     }
 
     public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
@@ -431,15 +444,15 @@ public class BluetoothInstance {
     public void getServicesAndCharacteristics() {
         List<BluetoothGattService> services = getSupportedGattServices();
         for (BluetoothGattService service : services) {
-            Log.i(TAG, "getServicesAndCharacteristics, service uuid: " + service.getUuid().toString());
+            //Log.i(TAG, "getServicesAndCharacteristics, service uuid: " + service.getUuid().toString());
             if (SERVICE_COMMUNICATION_UUID.equals(service.getUuid().toString())) {
                 mCommunicationService = service;
-                Log.i("AX", "mCommunicationService: " + mCommunicationService);
+                //Log.i("AX", "mCommunicationService: " + mCommunicationService);
             }
             List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
             for (BluetoothGattCharacteristic characteristic : characteristics) {
-                Log.i(TAG, "getServicesAndCharacteristics, characteristic uuid: " + characteristic.getUuid().toString()
-                        + ", property : " + getCharacteristicProperty(characteristic.getProperties()));
+                //Log.i(TAG, "getServicesAndCharacteristics, characteristic uuid: " + characteristic.getUuid().toString()
+                //        + ", property : " + getCharacteristicProperty(characteristic.getProperties()));
                 if (CHARACTERISTIC_WRITE_UUID.equals(characteristic.getUuid().toString())) {
                     mWriteCharacteristic = characteristic;
                 } else if (CHARACTERISTIC_NOTIFY_UUID.equals(characteristic.getUuid().toString())) {
