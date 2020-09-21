@@ -63,6 +63,7 @@ public class BluetoothInstance {
 
     private static final int MTU = 247;
     private static final long WAIT_TIMEOUT = 3000;
+    private static final long RECV_WAIT_TIMEOUT = 20000;
 
     private static Context sContext;
     private BluetoothAdapter mBluetoothAdapter;
@@ -522,7 +523,7 @@ public class BluetoothInstance {
         // wait for finishing receiving message
         synchronized (mReadSync) {
             try {
-                mReadSync.wait(WAIT_TIMEOUT);
+                mReadSync.wait(RECV_WAIT_TIMEOUT);
             } catch (Exception e) {
                 Log.e(TAG, "sendAndReceiveSync, wait for reading error: " + e.getMessage());
             }

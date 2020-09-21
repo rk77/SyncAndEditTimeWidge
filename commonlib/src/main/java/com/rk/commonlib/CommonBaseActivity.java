@@ -24,6 +24,7 @@ public abstract class CommonBaseActivity extends Activity {
     public UiHandler mUiHandler;
 
     protected static final int SHOW_OR_DISMISS_LOADING_MSG = 0;
+    protected static final int SHOW_TOAST_MSG = 1;
 
     protected class UiHandler extends Handler {
 
@@ -37,6 +38,9 @@ public abstract class CommonBaseActivity extends Activity {
                 case SHOW_OR_DISMISS_LOADING_MSG:
                     boolean isShow = (boolean) msg.obj;
                     showLoading(isShow);
+                    break;
+                case SHOW_TOAST_MSG:
+                    showToast(msg.obj);
                     break;
                 default:
                     handleUiMessage(msg);

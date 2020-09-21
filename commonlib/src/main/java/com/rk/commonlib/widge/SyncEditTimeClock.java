@@ -202,12 +202,17 @@ public class SyncEditTimeClock extends RelativeLayout {
         if (hour < 10) {
             sb.append("0" + hour);
         } else {
-            sb.append(hour);
+            sb.append(hour + "");
+        }
+        if (minute < 10) {
+            sb.append("0" + minute);
+        } else {
+            sb.append(minute + "");
         }
         if (second < 10) {
             sb.append("0" + second);
         } else {
-            sb.append(second);
+            sb.append(second + "");
         }
         return sb.toString();
     }

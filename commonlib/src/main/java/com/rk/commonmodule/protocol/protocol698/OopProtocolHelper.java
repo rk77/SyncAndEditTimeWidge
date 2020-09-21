@@ -1722,7 +1722,7 @@ public class OopProtocolHelper {
 
     }
 
-    public static byte[] makeRequestNormalFrame(byte[] oad) {
+    public static byte[] makeGetRequestNormalFrame(byte[] oad) {
 
         if (oad == null || oad.length <= 0) {
             return null;
@@ -2730,6 +2730,31 @@ public class OopProtocolHelper {
             } else if (map.containsKey(A_RECORD_ROW_LIST_KEY)) {
                 ArrayList<Protocol698Frame.A_RecordRow> a_recordRowArrayList = (ArrayList<Protocol698Frame.A_RecordRow>) map.get(A_RECORD_ROW_LIST_KEY);
                 return a_recordRowArrayList;
+
+            }
+        }
+        return null;
+    }
+
+    public static String parseTimeReadFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        Log.i(TAG, "parseTimeReadFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
+        if (isOK) {
+            Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+                    Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
+            if (map == null) {
+                Log.i(TAG, "1");
+                return null;
+            }
+            if (map.containsKey(DAR_KEY)) {
+                return null;
+            } else if (map.containsKey("value")) {
+                Protocol698Frame.DateTimeS dateTimeS = (Protocol698Frame.DateTimeS) map.get("value");
+                String time = dateTimeS.toString();
+                return time;
 
             }
         }

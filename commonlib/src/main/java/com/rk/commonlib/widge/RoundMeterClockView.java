@@ -50,7 +50,7 @@ public class RoundMeterClockView extends FrameLayout {
 
     public void reset() {
         mDateView.setText(null);
-        mTimeView.setText("电表时钟");
+        mTimeView.setText("时钟");
     }
 
 }
