@@ -2477,6 +2477,35 @@ public class OopProtocolHelper {
         return frame;
     }
 
+    public static byte[] makeDelArchiveFrame(int serialNum) {
+
+        Log.i(TAG, "makeDelArchiveFrame, serial num: " + serialNum);
+
+        Protocol698Frame.Data configSerialNumData = new Protocol698Frame.Data(Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE, serialNum);
+
+        Protocol698Frame.OMD omd = new Protocol698Frame.OMD(new byte[]{(byte)0x60, (byte)0x00, (byte)0x83, (byte)0x00});
+
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+        Map map = new HashMap();
+        map.put(ProtocolConstant.OMD_KEY, omd);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+        Protocol698Frame.Data data = new Protocol698Frame.Data(Protocol698Frame.Data_Type.NULL_TYPE, null);
+        map.put(ProtocolConstant.OMD_PARAM_KEY, configSerialNumData);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.ACTION_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.ACTION_REQUEST.ACTION_REQUEST_NORMAL.CLASS_ID, map);
+        Log.i(TAG, "makeDelArchiveFrame, ctrlArea: " + DataConvertUtils.convertByteToString(ctrlArea.data));
+        Log.i(TAG, "makeDelArchiveFrame, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "makeDelArchiveFrame, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+
+        return frame;
+    }
+
     public Protocol698Frame.Data achiveMapToData(Map map) {
 
         if (map == null) {
