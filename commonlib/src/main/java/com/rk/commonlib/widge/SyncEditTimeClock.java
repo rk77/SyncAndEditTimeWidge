@@ -14,6 +14,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.TimePicker;
 
 import java.text.ParseException;
@@ -33,6 +34,7 @@ public class SyncEditTimeClock extends RelativeLayout {
     private TimePicker mTimePicker;
     private NumberPicker mSecondPicker;
     private CheckBox mCheckbox;
+    private TextView mFlagTextView;
 
     private RelativeLayout mContainer;
 
@@ -100,13 +102,16 @@ public class SyncEditTimeClock extends RelativeLayout {
         mTimePicker = view.findViewById(R.id.time_picker);
         mTimePicker.setIs24HourView(true);
         mSecondPicker = view.findViewById(R.id.time_second_picker);
+        mFlagTextView = view.findViewById(R.id.flag);
         mSecondPicker.setMinValue(0);
         mSecondPicker.setMaxValue(59);
         mCheckbox = view.findViewById(R.id.sync_checkbox);
         mContainer = view.findViewById(R.id.time_picker_container);
         resizeDatePikcer(mDatePicker);
         resizeTimePikcer(mTimePicker);
-        //resizeNumberPicker1(mSecondPicker);
+        //resizeSecondNumberPicker(mSecondPicker);
+        int height = mSecondPicker.getHeight();
+        //resizeFlag(mContainer, mFlagTextView, height);
         mTimePicker.getChildAt(0).setPadding(0, 0, 0, 0);
 
         mCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -148,6 +153,20 @@ public class SyncEditTimeClock extends RelativeLayout {
     private void resizeNumberPicker(NumberPicker np) {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(95, LayoutParams.WRAP_CONTENT);
         params.setMargins(10, 0, 0, 0);
+        np.setLayoutParams(params);
+    }
+
+    private void resizeSecondNumberPicker(NumberPicker np) {
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(95, LayoutParams.WRAP_CONTENT);
+        //params.setMargins(10, 0, 0, 0);
+        np.setLayoutParams(params);
+    }
+
+    private void resizeFlag(RelativeLayout container, TextView np, int height) {
+        Log.i(TAG, "resize flag height: " + height);
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)container.getLayoutParams();
+        params.height = height;
+        //params.setMargins(10, 0, 0, 0);
         np.setLayoutParams(params);
     }
 
@@ -250,6 +269,12 @@ public class SyncEditTimeClock extends RelativeLayout {
     }
 
 
-
-
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        //resizeFlag(mContainer, mFlagTextView, mDatePicker.getHeight());
+        int height = mContainer.getHeight();
+        Log.i(TAG, "onMeasure, contain height: " + height);
+        mFlagTextView.setHeight(height);
+    }
 }

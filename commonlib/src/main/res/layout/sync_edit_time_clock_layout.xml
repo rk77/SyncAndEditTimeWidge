@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content">
 
     <RelativeLayout
         android:id="@+id/time_picker_container"
@@ -13,7 +13,7 @@
             android:id="@+id/date_picker"
             android:calendarViewShown="false"
             android:layout_width="wrap_content"
-            android:layout_height="540px"
+            android:layout_height="wrap_content"
             android:datePickerMode="spinner"
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
@@ -21,7 +21,7 @@
         <TimePicker
             android:id="@+id/time_picker"
             android:layout_width="wrap_content"
-            android:layout_height="540px"
+            android:layout_height="wrap_content"
             android:timePickerMode="spinner"
             android:layout_alignParentTop="true"
             android:layout_toRightOf="@id/date_picker"
@@ -29,16 +29,16 @@
         <TextView
             android:id="@+id/flag"
             android:layout_width="wrap_content"
-            android:layout_height="540px"
+            android:layout_height="wrap_content"
             android:text=":"
-            android:gravity="center"
             android:layout_alignParentTop="true"
             android:layout_toRightOf="@id/time_picker"
+            android:gravity="center"
             />
         <NumberPicker
             android:id="@+id/time_second_picker"
             android:layout_width="95px"
-            android:layout_height="540px"
+            android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_toRightOf="@id/flag"
             android:layout_marginLeft="15px"
