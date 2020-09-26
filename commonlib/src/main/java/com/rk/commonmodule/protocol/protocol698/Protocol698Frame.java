@@ -848,8 +848,10 @@ public class Protocol698Frame {
                 this.oad = new OAD(DataConvertUtils.getSubByteArray(data, begin, begin + 3));
                 int road_length = data[begin + 4];
 
+                Log.i(TAG, "ROAD, road_length: " + road_length);
+
                 if (road_length > 0) {
-                    for (int i = 1; i <= road_length - 1; i++) {
+                    for (int i = 1; i <= road_length; i++) {
                         this.oadArrayList.add(new OAD(DataConvertUtils.getSubByteArray(data, i * 4 + 1 + begin, i * 4 + 4 + begin)));
                     }
                 }
@@ -908,7 +910,7 @@ public class Protocol698Frame {
                 switch (this.type) {
                     case 0:
                         if (data.length >= 5) {
-                            this.object = new OAD(DataConvertUtils.getSubByteArray(data, begin, begin + 3));
+                            this.object = new OAD(DataConvertUtils.getSubByteArray(data, begin + 1, begin + 4));
                             if (((OAD) this.object).data == null) {
                                 return;
                             }

@@ -1886,6 +1886,25 @@ public class OopProtocolHelper {
         return frame;
     }
 
+    public static Map parseReadPowerFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        ArrayList<Map> resultMap = new ArrayList<>();
+        boolean isOK =true;
+        //boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        Log.i(TAG, "parseArchiveFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
+        if (isOK) {
+            Map map = Protocol698.PROTOCOL_698.parseApud(frame);
+            if (map == null) {
+                Log.i(TAG, "1");
+                return null;
+            }
+            return map;
+        }
+        return null;
+    }
+
     public static ArrayList<Map> parseArchiveFrame(byte[] frame) {
         if (frame == null || frame.length <= 0) {
             return null;

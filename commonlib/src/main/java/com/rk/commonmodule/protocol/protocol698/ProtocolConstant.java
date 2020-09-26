@@ -242,5 +242,15 @@ public class ProtocolConstant {
     public static final Map<String, String> CHANNEL_OAD_MAP = new HashMap<String, String>() {{
         put("45000200", "公网通信模块1");
         put("45100200", "以太网通信模块1");
+
+        put("50040200", "日冻结");
+        put("00100200", "正向有功电能");
+        put("00200200", "反向有功电能");
+
+        put("40010200", "通信地址");
+        put("60400200", "采集启动时标");
+        put("60410200", "采集成功时标");
+        put("60420200", "采集存储时标");
+
     }};
 }
