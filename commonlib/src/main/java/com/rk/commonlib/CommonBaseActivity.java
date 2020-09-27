@@ -113,12 +113,13 @@ public abstract class CommonBaseActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        Log.i(TAG, "onDestroy");
         if (mBroadcastReceiver != null) {
             unregisterReceiver(mBroadcastReceiver);
         }
         mHandlerThread.quitSafely();
-        mNonUiHandler = null;
-        mUiHandler = null;
+        //mNonUiHandler = null;
+        //mUiHandler = null;
         super.onDestroy();
     }
 
