@@ -1896,6 +1896,8 @@ public class OopProtocolHelper {
         Log.i(TAG, "parseArchiveFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
         if (isOK) {
             Map map = Protocol698.PROTOCOL_698.parseApud(frame);
+            //Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+            //        Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
             if (map == null) {
                 Log.i(TAG, "1");
                 return null;
