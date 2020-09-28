@@ -1890,14 +1890,13 @@ public class OopProtocolHelper {
         if (frame == null || frame.length <= 0) {
             return null;
         }
-        ArrayList<Map> resultMap = new ArrayList<>();
-        boolean isOK =true;
-        //boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        //boolean isOK =true;
+        boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
         Log.i(TAG, "parseArchiveFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
         if (isOK) {
-            Map map = Protocol698.PROTOCOL_698.parseApud(frame);
-            //Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
-            //        Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
+            //Map map = Protocol698.PROTOCOL_698.parseApud(frame);
+            Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+                    Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
             if (map == null) {
                 Log.i(TAG, "1");
                 return null;
