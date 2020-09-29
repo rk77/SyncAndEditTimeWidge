@@ -2,6 +2,8 @@ package com.rk.commonmodule.utils;
 
 import android.util.Log;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
@@ -168,7 +170,7 @@ public class DataConvertUtils {
             sb.append("0");
         }
         DecimalFormat df=new DecimalFormat(sb.toString());
-        return (df.format((float)a/b));
+        return df.format(a/(double)b);
     }
 
     public static String StringReserveBit(String a, int reserveBit) {
