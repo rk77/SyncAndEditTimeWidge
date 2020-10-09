@@ -1345,21 +1345,20 @@ public class Protocol698Frame {
                             } else {
                                 //TODO:
                                 int length_area_length = 1;
-                                while (size / 256 != 0) {
-                                    size = size / 256;
+                                int s = size;
+                                while (s / 256 >= 1) {
+                                    s = s / 256;
                                     length_area_length++;
                                 }
                                 this.data = new byte[1 + 1 + length_area_length + size];
                                 this.data[0] = (byte) 9;
                                 this.data[1] = (byte) ((length_area_length | 0x80) & 0xFF);
-                                int j = 2;
-                                for (int i = length_area_length - 1; i >= 0; i--) {
-                                    this.data[j] = (byte) ((size >> (i * 8)) & 0xFF);
-                                    j++;
+                                int j = length_area_length;
+                                for (int i = 2; i <= 2 + length_area_length - 1; i++) {
+                                    this.data[i] = (byte) ((size >> ((j - 1) * 8)) & 0xFF);
+                                    j--;
                                 }
-                                System.arraycopy(d, 0, this.data, j, size);
-
-
+                                System.arraycopy(d, 0, this.data, 2 + length_area_length, size);
                             }
 
                         } catch (Exception e) {
