@@ -1344,6 +1344,21 @@ public class Protocol698Frame {
                                 }
                             } else {
                                 //TODO:
+                                int length_area_length = 1;
+                                while (size / 256 != 0) {
+                                    size = size / 256;
+                                    length_area_length++;
+                                }
+                                this.data = new byte[1 + 1 + length_area_length + size];
+                                this.data[0] = (byte) 9;
+                                this.data[1] = (byte) ((length_area_length | 0x80) & 0xFF);
+                                int j = 2;
+                                for (int i = length_area_length - 1; i >= 0; i--) {
+                                    this.data[j] = (byte) ((size >> (i * 8)) & 0xFF);
+                                    j++;
+                                }
+                                System.arraycopy(d, 0, this.data, j, size);
+
 
                             }
 
@@ -1538,7 +1553,20 @@ public class Protocol698Frame {
                                 }
                             } else {
                                 //TODO:
-                                int lengthSize = frame[9] & 0x7F;
+                                int length_area_length = frame[9] & 0x7F;
+                                if (begin + 1 + length_area_length <= frame.length - 1) {
+                                    int lenght = frame[begin + 1 + 1];
+                                    for (int i = begin + 1 + 1 + 1; i <= begin + 1 + length_area_length; i++) {
+                                        lenght = lenght * 256 + frame[i];
+                                    }
+                                    this.data = new byte[1 + 1 + length_area_length + lenght];
+                                    byte[] o = new byte[lenght];
+                                    if (frame.length - 1 - begin + 1 >= this.data.length) {
+                                        System.arraycopy(frame, begin, this.data, 0, this.data.length);
+                                        System.arraycopy(frame, begin + 1 + length_area_length + 1, o, 0, o.length);
+                                        this.obj = o;
+                                    }
+                                }
                             }
                         }
                         break;
