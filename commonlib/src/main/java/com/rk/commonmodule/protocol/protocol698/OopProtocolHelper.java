@@ -1494,6 +1494,31 @@ public class OopProtocolHelper {
         return false;
     }
 
+    public static boolean parseActionResponseNormalFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return false;
+        }
+        boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        Log.i(TAG, "parseActionResponseNormalFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
+        if (isOK) {
+            Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+                    Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
+            if (map != null && map.containsKey(DAR_KEY)) {
+                byte dar = (byte) map.get(DAR_KEY);
+                if (dar == (byte) 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+
+
+        }
+        return false;
+    }
+
     public static byte[] makeWirelessNetParamFrame() {
 
         Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
@@ -2808,6 +2833,75 @@ public class OopProtocolHelper {
             }
         }
         return null;
+    }
+
+    public static byte[] makeFileTransferStartFrame(String src, String des, int size, String attr, String version, byte type, byte checkType, byte[] checkValue, int transferBlockSize) {
+        Protocol698Frame.File_Info fileInfo = new Protocol698Frame.File_Info(src, des, size, attr, version, type);
+        Protocol698Frame.Data fileInfoData = fileInfo.fileInfoData;
+
+        Protocol698Frame.Data transferSizeData = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, transferBlockSize);
+
+        Protocol698Frame.Check_Info checkInfo = new Protocol698Frame.Check_Info(checkType, checkValue);
+        Protocol698Frame.Data checkInfoData = checkInfo.checkInfoData;
+
+        ArrayList<Protocol698Frame.Data> dataArrayList = new ArrayList<>();
+
+        dataArrayList.add(fileInfoData);
+        dataArrayList.add(transferSizeData);
+        dataArrayList.add(checkInfoData);
+
+        Protocol698Frame.Data struc_data = new Protocol698Frame.Data(STRUCTURE_TYPE, dataArrayList);
+        Protocol698Frame.OMD omd = new Protocol698Frame.OMD(new byte[]{(byte)0xF0, (byte)0x01, (byte)0x07, (byte)0x00});
+
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+        Map map = new HashMap();
+        map.put(ProtocolConstant.OMD_KEY, omd);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+        map.put(ProtocolConstant.OMD_PARAM_KEY, struc_data);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.ACTION_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.ACTION_REQUEST.ACTION_REQUEST_NORMAL.CLASS_ID, map);
+        Log.i(TAG, "addBatchArchive, ctrlArea: " + DataConvertUtils.convertByteToString(ctrlArea.data));
+        Log.i(TAG, "addBatchArchive, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "addBatchArchive, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+
+        return frame;
+
+    }
+
+    public static byte[] makeWriteFileFrame(int blockSerialNum, byte[] block) {
+        ArrayList<Protocol698Frame.Data> dataArrayList = new ArrayList<>();
+        Protocol698Frame.Data blockSerialNumData = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, blockSerialNum);
+        Protocol698Frame.Data blockData = new Protocol698Frame.Data(OCTET_STRING_TYPE, block);
+        dataArrayList.add(blockSerialNumData);
+        dataArrayList.add(blockData);
+        Protocol698Frame.Data struc_data = new Protocol698Frame.Data(STRUCTURE_TYPE, dataArrayList);
+
+        Protocol698Frame.OMD omd = new Protocol698Frame.OMD(new byte[]{(byte)0xF0, (byte)0x01, (byte)0x08, (byte)0x00});
+
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+        Map map = new HashMap();
+        map.put(ProtocolConstant.OMD_KEY, omd);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+        map.put(ProtocolConstant.OMD_PARAM_KEY, struc_data);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.ACTION_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.ACTION_REQUEST.ACTION_REQUEST_NORMAL.CLASS_ID, map);
+        Log.i(TAG, "addBatchArchive, ctrlArea: " + DataConvertUtils.convertByteToString(ctrlArea.data));
+        Log.i(TAG, "addBatchArchive, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "addBatchArchive, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+
+        return frame;
     }
 
 }

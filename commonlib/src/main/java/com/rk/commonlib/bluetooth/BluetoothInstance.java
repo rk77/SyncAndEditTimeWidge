@@ -61,7 +61,7 @@ public class BluetoothInstance {
     private BluetoothGattCharacteristic mWriteCharacteristic;
     private BluetoothGattCharacteristic mNotifyCharacteristic;
 
-    private static final int MTU = 247;
+    private static final int MTU = 247/*247*/;
     private static final long WAIT_TIMEOUT = 3000;
     private static final long RECV_WAIT_TIMEOUT = 20000;
 

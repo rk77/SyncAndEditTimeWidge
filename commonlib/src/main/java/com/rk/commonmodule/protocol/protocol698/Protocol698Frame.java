@@ -3,9 +3,11 @@ package com.rk.commonmodule.protocol.protocol698;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.rk.commonmodule.utils.BitUtils;
 import com.rk.commonmodule.utils.DataConvertUtils;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 
 public class Protocol698Frame {
 
@@ -1285,13 +1287,18 @@ public class Protocol698Frame {
                             this.data[i + 2] =(byte)(s.charAt(i));
                         }
                     }
-                    if (obj == null || TextUtils.isEmpty((String)obj)) {
+                    if (obj == null) {
                         this.data = new byte[6];
                         this.data[0] = (byte) 10;
                         this.data[1] = (byte) 4;
                         for (int i = 0; i < 4; i++) {
                             this.data[2 + i] = (byte)0;
                         }
+                    }
+                    if (((String)obj).equals("")) {
+                        this.data = new byte[2];
+                        this.data[0] = (byte) 10;
+                        this.data[1] = (byte) 0;
                     }
                     break;
                 case STRUCTURE_TYPE:
@@ -1330,6 +1337,42 @@ public class Protocol698Frame {
                         this.data[1] = (byte) obj;
                     }
                     break;
+                case BIT_STRING_TYPE:
+                    if (obj instanceof String) {
+                        String bitString = (String) obj;
+                        int length = bitString.length();
+                        if (length <= 127) {
+                            int size = (length + 7) / 8;
+                            this.data = new byte[1 + 1 + size];
+                            this.data[0] = (byte) 4;
+                            this.data[1] = (byte) length;
+
+                            for (int i = 0; i < size; i++) {
+                                this.data[2 + i] = (byte) 0xFF;
+                                for (int j = i * 8; j < i * 8 + 8; j++) {
+                                    char bit = '0';
+                                    if (j <= length - 1) {
+                                        bit = bitString.charAt(j);
+                                    }
+                                    switch (bit) {
+                                        case '0':
+                                            this.data[2 + i] = BitUtils.setBitValue(this.data[2 + i], 7 - (j % 8), (byte) 0);
+                                            break;
+                                        case '1':
+                                            this.data[2 + i] = BitUtils.setBitValue(this.data[2 + i], 7 - (j % 8), (byte) 1);
+                                            break;
+                                        default:
+                                            this.data[2 + i] = BitUtils.setBitValue(this.data[2 + i], 7 - (j % 8), (byte) 0);
+                                    }
+                                }
+                            }
+
+                        } else {
+                            //TODO:
+                        }
+
+                    }
+                    break;
                 case OCTET_STRING_TYPE:
                     if (obj != null && obj instanceof byte[]) {
                         try {
@@ -1364,6 +1407,10 @@ public class Protocol698Frame {
                         } catch (Exception e) {
                             Log.e(TAG, "OCTET_STRING_TYPE, error: " + e.getMessage());
                         }
+                    } else if (obj == null) {
+                        this.data = new byte[2];
+                        this.data[0] = (byte) 9;
+                        this.data[1] = (byte) 0;
                     }
                     break;
                 case UNSIGNED_TYPE:
@@ -1494,6 +1541,29 @@ public class Protocol698Frame {
                                     this.obj = null;
                                 }
                             }
+                        }
+                        break;
+                    case 4:
+                        this.type = Data_Type.BIT_STRING_TYPE;
+                        if (begin + 1 <= frame.length - 1) {
+                            if ((frame[begin + 1] & 0x80) == 0) {
+                                int length = frame[begin + 1] & 0xFF;
+                                int size = (length + 7) / 8;
+                                this.data = new byte[1 + 1 + size];
+                                if (frame.length- begin >= 1 + 1 + size) {
+                                    System.arraycopy(frame, begin, this.data, 0, this.data.length);
+                                    StringBuilder bitString = new StringBuilder();
+                                    for (int i = 0; i < size; i++) {
+                                        for (int j = 0; j < 8; j++) {
+                                            bitString.append(BitUtils.getBitValue(this.data[2 + i], 7 - j));
+                                        }
+                                    }
+                                    this.obj = bitString.toString();
+                                }
+                            } else {
+                                //TODO:
+                            }
+
                         }
                         break;
                     case 5:
@@ -2081,5 +2151,96 @@ public class Protocol698Frame {
             }
 
         }
+    }
+
+    public static class Check_Info {
+        public byte check_type;
+        public byte[] check_value;
+        public byte[] data;
+        public Data checkInfoData;
+        public Check_Info(byte check_type, byte[] check_value){
+            this.check_type = check_type;
+            this.check_value = check_value;
+
+            Data checkTypeData = new Data(Data_Type.ENUM_TYPE, check_type);
+            Data checkValueData = new Data(Data_Type.OCTET_STRING_TYPE, check_value);
+
+            ArrayList<Data> dataArrayList = new ArrayList<>();
+            dataArrayList.add(checkTypeData);
+            dataArrayList.add(checkValueData);
+
+            this.checkInfoData = new Data(Data_Type.STRUCTURE_TYPE, dataArrayList);
+
+            this.data = checkInfoData.data;
+
+        }
+
+        public Check_Info(byte[] frame, int begin) {
+            this.checkInfoData = new Data(frame, begin);
+            ArrayList<Data> dataArrayList = (ArrayList<Data>) checkInfoData.obj;
+            if (dataArrayList != null && dataArrayList.size() == 2) {
+                Data checkTypeData = dataArrayList.get(0);
+                Data checkValueData = dataArrayList.get(1);
+
+                if (checkTypeData != null && checkTypeData.type == Data_Type.ENUM_TYPE) {
+                    this.check_type = (byte) checkTypeData.obj;
+                }
+
+                if (checkValueData != null && checkValueData.type == Data_Type.OCTET_STRING_TYPE) {
+                    this.check_value = (byte[]) checkValueData.obj;
+                }
+                this.data = checkInfoData.data;
+            }
+        }
+    }
+
+    public static class File_Info {
+        public Data srcFile;
+        public Data desFile;
+        public Data fileSize;
+        public Data fileAttr;
+        public Data fileVer;
+        public Data fileType;
+        public byte[] data;
+        public Data fileInfoData;
+
+        public File_Info(String src, String des, int size, String attr, String version, byte type){
+            this.srcFile = new Data(Data_Type.VISIBLE_STRING_TYPE, src);
+            this.desFile = new Data(Data_Type.VISIBLE_STRING_TYPE, des);
+            this.fileSize = new Data(Data_Type.DOUBLE_LONG_UNSIGNED_TYPE, size);
+            this.fileAttr = new Data(Data_Type.BIT_STRING_TYPE, attr);
+            this.fileVer = new Data(Data_Type.VISIBLE_STRING_TYPE, version);
+            this.fileType = new Data(Data_Type.ENUM_TYPE, type);
+
+            ArrayList<Data> dataArrayList = new ArrayList<>();
+            dataArrayList.add(srcFile);
+            dataArrayList.add(desFile);
+            dataArrayList.add(fileSize);
+            dataArrayList.add(fileAttr);
+            dataArrayList.add(fileVer);
+            //dataArrayList.add(fileType);
+            Data file_info = new Data(Data_Type.STRUCTURE_TYPE, dataArrayList);
+            this.data = file_info.data;
+            this.fileInfoData = file_info;
+        }
+
+        public File_Info(byte[] frame, int begin) {
+            Data file_info = new Data(frame, begin);
+            if (file_info.type == Data_Type.STRUCTURE_TYPE) {
+                ArrayList<Data> dataArrayList = (ArrayList<Data>) file_info.obj;
+                if (dataArrayList != null && dataArrayList.size() == 6) {
+                    this.srcFile = dataArrayList.get(0);
+                    this.desFile = dataArrayList.get(1);
+                    this.fileSize = dataArrayList.get(2);
+                    this.fileAttr = dataArrayList.get(3);
+                    this.fileVer = dataArrayList.get(4);
+                    this.fileType = dataArrayList.get(5);
+                    this.data = file_info.data;
+                    this.fileInfoData = file_info;
+                }
+            }
+
+        }
+
     }
 }
