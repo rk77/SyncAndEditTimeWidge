@@ -494,7 +494,7 @@ public class BluetoothInstance {
         }
         mReceivedFrame.clear();
 
-        int sendTime = frame.length / (MTU - 3) + 1;
+        int sendTime = (frame.length + (MTU - 3 - 1)) / (MTU - 3);
         for (int i = 0; i < sendTime; i++) {
             int begin = i * (MTU - 3);
             int end = (i + 1) * (MTU - 3) - 1;
