@@ -33,7 +33,7 @@ public class WaterWaveAttrInit {
 		progressBgColor = typedArray.getColor(
 				R.styleable.WaterWaveProgress_progressBgColor, 0xFFBEBEBE);
 		waterWaveColor = typedArray.getColor(
-				R.styleable.WaterWaveProgress_waterWaveColor, 0XFF4BBDFE);
+				R.styleable.WaterWaveProgress_waterWaveColor, 0xFF4BBDFE);
 		waterWaveBgColor = typedArray.getColor(
 				R.styleable.WaterWaveProgress_waterWaveBgColor, 0xFFDDDDDD);
 		progress2WaterWidth = typedArray.getDimensionPixelOffset(

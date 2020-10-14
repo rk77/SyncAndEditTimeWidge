@@ -9,4 +9,5 @@
     <color name="red">#D81B60</color>
     <color name="gray_bg">#f2f2f2</color>
     <color name="base_color">#e6e4e7</color>
+    <color name="test">#FFDDDDDD</color>
 </resources>

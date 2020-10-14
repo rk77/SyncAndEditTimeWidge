@@ -13,6 +13,7 @@ import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.Path.Direction;
 import android.graphics.Region.Op;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Build.VERSION;
@@ -75,7 +76,7 @@ public class WaterWaveProgress extends View {
     private static class MyHandler extends Handler {
         private WeakReference<WaterWaveProgress> mWeakRef = null;
 
-        private int refreshPeriod = 100;
+        private int refreshPeriod = 200;
 
         public MyHandler(WaterWaveProgress host) {
             mWeakRef = new WeakReference<WaterWaveProgress>(host);
@@ -122,11 +123,6 @@ public class WaterWaveProgress extends View {
         mProgress = attrInit.getProgress();
         mMaxProgress = attrInit.getMaxProgress();
 
-        // 如果手机版本在4.0以上,则开启硬件加速
-        if (VERSION.SDK_INT >= VERSION_CODES.ICE_CREAM_SANDWICH) {
-            setLayerType(View.LAYER_TYPE_HARDWARE, null);
-            // setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-        }
         mRingPaint = new Paint();
         mRingPaint.setAntiAlias(true);
         mRingPaint.setColor(mRingColor); // 圆环颜色
@@ -160,9 +156,11 @@ public class WaterWaveProgress extends View {
     @SuppressLint({"DrawAllocation", "NewApi"})
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
         // 获取整个View（容器）的宽、高
         int width = getWidth();
         int height = getHeight();
+        Log.i(TAG, "onDraw: w: " + width + ", h: " + height);
         width = height = (width < height) ? width : height;
         mAmplitude = width / 20f;
 
@@ -174,11 +172,9 @@ public class WaterWaveProgress extends View {
                     : mProgress2WaterWidth;
             mRingPaint.setStrokeWidth(mRingWidth);
             mTextPaint.setTextSize(mFontSize == 0 ? width / 5 : mFontSize);
-            if (VERSION.SDK_INT == VERSION_CODES.JELLY_BEAN) {
-                setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-            } else {
-                setLayerType(View.LAYER_TYPE_HARDWARE, null);
-            }
+
+                //setLayerType(View.LAYER_TYPE_HARDWARE, null);
+            setLayerType(View.LAYER_TYPE_SOFTWARE, null); //关闭硬件加速， 因为clipPath不支持硬件加速
         }
 
         RectF oval = new RectF();
@@ -234,6 +230,7 @@ public class WaterWaveProgress extends View {
         int staticHeight = (int) (waterHeight + mAmplitude);
         Path mPath = new Path();
         mPath.reset();
+        Log.i(TAG, "draw: waterHeightCount: " + waterHeightCount);
         if (mShowProgress) {
             mPath.addCircle(width / 2, width / 2, waterHeightCount / 2,
                     Direction.CCW);
@@ -242,15 +239,21 @@ public class WaterWaveProgress extends View {
                     Direction.CCW);
         }
         // canvas添加限制,让接下来的绘制都在园内
-        canvas.clipPath(mPath, Op.REPLACE);
+        //canvas.clipPath(mPath, Op.REPLACE);
+        if(Build.VERSION.SDK_INT >= 28){
+            canvas.clipPath(mPath);
+        }else {
+            canvas.clipPath(mPath, Op.REPLACE);
+        }
         Paint bgPaint = new Paint();
         bgPaint.setColor(mWaterBgColor);
         // 绘制背景
-        canvas.drawRect(waterPadding, waterPadding, waterHeightCount
-                + waterPadding, waterHeightCount + waterPadding, bgPaint);
+        canvas.drawRect(waterPadding, waterPadding,
+                waterHeightCount + waterPadding, waterHeightCount + waterPadding, bgPaint);
         // 绘制静止的水
-        canvas.drawRect(waterPadding, staticHeight, waterHeightCount
-                + waterPadding, waterHeightCount + waterPadding, mPaintWater);
+        canvas.drawRect(waterPadding, staticHeight,
+                waterHeightCount + waterPadding, waterHeightCount + waterPadding, mPaintWater);
+
 
         // 待绘制的波浪线的x坐标
         int xToBeDrawed = (int) waterPadding;
