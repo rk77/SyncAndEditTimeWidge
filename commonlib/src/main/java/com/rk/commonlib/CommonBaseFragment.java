@@ -17,6 +17,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.rk.commonlib.util.LogUtils;
+
 public abstract class CommonBaseFragment extends Fragment {
 
     private static final String TAG = CommonBaseFragment.class.getSimpleName();
