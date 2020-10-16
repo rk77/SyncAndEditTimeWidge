@@ -15,11 +15,27 @@ public class LogUtils {
         }
     }
 
-    public static void d() {
+    public static void d(String info) {
+        String fileName = new Exception().getStackTrace()[1].getFileName(); //获取调用者的文件名
+        String className = fileName.split("\\.")[0];
+        String method_name = new Exception().getStackTrace()[1].getMethodName(); //获取调用者的方法名
+        if (TextUtils.isEmpty(info)) {
+            Log.d(className, method_name);
+        } else {
+            Log.d(className, method_name + ", " + info);
+        }
 
     }
 
-    public static void e() {
+    public static void e(String info) {
+        String fileName = new Exception().getStackTrace()[1].getFileName(); //获取调用者的文件名
+        String className = fileName.split("\\.")[0];
+        String method_name = new Exception().getStackTrace()[1].getMethodName(); //获取调用者的方法名
+        if (TextUtils.isEmpty(info)) {
+            Log.e(className, method_name);
+        } else {
+            Log.e(className, method_name + ", " + info);
+        }
 
     }
 }
