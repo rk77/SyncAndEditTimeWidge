@@ -102,6 +102,8 @@ public class BluetoothInstance {
             }
         }
 
+
+
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
@@ -480,6 +482,7 @@ public class BluetoothInstance {
 
     public void setMtu() {
         Log.i(TAG, "setMtu");
+        //mBluetoothGatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH);
         mBluetoothGatt.requestMtu(MTU);
     }
 
