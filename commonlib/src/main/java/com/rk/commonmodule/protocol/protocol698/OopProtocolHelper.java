@@ -2904,4 +2904,14 @@ public class OopProtocolHelper {
         return frame;
     }
 
+    public static byte[] makeWholeFrame(byte[] apdu) {
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+        Log.i(TAG, "addBatchArchive, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+        return frame;
+    }
+
 }
