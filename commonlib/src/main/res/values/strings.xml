@@ -41,4 +41,20 @@
         <item>无效</item>
     </string-array>
 
+    <string-array name="process_id">
+        <item>0-MGR_ID</item>
+        <item>1-GPRS_ID</item>
+        <item>2-APP_ID</item>
+        <item>3- READ_METER_ID</item>
+    </string-array>
+
+    <string-array name="debug_level">
+        <item>0-DUBUG</item>
+        <item>1-INFO</item>
+        <item>2-WARN</item>
+        <item>3-ERROR</item>
+        <item>4-FATAL</item>
+        <item>5-OFF</item>
+    </string-array>
+
 </resources>

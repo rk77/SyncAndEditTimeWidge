@@ -2914,4 +2914,36 @@ public class OopProtocolHelper {
         return frame;
     }
 
+    public static byte[] makeSetProtocolObserverFrame(int observType, int outputType) {
+        byte[] oad_bytes = new byte[]{(byte)0xFF, (byte)0xFD, (byte)0x36, (byte)0x00};
+        Protocol698Frame.OAD oad = new Protocol698Frame.OAD(oad_bytes);
+
+        Protocol698Frame.Data obs_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, observType);
+        Protocol698Frame.Data output_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, outputType);
+
+        ArrayList<Protocol698Frame.Data> arrayList = new ArrayList<>();
+        arrayList.add(obs_data);
+        arrayList.add(output_data);
+
+        Protocol698Frame.Data data = new Protocol698Frame.Data(STRUCTURE_TYPE, arrayList);
+        return makeSetRequestNormalFrame(data, oad);
+    }
+
+    public static byte[] makeSetLogLevelObserverFrame(int processId, int logLevel, int recordType) {
+        byte[] oad_bytes = new byte[]{(byte)0xFF, (byte)0xFD, (byte)0x37, (byte)0x00};
+        Protocol698Frame.OAD oad = new Protocol698Frame.OAD(oad_bytes);
+
+        Protocol698Frame.Data process_id_data = new Protocol698Frame.Data(UNSIGNED_TYPE, (byte) processId);
+        Protocol698Frame.Data log_level_data = new Protocol698Frame.Data(UNSIGNED_TYPE, (byte) logLevel);
+        Protocol698Frame.Data record_type_data = new Protocol698Frame.Data(LONG_UNSIGNED_TYPE, recordType);
+
+        ArrayList<Protocol698Frame.Data> arrayList = new ArrayList<>();
+        arrayList.add(process_id_data);
+        arrayList.add(log_level_data);
+        arrayList.add(record_type_data);
+
+        Protocol698Frame.Data data = new Protocol698Frame.Data(ARRAY_TYPE, arrayList);
+        return makeSetRequestNormalFrame(data, oad);
+    }
+
 }
