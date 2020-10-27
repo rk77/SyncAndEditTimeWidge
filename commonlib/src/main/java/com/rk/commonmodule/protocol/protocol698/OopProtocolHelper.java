@@ -2942,7 +2942,10 @@ public class OopProtocolHelper {
         arrayList.add(log_level_data);
         arrayList.add(record_type_data);
 
-        Protocol698Frame.Data data = new Protocol698Frame.Data(ARRAY_TYPE, arrayList);
+        Protocol698Frame.Data stru_data = new Protocol698Frame.Data(STRUCTURE_TYPE, arrayList);
+        ArrayList<Protocol698Frame.Data> dataArrayList = new ArrayList<>();
+        dataArrayList.add(stru_data);
+        Protocol698Frame.Data data = new Protocol698Frame.Data(ARRAY_TYPE, dataArrayList);
         return makeSetRequestNormalFrame(data, oad);
     }
 
