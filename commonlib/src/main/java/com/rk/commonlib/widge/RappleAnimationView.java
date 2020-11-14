@@ -110,6 +110,9 @@ public class RappleAnimationView extends View {
     private int mBy = 3;
 
     public void startAnimation() {
+        if (!stop) {
+            return;
+        }
         stop = false;
         mDiff0 = 1;
         new Thread(new Runnable() {
