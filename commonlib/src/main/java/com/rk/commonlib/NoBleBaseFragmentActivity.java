@@ -57,8 +57,6 @@ public abstract class NoBleBaseFragmentActivity extends FragmentActivity {
     public NonUiHandler mNonUiHandler;
     private HandlerThread mHandlerThread;
 
-    protected abstract void handleBleBroadcast(Intent intent);
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
