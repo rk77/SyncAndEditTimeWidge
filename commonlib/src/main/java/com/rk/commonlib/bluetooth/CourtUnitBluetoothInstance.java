@@ -23,12 +23,15 @@ import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.rk.commonlib.util.LogUtils;
 import com.rk.commonmodule.protocol.protocol698.Protocol698Frame;
 import com.rk.commonmodule.protocol.protocol698.ProtocolConstant;
 import com.rk.commonmodule.utils.DataConvertUtils;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 public class CourtUnitBluetoothInstance {
@@ -52,16 +55,18 @@ public class CourtUnitBluetoothInstance {
     public final static String ACTION_GATT_MTU_WRITE = "com.rk.commonlib.bluetooth.ACTION_GATT_MTU_WRITE";
 
     private final static String SERVICE_COMMUNICATION_UUID = "6e400001-b5a3-f393-e0a9-e50e24dc4179";
-    private final static String CHARACTERISTIC_WRITE_UUID = "6e400002-b5a3-f393-e0a9-e50e24dc4179";
-    private final static String CHARACTERISTIC_NOTIFY_UUID = "6e400003-b5a3-f393-e0a9-e50e24dc4179";
+    private final static String CHARACTERISTIC_WRITE_UUID = "0000fff6-0000-1000-8000-00805f9b34fb";
+    private final static String CHARACTERISTIC_NOTIFY_UUID = "0000fff4-0000-1000-8000-00805f9b34fb";
+    private final static String CHARACTERISTIC_CONFIRM_UUID = "0000fff3-0000-1000-8000-00805f9b34fb";
     private final static String DESCRIPTOR_CCCD_UUID = "00002902-0000-1000-8000-00805f9b34fb";
     private BluetoothGattService mCommunicationService;
     private BluetoothGattCharacteristic mWriteCharacteristic;
     private BluetoothGattCharacteristic mNotifyCharacteristic;
+    private BluetoothGattCharacteristic mConfirmCharacteristic;
 
-    private int MTU = 247/*247*/;
+    private int MTU = 22/*247*/;
     private static final long WAIT_TIMEOUT = 3000;
-    private static final long RECV_WAIT_TIMEOUT = 20000;
+    private static final long RECV_WAIT_TIMEOUT = 5000;
 
     private static Context sContext;
     private BluetoothAdapter mBluetoothAdapter;
@@ -92,11 +97,11 @@ public class CourtUnitBluetoothInstance {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 Log.i(TAG, "onConnectionStateChange, Connected to GATT server.");
                 mIsConnected = true;
-                broadcastUpdate(ACTION_GATT_CONNECTED);
+                broadcastUpdate(ACTION_GATT_CONNECTED, status);
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.i(TAG, "onConnectionStateChange, Disconnected from GATT server.");
                 mIsConnected = false;
-                broadcastUpdate(ACTION_GATT_DISCONNECTED);
+                broadcastUpdate(ACTION_GATT_DISCONNECTED, status);
             }
         }
 
@@ -180,6 +185,16 @@ public class CourtUnitBluetoothInstance {
         private void broadcastUpdate(final String action) {
             Log.i(TAG, "broadcastUpdate, action: " + action);
             final Intent intent = new Intent(action);
+            if (sContext != null) {
+                sContext.sendBroadcast(intent);
+            }
+
+        }
+
+        private void broadcastUpdate(final String action, int status) {
+            Log.i(TAG, "broadcastUpdate, action: " + action);
+            final Intent intent = new Intent(action);
+            intent.putExtra("status", status);
             if (sContext != null) {
                 sContext.sendBroadcast(intent);
             }
@@ -337,9 +352,9 @@ public class CourtUnitBluetoothInstance {
         }
         // We want to directly connect to the device, so we are setting the autoConnect
         // parameter to false.
-        /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback, BluetoothDevice.TRANSPORT_LE);
-        } else {*/
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        //    mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback, BluetoothDevice.TRANSPORT_LE);
+        //} else {
             mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback);
         //}
 
@@ -370,9 +385,27 @@ public class CourtUnitBluetoothInstance {
         mNotifyCharacteristic = null;
         mWriteCharacteristic = null;
         mCommunicationService = null;
+        mConfirmCharacteristic = null;
         mBluetoothGatt = null;
         mIsConnected = false;
         mBluetoothDeviceAddress = null;
+    }
+
+    public boolean refreshDeviceCache() {
+        if (mBluetoothGatt != null) {
+            try {
+                Method localMethod = mBluetoothGatt.getClass().getMethod(
+                        "refresh", new Class[0]);
+                if (localMethod != null) {
+                    boolean bool = ((Boolean) localMethod.invoke(
+                            mBluetoothGatt, new Object[0])).booleanValue();
+                    return bool;
+                }
+            } catch (Exception localException) {
+                LogUtils.i("An exception occured while refreshing device");
+            }
+        }
+        return false;
     }
 
     public boolean isDeviceConnected(String deviceAddr) {
@@ -409,7 +442,9 @@ public class CourtUnitBluetoothInstance {
         if (mBluetoothGatt == null) {
             return;
         }
-        mBluetoothGatt.discoverServices();
+
+        boolean isOK = mBluetoothGatt.discoverServices();
+        LogUtils.i("isOk: " + isOK);
     }
 
     public String getCharacteristicProperty(int prop) {
@@ -459,6 +494,8 @@ public class CourtUnitBluetoothInstance {
                     mWriteCharacteristic = characteristic;
                 } else if (CHARACTERISTIC_NOTIFY_UUID.equals(characteristic.getUuid().toString())) {
                     mNotifyCharacteristic = characteristic;
+                } else if (CHARACTERISTIC_CONFIRM_UUID.equals(characteristic.getUuid().toString())) {
+                    mConfirmCharacteristic = characteristic;
                 }
             }
         }
@@ -548,7 +585,13 @@ public class CourtUnitBluetoothInstance {
             for (int i = 0; i < tmpFrame.length; i++) {
                 tmpFrame[i] = frame.get(i);
             }
-            return verify698Frame(tmpFrame);
+            if (tmpFrame[0] == (byte) 0xFF) {
+                return true;
+            } else if (tmpFrame[0] == (byte) 0xFE) {
+                return true;
+            } else {
+                return verify698Frame(tmpFrame);
+            }
         }
         return false;
     }
@@ -699,5 +742,161 @@ public class CourtUnitBluetoothInstance {
         return false;
     }
 
+    public synchronized byte[] sendConfirm() {
+        if (mConfirmCharacteristic == null) {
+            LogUtils.i("mConfirmCharacteristic is null");
+            return null;
+        }
+
+
+        mReceivedFrame.clear();
+
+        if (mBluetoothGatt != null) {
+
+            synchronized (mWriteSync) {
+                try {
+                    byte[] confirmValue = {(byte) 0xAA};
+                    mConfirmCharacteristic.setValue(confirmValue);
+                    mBluetoothGatt.writeCharacteristic(mConfirmCharacteristic);
+                    mWriteSync.wait(WAIT_TIMEOUT);
+                } catch (Exception e) {
+                    Log.e(TAG, "sendAndReceiveSync, wait for writing error: " + e.getMessage());
+                }
+            }
+        }
+
+        // wait for finishing receiving message
+        synchronized (mReadSync) {
+            try {
+                mReadSync.wait(RECV_WAIT_TIMEOUT);
+            } catch (Exception e) {
+                Log.e(TAG, "sendAndReceiveSync, wait for reading error: " + e.getMessage());
+            }
+        }
+        Log.i(TAG, "sendAndReceiveSync, receive done.");
+        byte[] recvFrame = null;
+        if (mReceivedFrame != null && mReceivedFrame.size() > 0) {
+            recvFrame = new byte[mReceivedFrame.size()];
+            for (int i = 0; i < recvFrame.length; i++) {
+                recvFrame[i] = mReceivedFrame.get(i);
+            }
+        }
+        return recvFrame;
+    }
+
+
+    private byte[] encryptFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+
+        byte[] cipSource = new byte[8];
+        if (frame.length > 9) {
+            for (int i = 1; i < 9; i++) {
+                cipSource[i - 1] = frame[i];
+            }
+            byte[] encryptData = encrypt(cipSource);
+
+
+            int length = encryptData.length;
+            byte[] encryptFrame = new byte[length + 3];
+            encryptFrame[0] = (byte) 0xff;
+            for (int i = 0; i < length; i++) {
+                encryptFrame[i + 1] = encryptData[i];
+            }
+            Random random = new Random();
+            encryptFrame[length + 1] = (byte) random.nextInt(256);//不含256
+            encryptFrame[length + 2] = (byte) random.nextInt(256);
+
+            return encryptFrame;
+        }
+        return null;
+    }
+
+    public synchronized byte[] sendEncryptInfo(byte[] frame) {
+        Log.i(TAG, "sendEncryptInfo, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
+        if (frame == null) {
+            return null;
+        }
+        byte[] encryptFrame = encryptFrame(frame);
+        if (encryptFrame == null) {
+            return null;
+        }
+        mReceivedFrame.clear();
+
+        int sendTime = (encryptFrame.length + (MTU - 3 - 1)) / (MTU - 3);
+        for (int i = 0; i < sendTime; i++) {
+            int begin = i * (MTU - 3);
+            int end = (i + 1) * (MTU - 3) - 1;
+            if (end > frame.length - 1) {
+                end = frame.length - 1;
+            }
+            if (mWriteCharacteristic != null && mBluetoothGatt != null) {
+                byte[] subFrame = DataConvertUtils.getSubByteArray(encryptFrame, begin, end);
+                Log.i(TAG, "sendEncryptInfo, total: " + encryptFrame.length + ", begin: " + begin + ", end: " + end
+                        + ", sub frame: " + DataConvertUtils.convertByteArrayToString(subFrame, false));
+
+                synchronized (mWriteSync) {
+                    try {
+                        mWriteCharacteristic.setValue(subFrame);
+                        mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
+                        Log.i(TAG, "sendEncryptInfo, send chara: " + mWriteCharacteristic);
+                        mWriteSync.wait(WAIT_TIMEOUT);
+                    } catch (Exception e) {
+                        Log.e(TAG, "sendEncryptInfo, wait for writing error: " + e.getMessage());
+                    }
+                }
+            }
+        }
+        Log.i(TAG, "sendEncryptInfo, send done.");
+
+        // wait for finishing receiving message
+        synchronized (mReadSync) {
+            try {
+                mReadSync.wait(RECV_WAIT_TIMEOUT);
+            } catch (Exception e) {
+                Log.e(TAG, "sendEncryptInfo, wait for reading error: " + e.getMessage());
+            }
+        }
+        Log.i(TAG, "sendEncryptInfo, receive done.");
+        byte[] recvFrame = null;
+        if (mReceivedFrame != null && mReceivedFrame.size() > 0) {
+            recvFrame = new byte[mReceivedFrame.size()];
+            for (int i = 0; i < recvFrame.length; i++) {
+                recvFrame[i] = mReceivedFrame.get(i);
+            }
+        }
+        return recvFrame;
+
+    }
+
+
+    private byte[] encrypt(byte[] cipSource) {
+        int C1 = 52845;
+        int C2 = 22719;
+        int Key = 0x35ac;
+        //  LogUtil.d(TAG,"取出的8字节待加密信息："+TopscommUtils.byteArrayToHexString(cipSource));
+        byte[] cipResult = new byte[2 * cipSource.length];
+        for (int i = 0; i < 8; i++) {
+            int temp = cipSource[i] & 0xFF;
+            temp = (temp ^ (Key >>> 8)) & 0xFF;
+            cipSource[i] = (byte) temp;
+            Key = ((temp + Key) * C1 + C2) & 0xFFFF;
+
+/*                    cipSource[i] = (byte) (cipSource[i] ^ ((byte) (Key>>>8)));
+                    Key = (short) (((cipSource[i]+Key)*C1+C2)&(short)0xffff);*/
+        }
+        // LogUtil.d(TAG,"经过第一次加密后的8字节信息："+TopscommUtils.byteArrayToHexString(cipSource));
+        //对加密结果进行转换
+        for (int i = 0; i < 8; i++) {
+            int temp = cipSource[i] & 0xFF;
+            cipResult[i * 2] = (byte) (temp / 26 + 65);
+            cipResult[i * 2 + 1] = (byte) (temp % 26 + 65);
+/*                    cipResult[i*2] = (byte) (cipSource[i]/26 + 65);
+                    cipResult[i*2+1] = (byte)(cipSource[i]%26+65);*/
+        }
+        // LogUtil.d(TAG,"经过第二次加密后的16字节信息："+TopscommUtils.byteArrayToHexString(cipResult));
+        return cipResult;
+    }
 
 }

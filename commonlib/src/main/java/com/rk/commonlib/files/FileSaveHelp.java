@@ -3,6 +3,7 @@ package com.rk.commonlib.files;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
@@ -83,7 +84,7 @@ public enum FileSaveHelp {
      * @param tag
      */
     public void scanFile(Activity activity, String fileName, String tag, Context context) {
-        scanFile(Environment.getExternalStorageDirectory().toString() + "/" + context.getString(R.string.rk_file) + "/" + fileName + tag, context);
+        scanDir(Environment.getExternalStorageDirectory().getPath() + "/" + context.getString(R.string.rk_file) + "/" + fileName + "." + tag, context);
     }
 
 
@@ -96,6 +97,9 @@ public enum FileSaveHelp {
         Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
         scanIntent.setData(Uri.fromFile(new File(filePath)));
         context.sendBroadcast(scanIntent);
+    }
+    public void scanDir(String filePath, Context context) {
+        MediaScannerConnection.scanFile(context, new String[] { filePath }, null, null);
     }
 
 }

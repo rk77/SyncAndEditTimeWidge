@@ -7,6 +7,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.rk.commonlib.util.ConstantUtil;
+import com.rk.commonlib.util.LogUtils;
 import com.rk.commonlib.util.TimeMethods;
 import com.rk.commonlib.R;
 
@@ -19,6 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
@@ -102,7 +104,7 @@ public class AppExternalFileWriter {
         String directoryName = context.getString(R.string.rk_file);
         Log.d(TAG,"directoryName = " + directoryName);
         if (isExternalStorageAvailable(false)) {
-            appDirectory = new File(Environment.getExternalStorageDirectory().toString(), directoryName);
+            appDirectory = new File(Environment.getExternalStorageDirectory().getPath(), directoryName);
             Log.d(TAG,"Environment.getExternalStorageDirectory().toString() = " + Environment.getExternalStorageDirectory().toString());
             createDirectory(appDirectory);
             appCacheDirectory = new File(externalCacheDirectory, directoryName);
@@ -182,6 +184,7 @@ public class AppExternalFileWriter {
      *             greater than size available, it will show error.
      */
     private void writeDataToFile(File file, String data, boolean append) throws AppExternalFileWriter.ExternalFileWriterException {
+        Log.i(TAG, "writeDataToFile: " + data + ", to file: " + file.getPath());
         byte[] stringBuffer = data.getBytes();
         writeDataToFile(file, stringBuffer,append);
     }
@@ -200,18 +203,29 @@ public class AppExternalFileWriter {
                 if (file != null && data != null) {
                     double dataSize = data.length;
                     double remainingSize = getAvailableSpace();
+                    FileOutputStream out = null;
                     if (dataSize >= remainingSize) {
                         throwException("没有有足够的空间");
                     } else {
                         try {
-                            FileOutputStream out = null;
-                            out = new FileOutputStream(file,append);
+                            out = new FileOutputStream(file, append);
                             out.write(data);
-                            out.close();
+                            //out.close();
+                            LogUtils.i("data: " + data + ", append: " + append);
                         } catch (IOException e) {
                             e.printStackTrace();
                         } catch (Exception e) {
                             e.printStackTrace();
+                        } finally {
+                            try {
+                                if (out != null) {
+                                    out.close();
+                                }
+
+                            } catch (IOException e) {
+
+                            }
+
                         }
                     }
                 }
