@@ -2,6 +2,10 @@ package com.rk.commonmodule.protocol.protocol3761;
 
 import android.util.Log;
 
+import com.rk.commonlib.util.LogUtils;
+
+import java.util.ArrayList;
+
 public enum Protocol3761 {
     PROTOCOL_3761;
     private static final String TAG = Protocol3761.class.getSimpleName();
@@ -113,6 +117,67 @@ public enum Protocol3761 {
             return true;
         }
         return false;
+    }
+
+    public byte[] makeFrame(byte[] userDataArea) {
+        if (userDataArea != null && userDataArea.length >= 8) {
+
+            byte[] frame = new byte[1 + 1 + 1 + 1 + 4 + userDataArea.length];
+            frame[0] = 0x68;
+            Protocol3761Frame.LengthArea lengthArea = new Protocol3761Frame.LengthArea(0, 1, userDataArea.length);
+            System.arraycopy(lengthArea.data, 0, frame, 1, lengthArea.data.length);
+            System.arraycopy(lengthArea.data, 0, frame, 1 + lengthArea.data.length, lengthArea.data.length);
+            frame[1 + lengthArea.data.length * 2] = 0x68;
+            System.arraycopy(userDataArea, 0, frame, 1 + lengthArea.data.length * 2 + 1, userDataArea.length);
+            byte cs = calcCs(userDataArea);
+            frame[1 + lengthArea.data.length * 2 + 1 + userDataArea.length] = cs;
+            frame[1 + lengthArea.data.length * 2 + 1 + userDataArea.length + 1] = 0x16;
+            return frame;
+        }
+        LogUtils.i("frame is null");
+        return null;
+    }
+
+    public byte[] makeLinkUserData(byte afn, byte seq, Protocol3761Frame.DataUnitID dataUnitID, byte[] aux) {
+        if (dataUnitID != null && dataUnitID.data != null) {
+            int size = 1 + 1 + dataUnitID.data.length;
+            if (aux != null && aux.length > 0) {
+                size = size + aux.length;
+            }
+            byte[] linkUserData = new byte[size];
+            linkUserData[0] = afn;
+            linkUserData[1] = seq;
+            System.arraycopy(dataUnitID.data, 0 , linkUserData, 2, dataUnitID.data.length);
+            if (aux != null && aux.length > 0) {
+                System.arraycopy(aux, 0 , linkUserData, 1 + 1 + dataUnitID.data.length, aux.length);
+            }
+            return linkUserData;
+        }
+        return null;
+
+    }
+
+    public byte[] makeUserDataArea(byte ctrlArea, Protocol3761Frame.AddrArea addrArea, byte[] linkUserData) {
+        if (addrArea != null && addrArea.data != null && linkUserData != null) {
+            byte[] userDataArea = new byte[1 + addrArea.data.length + linkUserData.length];
+            userDataArea[0] = ctrlArea;
+            System.arraycopy(addrArea.data, 0, userDataArea, 1, addrArea.data.length);
+            System.arraycopy(linkUserData, 0, userDataArea, 1 + addrArea.data.length, linkUserData.length);
+            return userDataArea;
+        }
+        return null;
+    }
+
+    private byte calcCs(byte[] userDataAre) {
+        int cs = 0;
+        if (userDataAre == null || userDataAre.length <=0) {
+            return (byte) cs;
+        }
+        for (int i = 0; i< userDataAre.length; i++) {
+            cs = cs + userDataAre[i];
+        }
+
+        return (byte) cs;
     }
 
 

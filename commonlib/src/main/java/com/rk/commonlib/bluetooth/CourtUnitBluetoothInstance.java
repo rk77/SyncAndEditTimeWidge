@@ -30,6 +30,7 @@ import com.rk.commonmodule.utils.DataConvertUtils;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -129,15 +130,36 @@ public class CourtUnitBluetoothInstance {
             Log.i(TAG, "onCharacteristicChanged");
             byte[] recvFrame = characteristic.getValue();
             Log.i(TAG, "onCharacteristicChanged, recvFrame: " + DataConvertUtils.convertByteArrayToString(recvFrame, false));
-            if (mReceivedFrame != null && recvFrame != null && recvFrame.length > 0) {
-                for (int i = 0; i < recvFrame.length; i++) {
-                    mReceivedFrame.add(recvFrame[i]);
-                }
-            }
 
-            if (isReceivedDone(mReceivedFrame)) {
+            if (isReceivedDone(recvFrame)) {
+
+                if (mReceivedFrame != null && recvFrame != null && recvFrame.length > 0) {
+                    if (recvFrame[0] == (byte) 0xFF || recvFrame[0] == (byte) 0xFE) {
+                        for (int i = 0; i < recvFrame.length; i++) {
+                            mReceivedFrame.add(recvFrame[i]);
+                        }
+                    } else {
+                        int end = 0;
+                        for (int i = 0; i < recvFrame.length; i++) {
+                            if (recvFrame[recvFrame.length - 1 -i] == 0x16) {
+                                end = recvFrame.length - 1 -i;
+                                break;
+                            }
+                        }
+                        for (int i = 1; i <= end; i++) {
+                            mReceivedFrame.add(recvFrame[i]);
+                        }
+                    }
+                }
+
                 synchronized (mReadSync) {
                     mReadSync.notify();
+                }
+            } else {
+                if (mReceivedFrame != null && recvFrame != null && recvFrame.length > 0) {
+                    for (int i = 1; i < recvFrame.length; i++) {
+                        mReceivedFrame.add(recvFrame[i]);
+                    }
                 }
             }
         }
@@ -533,21 +555,31 @@ public class CourtUnitBluetoothInstance {
         }
         mReceivedFrame.clear();
 
-        int sendTime = (frame.length + (MTU - 3 - 1)) / (MTU - 3);
+        int sendTime = (frame.length + (MTU - 1 - 3 - 1)) / (MTU - 1 - 3);
         for (int i = 0; i < sendTime; i++) {
-            int begin = i * (MTU - 3);
-            int end = (i + 1) * (MTU - 3) - 1;
+            int begin = i * (MTU - 3 - 1);
+            int end = (i + 1) * (MTU - 3 - 1) - 1;
             if (end > frame.length - 1) {
                 end = frame.length - 1;
             }
             if (mWriteCharacteristic != null && mBluetoothGatt != null) {
                 byte[] subFrame = DataConvertUtils.getSubByteArray(frame, begin, end);
+                byte[] sendFrame = new byte[MTU - 3];
+                Arrays.fill( sendFrame, (byte) 0 );
+
+                if (i == sendTime -1) {
+                    //the last frame
+                    sendFrame[0] = (byte) (0x80 | i);
+                } else {
+                    sendFrame[0] = (byte) i;
+                }
+                System.arraycopy(subFrame, 0, sendFrame, 1, subFrame.length);
                 Log.i(TAG, "sendAndReceiveSync, total: " + frame.length + ", begin: " + begin + ", end: " + end
-                        + ", sub frame: " + DataConvertUtils.convertByteArrayToString(subFrame, false));
+                        + ", sub frame: " + DataConvertUtils.convertByteArrayToString(sendFrame, false));
 
                 synchronized (mWriteSync) {
                     try {
-                        mWriteCharacteristic.setValue(subFrame);
+                        mWriteCharacteristic.setValue(sendFrame);
                         mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
                         Log.i("AX", "send chara: " + mWriteCharacteristic);
                         mWriteSync.wait(WAIT_TIMEOUT);
@@ -579,19 +611,25 @@ public class CourtUnitBluetoothInstance {
 
     }
 
-    private boolean isReceivedDone(ArrayList<Byte> frame) {
-        if (frame != null && frame.size() > 0) {
-            byte[] tmpFrame = new byte[frame.size()];
-            for (int i = 0; i < tmpFrame.length; i++) {
-                tmpFrame[i] = frame.get(i);
-            }
-            if (tmpFrame[0] == (byte) 0xFF) {
+    private boolean isReceivedDone(byte[] frame) {
+        if (frame != null && frame.length > 0) {
+            if (frame[0] == (byte) 0xFF) {
                 return true;
-            } else if (tmpFrame[0] == (byte) 0xFE) {
+            } else if (frame[0] == (byte) 0xFE) {
                 return true;
             } else {
-                return verify698Frame(tmpFrame);
+                return verify3761Frame(frame);
             }
+        }
+        return false;
+    }
+
+    public boolean verify3761Frame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return false;
+        }
+        if ((frame[0] & 0x80) == 0x80) {
+            return true;
         }
         return false;
     }

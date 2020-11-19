@@ -223,4 +223,19 @@ public class DataConvertUtils {
         }
     }
 
+    public static boolean isNumberString(String s) {
+        if (s != null) {
+            int length = s.length();
+            for (int i = 0; i < length; i++) {
+                if (!((s.charAt(i) >= '0' && s.charAt(i) <= '9')
+                        || (s.charAt(i) >= 'a' && s.charAt(i) <= 'f')
+                        || (s.charAt(i) >= 'A' && s.charAt(i) <= 'F'))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
 }
