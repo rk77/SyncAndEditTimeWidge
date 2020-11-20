@@ -1,6 +1,7 @@
 package com.rk.commonmodule.protocol.protocol3761;
 
 import com.rk.commonlib.util.LogUtils;
+import com.rk.commonmodule.utils.DataConvertUtils;
 
 public class Protocol3761Helper {
     public static byte[] makeGetTerminalVersionInfoFrame() {
@@ -20,5 +21,24 @@ public class Protocol3761Helper {
         }
         byte[] frame = Protocol3761.PROTOCOL_3761.makeFrame(userDataArea);
         return frame;
+    }
+
+    public static String parseVersionFrame(byte[] frame) {
+        boolean isOk = Protocol3761.PROTOCOL_3761.verifyFrame(frame);
+        LogUtils.i("isOk: " + isOk);
+        if (!isOk) {
+            return null;
+        }
+
+        byte[] data_unit = DataConvertUtils.getSubByteArray(frame, Protocol3761.PROTOCOL_3761.mSEQPos + 1, Protocol3761.PROTOCOL_3761.mCsPos - 1);
+        if (data_unit == null || data_unit.length < 20) {
+            return null;
+        }
+        byte[] version_data = DataConvertUtils.getSubByteArray(data_unit, 16, 19);
+
+        return DataConvertUtils.getByteArray2AsciiString(version_data);
+
+
+
     }
 }

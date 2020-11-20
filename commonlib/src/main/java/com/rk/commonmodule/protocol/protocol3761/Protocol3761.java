@@ -180,5 +180,97 @@ public enum Protocol3761 {
         return (byte) cs;
     }
 
+    public int mFirstBeginPos = 0;
+    public int mLengthPos = 0;
+    public int mSecondBeginPos = 0;
+    public int mCtrlAreaPos = 0;
+    public int mAddrAreaPos = 0;
+    public int mAFNPos = 0;
+    public int mSEQPos = 0;
+    public int mLinkUserDataPos = 0;
+    public int mCsPos = 0;
+    public int mEndPos = 0;
+
+    public boolean verifyFrame(byte[] frame) {
+        init();
+        if (frame == null || frame.length < 16 /* at least 16 bytes*/) {
+            Log.i(TAG, "verifyFrame, frame is null or size is so little");
+            return false;
+        }
+        for (int i = 0; i < frame.length; i++) {
+            if (frame[i] == 0x68) {
+                mFirstBeginPos = i;
+                break;
+            }
+        }
+        if (mFirstBeginPos < 0) {
+            Log.i(TAG, "verifyFrame, not find start char");
+            return false;
+        }
+
+        if (mFirstBeginPos + 2 + 2 + 1 < frame.length) {
+            if (frame[mFirstBeginPos + 2 + 2 + 1] == 0x68) {
+                mSecondBeginPos = mFirstBeginPos + 5;
+            } else {
+                Log.i(TAG, "verifyFrame, no second start char");
+                return false;
+            }
+        } else {
+            Log.i(TAG, "verifyFrame, verify error 1");
+            return false;
+        }
+        mLengthPos = mFirstBeginPos + 1;
+        Protocol3761Frame.LengthArea lengthArea = new Protocol3761Frame.LengthArea(frame, mLengthPos);
+        int length = lengthArea.length;
+        if (length < 8 /* at least 8 bytes, include CtrlArea(size = 1)/AddrArea(size = 5)/AFN(size = 1)/SEQ(size = 1) */) {
+            Log.i(TAG, "verifyFrame, verify error 2");
+            return false;
+        }
+
+        if ((mSecondBeginPos + length + 1 + 1) < frame.length) {
+            if (frame[mSecondBeginPos + length + 2] == 0x16) {
+                mEndPos = mSecondBeginPos + length + 2;
+            } else {
+                Log.i(TAG, "verifyFrame, verify error 3");
+                return false;
+            }
+        } else {
+            Log.i(TAG, "verifyFrame, verify error 4");
+            return false;
+        }
+        byte cs = frame[mEndPos - 1];
+        byte value = 0x00;
+
+        for (int i = mSecondBeginPos + 1; i <= (mSecondBeginPos + length); i++) {
+            value = (byte) (value + frame[i]);
+        }
+        if (value == cs) {
+            mCtrlAreaPos = mSecondBeginPos + 1;
+            mAddrAreaPos = mCtrlAreaPos + 1;
+            mAFNPos = mAddrAreaPos + 5;
+            mSEQPos = mAddrAreaPos + 5 + 1;
+            mLinkUserDataPos = mAddrAreaPos + 5;
+            mCsPos = mEndPos - 1;
+        } else {
+            Log.i(TAG, "verifyFrame, verify error 5");
+            return false;
+        }
+        Log.i(TAG, "verifyFrame, verify successfully");
+        return true;
+    }
+
+    private void init() {
+        mFirstBeginPos = -1;
+        mLengthPos = -1;
+        mSecondBeginPos = -1;
+        mCtrlAreaPos = -1;
+        mAddrAreaPos = -1;
+        mAFNPos = -1;
+        mSEQPos = -1;
+        mLinkUserDataPos = -1;
+        mCsPos = -1;
+        mEndPos = -1;
+    }
+
 
 }
