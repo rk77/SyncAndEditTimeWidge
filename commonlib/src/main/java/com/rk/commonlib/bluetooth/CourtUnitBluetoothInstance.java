@@ -314,7 +314,9 @@ public class CourtUnitBluetoothInstance {
                     return false;
                 }
             } else {
-                dynamicRequestPermission(activity);
+                if (!dynamicRequestPermission(activity)) {
+                    return false;
+                }
             }
             mBluetoothAdapter.startLeScan(mLeScanCallback);
             return true;
@@ -333,7 +335,7 @@ public class CourtUnitBluetoothInstance {
         return manager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
-    public static void dynamicRequestPermission(Activity activity) {
+    public static boolean dynamicRequestPermission(Activity activity) {
         Log.i(TAG, "dynamicRequestPermission");
         //Android6.0需要动态申请权限
         if (ContextCompat.checkSelfPermission(sContext, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -347,6 +349,9 @@ public class CourtUnitBluetoothInstance {
                 //判断是否需要解释
                 Toast.makeText(sContext, "需要蓝牙权限....", Toast.LENGTH_SHORT).show();
             }
+            return false;
+        } else {
+            return true;
         }
     }
 
