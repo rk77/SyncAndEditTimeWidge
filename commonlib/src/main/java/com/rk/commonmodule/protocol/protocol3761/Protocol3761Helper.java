@@ -37,8 +37,6 @@ public class Protocol3761Helper {
         byte[] version_data = DataConvertUtils.getSubByteArray(data_unit, 16, 19);
 
         return DataConvertUtils.getByteArray2AsciiString(version_data);
-
-
-
     }
 }
+//

@@ -14,6 +14,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.rk.commonlib.bluetooth.BluetoothInstance;
+import com.rk.commonlib.bluetooth.IBluethoothInstance;
 import com.rk.commonlib.widge.LoadingDialog;
 
 public abstract class CommonBaseActivity extends Activity {
@@ -158,14 +159,8 @@ public abstract class CommonBaseActivity extends Activity {
 
     private static IntentFilter makeGattUpdateIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BluetoothInstance.ACTION_GATT_CONNECTED);
-        intentFilter.addAction(BluetoothInstance.ACTION_GATT_DISCONNECTED);
-        intentFilter.addAction(BluetoothInstance.ACTION_GATT_SERVICES_DISCOVERED);
-        intentFilter.addAction(BluetoothInstance.ACTION_GATT_CHARACTERISTIC_READ);
-        intentFilter.addAction(BluetoothInstance.ACTION_GATT_CHARACTERISTIC_WRITE);
-        intentFilter.addAction(BluetoothInstance.ACTION_GATT_DESCRIPTOR_READ);
-        intentFilter.addAction(BluetoothInstance.ACTION_GATT_DESCRIPTOR_WRITE);
-        intentFilter.addAction(BluetoothInstance.ACTION_GATT_MTU_WRITE);
+        intentFilter.addAction(IBluethoothInstance.CONNECT_ACTION);
+        intentFilter.addAction(IBluethoothInstance.DISCONNECT_ACTION);
         return intentFilter;
     }
 }

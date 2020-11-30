@@ -103,6 +103,7 @@ public abstract class NoBleBaseFragmentActivity extends FragmentActivity {
     }
 
     public void setLoadingVisible(boolean show) {
+        Log.i(TAG, "setLoadingVisible, show: " + show);
         mUiHandler.removeMessages(SHOW_OR_DISMISS_LOADING_MSG);
         mUiHandler.sendMessage(mUiHandler.obtainMessage(SHOW_OR_DISMISS_LOADING_MSG, show));
     }
