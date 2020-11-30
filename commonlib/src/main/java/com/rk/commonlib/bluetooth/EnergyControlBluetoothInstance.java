@@ -334,12 +334,6 @@ public class EnergyControlBluetoothInstance implements IBluethoothInstance{
         return true;
     }
 
-    public boolean isDeviceConnected(String deviceAddr) {
-        if (deviceAddr != null && deviceAddr.equals(mBluetoothDeviceAddress)) {
-            return mIsConnected;
-        }
-        return false;
-    }
 
     public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
@@ -731,6 +725,13 @@ public class EnergyControlBluetoothInstance implements IBluethoothInstance{
         mBluetoothGatt = null;
         mIsConnected = false;
         mBluetoothDeviceAddress = null;
+    }
+
+    public boolean isDeviceConnected(String deviceAddr) {
+        if (deviceAddr != null && deviceAddr.equals(mBluetoothDeviceAddress)) {
+            return mIsConnected;
+        }
+        return false;
     }
 
 

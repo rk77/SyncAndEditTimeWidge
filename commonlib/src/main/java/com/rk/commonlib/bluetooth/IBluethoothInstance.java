@@ -19,4 +19,5 @@ public interface IBluethoothInstance {
     void close();
 
     byte[] sendAndReceiveSync(byte[] frame);
+    boolean isDeviceConnected(String deviceAddr);
 }

@@ -110,4 +110,11 @@ public class BluetoothManager implements IBluethoothInstance{
         mCurrentBluetoothInstance.close();
     }
 
+    public boolean isDeviceConnected(String deviceAddr) {
+        if (mCurrentBluetoothInstance == null) {
+            return false;
+        }
+        return mCurrentBluetoothInstance.isDeviceConnected(deviceAddr);
+    }
+
 }
