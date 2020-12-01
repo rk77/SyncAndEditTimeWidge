@@ -11,15 +11,22 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.os.Message;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -35,25 +42,20 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
-public class CourtUnitBluetoothInstance {
-    private static final String TAG = CourtUnitBluetoothInstance.class.getSimpleName();
-
-    public static final int REQUEST_ENABLE_BT = 1;
-    public static final int REQUEST_ENABLE_LACATION = 2;
-    public static final int REQUEST_ACCESS_COARSE_LOCATION = 3;
+public class TerminalFourBluetoothInstance implements IBluethoothInstance{
+    private static final String TAG = TerminalFourBluetoothInstance.class.getSimpleName();
 
     public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
 
-    public final static String ACTION_GATT_CONNECTED = "com.rk.commonlib.bluetooth.ACTION_GATT_CONNECTED";
-    public final static String ACTION_GATT_DISCONNECTED = "com.rk.commonlib.bluetooth.ACTION_GATT_DISCONNECTED";
-    public final static String ACTION_GATT_SERVICES_DISCOVERED = "com.rk.commonlib.bluetooth.ACTION_GATT_SERVICES_DISCOVERED";
-    public final static String ACTION_GATT_CHARACTERISTIC_READ = "com.rk.commonlib.bluetooth.ACTION_GATT_CHARACTERISTIC_READ";
-    public final static String ACTION_GATT_CHARACTERISTIC_WRITE = "com.rk.commonlib.bluetooth.ACTION_GATT_CHARACTERISTIC_WRITE";
-    public final static String ACTION_GATT_DESCRIPTOR_READ = "com.rk.commonlib.bluetooth.ACTION_GATT_DESCRIPTOR_READ";
-    public final static String ACTION_GATT_DESCRIPTOR_WRITE = "com.rk.commonlib.bluetooth.ACTION_GATT_DESCRIPTOR_WRITE";
-
-    public final static String ACTION_GATT_MTU_WRITE = "com.rk.commonlib.bluetooth.ACTION_GATT_MTU_WRITE";
+    public final static String ACTION_GATT_CONNECTED = "com.rk.commonlib.bluetooth.TerminalFourBluetoothInstance.ACTION_GATT_CONNECTED";
+    public final static String ACTION_GATT_DISCONNECTED = "com.rk.commonlib.bluetooth.TerminalFourBluetoothInstance.ACTION_GATT_DISCONNECTED";
+    public final static String ACTION_GATT_SERVICES_DISCOVERED = "com.rk.commonlib.bluetooth.TerminalFourBluetoothInstance.ACTION_GATT_SERVICES_DISCOVERED";
+    public final static String ACTION_GATT_CHARACTERISTIC_READ = "com.rk.commonlib.bluetooth.TerminalFourBluetoothInstance.ACTION_GATT_CHARACTERISTIC_READ";
+    public final static String ACTION_GATT_CHARACTERISTIC_WRITE = "com.rk.commonlib.bluetooth.TerminalFourBluetoothInstance.ACTION_GATT_CHARACTERISTIC_WRITE";
+    public final static String ACTION_GATT_DESCRIPTOR_READ = "com.rk.commonlib.bluetooth.TerminalFourBluetoothInstance.ACTION_GATT_DESCRIPTOR_READ";
+    public final static String ACTION_GATT_DESCRIPTOR_WRITE = "com.rk.commonlib.bluetooth.TerminalFourBluetoothInstance.ACTION_GATT_DESCRIPTOR_WRITE";
+    public final static String ACTION_GATT_MTU_WRITE = "com.rk.commonlib.bluetooth.TerminalFourBluetoothInstance.ACTION_GATT_MTU_WRITE";
 
     private final static String SERVICE_COMMUNICATION_UUID = "6e400001-b5a3-f393-e0a9-e50e24dc4179";
     private final static String CHARACTERISTIC_WRITE_UUID = "0000fff6-0000-1000-8000-00805f9b34fb";
@@ -74,27 +76,44 @@ public class CourtUnitBluetoothInstance {
     private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
 
-    private ILeScanVallback mLeScanListener;
-
     private boolean mIsConnected = false;
 
-    public interface ILeScanVallback {
-        void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord);
-    }
+    private Object mWriteSync = new Object();
+    private Object mReadSync = new Object();
+    private ArrayList<Byte> mReceivedFrame = new ArrayList<>();
 
-    private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+    private NonUIHandler mNonUIHandler;
+    private HandlerThread mHandlerThread;
+    private class NonUIHandler extends Handler {
+        public static final int NON_UI_CONFIRM_MSG = 0;
+        public static final int NON_UI_ENCRYPT_MSG = 1;
+
+        public NonUIHandler(Looper looper) {
+            super(looper);
+        }
         @Override
-        public void onLeScan(final BluetoothDevice device, final int rssi, byte[] scanRecord) {
-            if (mLeScanListener != null) {
-                mLeScanListener.onLeScan(device, rssi, scanRecord);
+        public void handleMessage(@NonNull Message msg) {
+            switch (msg.what) {
+                case NON_UI_CONFIRM_MSG:
+                    byte[] recvFrame = sendConfirm();
+                    if (recvFrame != null) {
+                        recvFrame = sendEncryptInfo(recvFrame);
+                        if (recvFrame != null) {
+                            broadcastUpdate(IBluethoothInstance.CONNECT_ACTION);
+                            return;
+                        }
+                    }
+                    broadcastUpdate(IBluethoothInstance.DISCONNECT_ACTION);
+                    break;
+                default:
+                    super.handleMessage(msg);
             }
         }
-    };
+    }
 
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            String intentAction;
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 Log.i(TAG, "onConnectionStateChange, Connected to GATT server.");
                 mIsConnected = true;
@@ -125,7 +144,6 @@ public class CourtUnitBluetoothInstance {
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            Log.i(TAG, "onCharacteristicChanged");
             byte[] recvFrame = characteristic.getValue();
             Log.i(TAG, "onCharacteristicChanged, recvFrame: " + DataConvertUtils.convertByteArrayToString(recvFrame, false));
 
@@ -164,19 +182,12 @@ public class CourtUnitBluetoothInstance {
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            super.onCharacteristicWrite(gatt, characteristic, status);
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                try {
-                    Log.i("AX", "send succ chara: " + characteristic);
-                    Log.i(TAG, "onCharacteristicWrite, UUID: " + characteristic.getUuid().toString()
-                            + ", write data: " + DataConvertUtils.convertByteArrayToString(characteristic.getValue(), false));
-                } catch (Exception e) {
-                    Log.e(TAG, "onCharacteristicWrite, error: " + e.getMessage());
-                }
+                Log.i(TAG, "onCharacteristicWrite, UUID: " + characteristic.getUuid().toString()
+                        + ", write data: " + DataConvertUtils.convertByteArrayToString(characteristic.getValue(), false));
                 synchronized (mWriteSync) {
                     mWriteSync.notify();
                 }
-
             }
         }
 
@@ -201,59 +212,111 @@ public class CourtUnitBluetoothInstance {
                 broadcastUpdate(ACTION_GATT_MTU_WRITE);
             }
         }
+    };
 
-        private void broadcastUpdate(final String action) {
-            Log.i(TAG, "broadcastUpdate, action: " + action);
-            final Intent intent = new Intent(action);
-            if (sContext != null) {
-                sContext.sendBroadcast(intent);
-            }
-
+    private void broadcastUpdate(final String action) {
+        Log.i(TAG, "broadcastUpdate, action: " + action);
+        final Intent intent = new Intent(action);
+        if (sContext != null) {
+            sContext.sendBroadcast(intent);
         }
 
-        private void broadcastUpdate(final String action, int status) {
-            Log.i(TAG, "broadcastUpdate, action: " + action);
-            final Intent intent = new Intent(action);
-            intent.putExtra("status", status);
-            if (sContext != null) {
-                sContext.sendBroadcast(intent);
-            }
+    }
 
+    private void broadcastUpdate(final String action, int status) {
+        Log.i(TAG, "broadcastUpdate, action: " + action);
+        final Intent intent = new Intent(action);
+        intent.putExtra("status", status);
+        if (sContext != null) {
+            sContext.sendBroadcast(intent);
         }
 
-        private void broadcastUpdate(final String action, final BluetoothGattCharacteristic characteristic) {
-            final Intent intent = new Intent(action);
-            if (sContext != null) {
-                sContext.sendBroadcast(intent);
-            }
-        }
+    }
 
-        private void broadcastUpdate(final String action, final BluetoothGattDescriptor descriptor) {
-            final Intent intent = new Intent(action);
-            intent.putExtra("descriptor", descriptor.getValue());
-            if (sContext != null) {
-                sContext.sendBroadcast(intent);
+    private void broadcastUpdate(final String action, final byte[] bytes) {
+        final Intent intent = new Intent(action);
+        intent.putExtra("value", bytes);
+        if (sContext != null) {
+            sContext.sendBroadcast(intent);
+        }
+    }
+
+    private void broadcastUpdate(final String action, final BluetoothGattCharacteristic characteristic) {
+        final Intent intent = new Intent(action);
+        if (sContext != null) {
+            sContext.sendBroadcast(intent);
+        }
+    }
+
+    private void broadcastUpdate(final String action, final BluetoothGattDescriptor descriptor) {
+        final Intent intent = new Intent(action);
+        intent.putExtra("descriptor", descriptor.getValue());
+        if (sContext != null) {
+            sContext.sendBroadcast(intent);
+        }
+    }
+
+    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            LogUtils.i("action: " + action);
+            if (ACTION_GATT_CONNECTED.equals(action)) {
+                discoveryGattServices();
+            } else if (ACTION_GATT_DISCONNECTED.equals(action)) {
+                broadcastUpdate(IBluethoothInstance.DISCONNECT_ACTION);
+            } else if (ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+                getServicesAndCharacteristics();
+                enableCharacteristicNotify();
+            } else if (ACTION_GATT_CHARACTERISTIC_READ.equals(action)) {
+
+            } else if (ACTION_GATT_CHARACTERISTIC_WRITE.equals(action)) {
+
+            } else if (ACTION_GATT_DESCRIPTOR_READ.equals(action)) {
+
+            } else if (ACTION_GATT_DESCRIPTOR_WRITE.equals(action)) {
+                mNonUIHandler.removeMessages(NonUIHandler.NON_UI_CONFIRM_MSG);
+                mNonUIHandler.sendMessage(mNonUIHandler.obtainMessage(NonUIHandler.NON_UI_CONFIRM_MSG));
+            } else if (ACTION_GATT_MTU_WRITE.equals(action)) {
+                //broadcastUpdate(IBluethoothInstance.CONNECT_ACTION);
             }
         }
     };
 
-    private CourtUnitBluetoothInstance() {
+    private static IntentFilter makeGattUpdateIntentFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ACTION_GATT_CONNECTED);
+        intentFilter.addAction(ACTION_GATT_DISCONNECTED);
+        intentFilter.addAction(ACTION_GATT_SERVICES_DISCOVERED);
+        intentFilter.addAction(ACTION_GATT_CHARACTERISTIC_READ);
+        intentFilter.addAction(ACTION_GATT_CHARACTERISTIC_WRITE);
+        intentFilter.addAction(ACTION_GATT_DESCRIPTOR_READ);
+        intentFilter.addAction(ACTION_GATT_DESCRIPTOR_WRITE);
+        intentFilter.addAction(ACTION_GATT_MTU_WRITE);
+        return intentFilter;
+    }
+
+    private TerminalFourBluetoothInstance() {
         if (sContext != null) {
             final BluetoothManager bluetoothManager = (BluetoothManager) sContext.getSystemService(Context.BLUETOOTH_SERVICE);
             mBluetoothAdapter = bluetoothManager.getAdapter();
+            sContext.registerReceiver(mBroadcastReceiver, makeGattUpdateIntentFilter());
+            mHandlerThread = new HandlerThread(TerminalFourBluetoothInstance.class.getName() + ".HandlerThread");
+            mHandlerThread.start();
+            mNonUIHandler = new NonUIHandler(mHandlerThread.getLooper());
         }
     }
 
     private static class InstanceHolder {
-        private static final CourtUnitBluetoothInstance INSTANCE = new CourtUnitBluetoothInstance();
+        private static final TerminalFourBluetoothInstance INSTANCE = new TerminalFourBluetoothInstance();
     }
 
-    public static CourtUnitBluetoothInstance getInstance(Context context) {
+    public static TerminalFourBluetoothInstance getInstance(Context context) {
         sContext = context.getApplicationContext();
         return InstanceHolder.INSTANCE;
     }
 
-    public boolean startScan(Activity activity) {
+    private boolean startScan(Activity activity) {
         if (mBluetoothAdapter == null) {
             Toast.makeText(sContext, "Not Support BLE！", Toast.LENGTH_LONG).show();
             return false;
@@ -279,7 +342,7 @@ public class CourtUnitBluetoothInstance {
         return true;
     }
 
-    public boolean stopScan(Activity activity) {
+    private boolean stopScan(Activity activity) {
         if (mBluetoothAdapter != null) {
             mBluetoothAdapter.cancelDiscovery();
             return true;
@@ -287,11 +350,7 @@ public class CourtUnitBluetoothInstance {
         return false;
     }
 
-    public void setLeScanListener(ILeScanVallback listener) {
-        mLeScanListener = listener;
-    }
-
-    public boolean scanLeDevice(final boolean enable, Activity activity) {
+    private boolean scanLeDevice(final boolean enable, Activity activity, BluetoothAdapter.LeScanCallback leScanCallback) {
         if (enable) {
             if (mBluetoothAdapter == null) {
                 Toast.makeText(sContext, "Not Support BLE！", Toast.LENGTH_LONG).show();
@@ -316,10 +375,10 @@ public class CourtUnitBluetoothInstance {
                     return false;
                 }
             }
-            mBluetoothAdapter.startLeScan(mLeScanCallback);
+            mBluetoothAdapter.startLeScan(leScanCallback);
             return true;
         } else {
-            mBluetoothAdapter.stopLeScan(mLeScanCallback);
+            mBluetoothAdapter.stopLeScan(leScanCallback);
             return false;
         }
     }
@@ -353,69 +412,6 @@ public class CourtUnitBluetoothInstance {
         }
     }
 
-    public boolean connect(final String address) {
-        if (mBluetoothAdapter == null || address == null) {
-            Log.w(TAG, "connect, BluetoothAdapter not initialized or unspecified address.");
-            return false;
-        }
-
-
-        // Previously connected device.  Try to reconnect.
-        if (mBluetoothDeviceAddress != null && address.equals(mBluetoothDeviceAddress) && mBluetoothGatt != null) {
-            Log.d(TAG, "connect, Trying to use an existing mBluetoothGatt for connection.");
-            if (mBluetoothGatt.connect()) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-        if (device == null) {
-            Log.w(TAG, "connect, Device not found.  Unable to connect.");
-            return false;
-        }
-        // We want to directly connect to the device, so we are setting the autoConnect
-        // parameter to false.
-        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        //    mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback, BluetoothDevice.TRANSPORT_LE);
-        //} else {
-            mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback);
-        //}
-
-        Log.d(TAG, "connect, Trying to create a new connection.");
-        mBluetoothDeviceAddress = address;
-        mNotifyCharacteristic = null;
-        mWriteCharacteristic = null;
-        mCommunicationService = null;
-
-        return true;
-    }
-
-    public void disconnect() {
-        Log.i(TAG, "disconnect");
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-        mBluetoothGatt.disconnect();
-    }
-
-    public void close() {
-        Log.i(TAG, "close");
-        if (mBluetoothGatt == null) {
-            return;
-        }
-        mBluetoothGatt.close();
-        mNotifyCharacteristic = null;
-        mWriteCharacteristic = null;
-        mCommunicationService = null;
-        mConfirmCharacteristic = null;
-        mBluetoothGatt = null;
-        mIsConnected = false;
-        mBluetoothDeviceAddress = null;
-    }
-
     public boolean refreshDeviceCache() {
         if (mBluetoothGatt != null) {
             try {
@@ -429,13 +425,6 @@ public class CourtUnitBluetoothInstance {
             } catch (Exception localException) {
                 LogUtils.i("An exception occured while refreshing device");
             }
-        }
-        return false;
-    }
-
-    public boolean isDeviceConnected(String deviceAddr) {
-        if (deviceAddr != null && deviceAddr.equals(mBluetoothDeviceAddress)) {
-            return mIsConnected;
         }
         return false;
     }
@@ -546,74 +535,6 @@ public class CourtUnitBluetoothInstance {
         mBluetoothGatt.requestMtu(MTU);
     }
 
-    private Object mWriteSync = new Object();
-    private Object mReadSync = new Object();
-
-    private ArrayList<Byte> mReceivedFrame = new ArrayList<>();
-
-    public synchronized byte[] sendAndReceiveSync(byte[] frame) {
-        Log.i(TAG, "sendAndReceiveSync, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
-        if (frame == null) {
-            return null;
-        }
-        mReceivedFrame.clear();
-
-        int sendTime = (frame.length + (MTU - 1 - 3 - 1)) / (MTU - 1 - 3);
-        for (int i = 0; i < sendTime; i++) {
-            int begin = i * (MTU - 3 - 1);
-            int end = (i + 1) * (MTU - 3 - 1) - 1;
-            if (end > frame.length - 1) {
-                end = frame.length - 1;
-            }
-            if (mWriteCharacteristic != null && mBluetoothGatt != null) {
-                byte[] subFrame = DataConvertUtils.getSubByteArray(frame, begin, end);
-                byte[] sendFrame = new byte[MTU - 3];
-                Arrays.fill( sendFrame, (byte) 0 );
-
-                if (i == sendTime -1) {
-                    //the last frame
-                    sendFrame[0] = (byte) (0x80 | i);
-                } else {
-                    sendFrame[0] = (byte) i;
-                }
-                System.arraycopy(subFrame, 0, sendFrame, 1, subFrame.length);
-                Log.i(TAG, "sendAndReceiveSync, total: " + frame.length + ", begin: " + begin + ", end: " + end
-                        + ", sub frame: " + DataConvertUtils.convertByteArrayToString(sendFrame, false));
-
-                synchronized (mWriteSync) {
-                    try {
-                        mWriteCharacteristic.setValue(sendFrame);
-                        mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
-                        Log.i("AX", "send chara: " + mWriteCharacteristic);
-                        mWriteSync.wait(WAIT_TIMEOUT);
-                    } catch (Exception e) {
-                        Log.e(TAG, "sendAndReceiveSync, wait for writing error: " + e.getMessage());
-                    }
-                }
-            }
-        }
-        Log.i(TAG, "sendAndReceiveSync, send done.");
-
-        // wait for finishing receiving message
-        synchronized (mReadSync) {
-            try {
-                mReadSync.wait(RECV_WAIT_TIMEOUT);
-            } catch (Exception e) {
-                Log.e(TAG, "sendAndReceiveSync, wait for reading error: " + e.getMessage());
-            }
-        }
-        Log.i(TAG, "sendAndReceiveSync, receive done.");
-        byte[] recvFrame = null;
-        if (mReceivedFrame != null && mReceivedFrame.size() > 0) {
-            recvFrame = new byte[mReceivedFrame.size()];
-            for (int i = 0; i < recvFrame.length; i++) {
-                recvFrame[i] = mReceivedFrame.get(i);
-            }
-        }
-        return recvFrame;
-
-    }
-
     private boolean isReceivedDone(byte[] frame) {
         if (frame != null && frame.length > 0) {
             if (frame[0] == (byte) 0xFF) {
@@ -621,13 +542,13 @@ public class CourtUnitBluetoothInstance {
             } else if (frame[0] == (byte) 0xFE) {
                 return true;
             } else {
-                return verify3761Frame(frame);
+                return verifyFrame(frame);
             }
         }
         return false;
     }
 
-    public boolean verify3761Frame(byte[] frame) {
+    public boolean verifyFrame(byte[] frame) {
         if (frame == null || frame.length <= 0) {
             return false;
         }
@@ -783,7 +704,7 @@ public class CourtUnitBluetoothInstance {
         return false;
     }
 
-    public synchronized byte[] sendConfirm() {
+    private byte[] sendConfirm() {
         if (mConfirmCharacteristic == null) {
             LogUtils.i("mConfirmCharacteristic is null");
             return null;
@@ -854,7 +775,7 @@ public class CourtUnitBluetoothInstance {
         return null;
     }
 
-    public synchronized byte[] sendEncryptInfo(byte[] frame) {
+    private byte[] sendEncryptInfo(byte[] frame) {
         Log.i(TAG, "sendEncryptInfo, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
         if (frame == null) {
             return null;
@@ -908,7 +829,6 @@ public class CourtUnitBluetoothInstance {
             }
         }
         return recvFrame;
-
     }
 
 
@@ -938,6 +858,157 @@ public class CourtUnitBluetoothInstance {
         }
         // LogUtil.d(TAG,"经过第二次加密后的16字节信息："+TopscommUtils.byteArrayToHexString(cipResult));
         return cipResult;
+    }
+
+
+
+
+    /** IBluetooth Interface Implement **/
+    public boolean startScan(Activity activity, boolean isBle, BluetoothAdapter.LeScanCallback leScanCallback) {
+        if (isBle) {
+            return scanLeDevice(true, activity, leScanCallback);
+        } else {
+            return startScan(activity);
+        }
+    }
+
+    public boolean stopScan(Activity activity, boolean isBle) {
+        if (isBle) {
+            return scanLeDevice(false, activity, null);
+        } else {
+            return stopScan(activity);
+        }
+    }
+
+    public boolean connect(final String address) {
+        if (mBluetoothAdapter == null || address == null) {
+            Log.w(TAG, "connect, BluetoothAdapter not initialized or unspecified address.");
+            return false;
+        }
+        // Previously connected device.  Try to reconnect.
+        if (mBluetoothDeviceAddress != null && address.equals(mBluetoothDeviceAddress) && mBluetoothGatt != null) {
+            Log.d(TAG, "connect, Trying to use an existing mBluetoothGatt for connection.");
+            if (mBluetoothGatt.connect()) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+        if (device == null) {
+            Log.w(TAG, "connect, Device not found.  Unable to connect.");
+            return false;
+        }
+        // We want to directly connect to the device, so we are setting the autoConnect
+        // parameter to false.
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        //    mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback, BluetoothDevice.TRANSPORT_LE);
+        //} else {
+        mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback);
+        //}
+
+        Log.d(TAG, "connect, Trying to create a new connection.");
+        mBluetoothDeviceAddress = address;
+        mNotifyCharacteristic = null;
+        mWriteCharacteristic = null;
+        mCommunicationService = null;
+
+        return true;
+    }
+
+    public synchronized byte[] sendAndReceiveSync(byte[] frame) {
+        Log.i(TAG, "sendAndReceiveSync, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
+        if (frame == null) {
+            return null;
+        }
+        mReceivedFrame.clear();
+
+        int sendTime = (frame.length + (MTU - 1 - 3 - 1)) / (MTU - 1 - 3);
+        for (int i = 0; i < sendTime; i++) {
+            int begin = i * (MTU - 3 - 1);
+            int end = (i + 1) * (MTU - 3 - 1) - 1;
+            if (end > frame.length - 1) {
+                end = frame.length - 1;
+            }
+            if (mWriteCharacteristic != null && mBluetoothGatt != null) {
+                byte[] subFrame = DataConvertUtils.getSubByteArray(frame, begin, end);
+                byte[] sendFrame = new byte[MTU - 3];
+                Arrays.fill( sendFrame, (byte) 0 );
+
+                if (i == sendTime -1) {
+                    //the last frame
+                    sendFrame[0] = (byte) (0x80 | i);
+                } else {
+                    sendFrame[0] = (byte) i;
+                }
+                System.arraycopy(subFrame, 0, sendFrame, 1, subFrame.length);
+                Log.i(TAG, "sendAndReceiveSync, total: " + frame.length + ", begin: " + begin + ", end: " + end
+                        + ", sub frame: " + DataConvertUtils.convertByteArrayToString(sendFrame, false));
+
+                synchronized (mWriteSync) {
+                    try {
+                        mWriteCharacteristic.setValue(sendFrame);
+                        mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
+                        Log.i("AX", "send chara: " + mWriteCharacteristic);
+                        mWriteSync.wait(WAIT_TIMEOUT);
+                    } catch (Exception e) {
+                        Log.e(TAG, "sendAndReceiveSync, wait for writing error: " + e.getMessage());
+                    }
+                }
+            }
+        }
+        Log.i(TAG, "sendAndReceiveSync, send done.");
+
+        // wait for finishing receiving message
+        synchronized (mReadSync) {
+            try {
+                mReadSync.wait(RECV_WAIT_TIMEOUT);
+            } catch (Exception e) {
+                Log.e(TAG, "sendAndReceiveSync, wait for reading error: " + e.getMessage());
+            }
+        }
+        Log.i(TAG, "sendAndReceiveSync, receive done.");
+        byte[] recvFrame = null;
+        if (mReceivedFrame != null && mReceivedFrame.size() > 0) {
+            recvFrame = new byte[mReceivedFrame.size()];
+            for (int i = 0; i < recvFrame.length; i++) {
+                recvFrame[i] = mReceivedFrame.get(i);
+            }
+        }
+        return recvFrame;
+
+    }
+
+    public void disconnect() {
+        Log.i(TAG, "disconnect");
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+        mBluetoothGatt.disconnect();
+    }
+
+    public void close() {
+        Log.i(TAG, "close");
+        if (mBluetoothGatt == null) {
+            return;
+        }
+        mBluetoothGatt.close();
+        mNotifyCharacteristic = null;
+        mWriteCharacteristic = null;
+        mCommunicationService = null;
+        mConfirmCharacteristic = null;
+        mBluetoothGatt = null;
+        mIsConnected = false;
+        mBluetoothDeviceAddress = null;
+    }
+
+    public boolean isDeviceConnected(String deviceAddr) {
+        if (deviceAddr != null && deviceAddr.equals(mBluetoothDeviceAddress)) {
+            return mIsConnected;
+        }
+        return false;
     }
 
 }
