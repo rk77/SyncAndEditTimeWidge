@@ -63,6 +63,8 @@ public class BluetoothManager implements IBluethoothInstance{
     public void setCurrentBluetoothType(int type) {
         if (type == 0) {
             mCurrentBluetoothInstance = EnergyControlBluetoothInstance.getInstance(sContext);
+        } else if (type == 1) {
+            mCurrentBluetoothInstance = TerminalFourBluetoothInstance.getInstance(sContext);
         }
     }
 

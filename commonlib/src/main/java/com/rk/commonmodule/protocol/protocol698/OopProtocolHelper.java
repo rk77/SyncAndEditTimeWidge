@@ -2062,7 +2062,7 @@ public class OopProtocolHelper {
                             continue;
                         }
                         byte userType = (byte) userTypeData.obj;
-                        parsedMap.put(USER_TYPE_KEY, String.valueOf(userType));
+                        parsedMap.put(USER_TYPE_KEY, String.valueOf(userType & 0xFF));
 
                         Protocol698Frame.Data lineConnectTypeData = basicObjectList.get(7);
                         if (lineConnectTypeData == null || lineConnectTypeData.data == null || lineConnectTypeData.type != Protocol698Frame.Data_Type.ENUM_TYPE) {

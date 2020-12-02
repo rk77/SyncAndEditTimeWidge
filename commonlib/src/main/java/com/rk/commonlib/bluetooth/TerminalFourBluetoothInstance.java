@@ -722,7 +722,7 @@ public class TerminalFourBluetoothInstance implements IBluethoothInstance{
                     mBluetoothGatt.writeCharacteristic(mConfirmCharacteristic);
                     mWriteSync.wait(WAIT_TIMEOUT);
                 } catch (Exception e) {
-                    Log.e(TAG, "sendAndReceiveSync, wait for writing error: " + e.getMessage());
+                    Log.e(TAG, "sendConfirm, wait for writing error: " + e.getMessage());
                 }
             }
         }
@@ -732,10 +732,10 @@ public class TerminalFourBluetoothInstance implements IBluethoothInstance{
             try {
                 mReadSync.wait(RECV_WAIT_TIMEOUT);
             } catch (Exception e) {
-                Log.e(TAG, "sendAndReceiveSync, wait for reading error: " + e.getMessage());
+                Log.e(TAG, "sendConfirm, wait for reading error: " + e.getMessage());
             }
         }
-        Log.i(TAG, "sendAndReceiveSync, receive done.");
+        Log.i(TAG, "sendConfirm, receive done.");
         byte[] recvFrame = null;
         if (mReceivedFrame != null && mReceivedFrame.size() > 0) {
             recvFrame = new byte[mReceivedFrame.size()];
