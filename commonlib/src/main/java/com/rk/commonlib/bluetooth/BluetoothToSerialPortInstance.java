@@ -146,15 +146,18 @@ public class BluetoothToSerialPortInstance implements IBluethoothInstance{
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             byte[] recvFrame = characteristic.getValue();
             Log.i(TAG, "onCharacteristicChanged, recvFrame: " + DataConvertUtils.convertByteArrayToString(recvFrame, false));
-            if (mReceivedFrame != null && recvFrame != null && recvFrame.length > 0) {
-                for (int i = 0; i < recvFrame.length; i++) {
-                    mReceivedFrame.add(recvFrame[i]);
+            synchronized (this) {
+                if (mReceivedFrame != null && recvFrame != null && recvFrame.length > 0) {
+                    for (int i = 0; i < recvFrame.length; i++) {
+                        mReceivedFrame.add(recvFrame[i]);
+                    }
                 }
-            }
 
-            if (isReceivedDone(mReceivedFrame)) {
-                synchronized (mReadSync) {
-                    mReadSync.notify();
+
+                if (isReceivedDone(mReceivedFrame)) {
+                    synchronized (mReadSync) {
+                        mReadSync.notify();
+                    }
                 }
             }
         }
@@ -254,8 +257,8 @@ public class BluetoothToSerialPortInstance implements IBluethoothInstance{
             } else if (ACTION_GATT_DESCRIPTOR_READ.equals(action)) {
 
             } else if (ACTION_GATT_DESCRIPTOR_WRITE.equals(action)) {
-                //broadcastUpdate(IBluethoothInstance.CONNECT_ACTION);
-                setMtu();
+                broadcastUpdate(IBluethoothInstance.CONNECT_ACTION);
+                //setMtu();
             } else if (ACTION_GATT_MTU_WRITE.equals(action)) {
                 broadcastUpdate(IBluethoothInstance.CONNECT_ACTION);
             }
@@ -511,7 +514,7 @@ public class BluetoothToSerialPortInstance implements IBluethoothInstance{
     public void setMtu() {
         Log.i(TAG, "setMtu");
         //mBluetoothGatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH);
-        mBluetoothGatt.requestMtu(247);
+        mBluetoothGatt.requestMtu(MTU);
     }
 
     private boolean isReceivedDone(ArrayList<Byte> frame) {
