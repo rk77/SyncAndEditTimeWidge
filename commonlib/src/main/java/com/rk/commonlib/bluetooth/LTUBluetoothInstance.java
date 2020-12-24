@@ -336,7 +336,9 @@ public class LTUBluetoothInstance implements IBluethoothInstance{
                 return false;
             }
         } else {
-            dynamicRequestPermission(activity);
+            if (!dynamicRequestPermission(activity)) {
+                return false;
+            }
         }
         mBluetoothAdapter.startDiscovery();
         return true;
