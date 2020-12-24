@@ -67,6 +67,8 @@ public class BluetoothManager implements IBluethoothInstance{
             mCurrentBluetoothInstance = TerminalFourBluetoothInstance.getInstance(sContext);
         } else if (type == 2) {
             mCurrentBluetoothInstance = BluetoothToSerialPortInstance.getInstance(sContext);
+        } else if (type == 3) {
+            mCurrentBluetoothInstance = LTUBluetoothInstance.getInstance(sContext);
         }
     }
 
