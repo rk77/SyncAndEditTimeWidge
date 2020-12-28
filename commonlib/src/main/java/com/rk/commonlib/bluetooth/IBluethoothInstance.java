@@ -5,6 +5,9 @@ import android.bluetooth.BluetoothAdapter;
 
 public interface IBluethoothInstance {
 
+    public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
+    public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
+
     public static final int REQUEST_ENABLE_BT = 1;
     public static final int REQUEST_ENABLE_LACATION = 2;
     public static final int REQUEST_ACCESS_COARSE_LOCATION = 3;

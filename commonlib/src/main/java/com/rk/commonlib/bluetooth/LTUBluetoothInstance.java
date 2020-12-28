@@ -45,8 +45,6 @@ import java.util.UUID;
 public class LTUBluetoothInstance implements IBluethoothInstance{
     private static final String TAG = LTUBluetoothInstance.class.getSimpleName();
 
-    public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
-    public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
 
     public final static String ACTION_GATT_CONNECTED = "com.rk.commonlib.bluetooth.LTUBluetoothInstance.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED = "com.rk.commonlib.bluetooth.LTUBluetoothInstance.ACTION_GATT_DISCONNECTED";
