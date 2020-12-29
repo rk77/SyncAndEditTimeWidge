@@ -205,6 +205,26 @@ public class DataConvertUtils {
 
     }
 
+    public static String getByteArray2AsciiString(byte[] data, int begin, int end, boolean revertTo){
+        if (data == null || data.length <= 0) {
+            return null;
+        }
+        if (begin > end || begin > data.length - 1 || end > data.length - 1) {
+            return null;
+        }
+        byte[] subData = new byte[end - begin + 1];
+        if (revertTo) {
+            for (int i = 0; i <= subData.length - 1; i++) {
+                subData[i] = data[end - i];
+            }
+        } else {
+            for (int i = 0; i <= subData.length - 1; i++) {
+                subData[i] = data[begin + i];
+            }
+        }
+        return getByteArray2AsciiString(subData);
+    }
+
     public static String getByteArray2AsciiString(byte[] data){
         String asciiString = "";
         if (data != null && data.length > 0) {
