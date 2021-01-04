@@ -1,5 +1,7 @@
 package com.rk.commonmodule.protocol.protocol645;
 
+import android.text.TextUtils;
+
 import com.rk.commonlib.util.LogUtils;
 import com.rk.commonmodule.utils.DataConvertUtils;
 
@@ -52,6 +54,28 @@ public class Ltu645ProtocolHelper {
         if (protocol645Frame == null) {
             return null;
         }
-        return DataConvertUtils.convertByteArrayToString(protocol645Frame.mAddressArea, false);
+        return DataConvertUtils.convertByteArrayToString(protocol645Frame.mAddressArea, true);
+    }
+
+    public static byte[] makeSetAddrFrame(String oldAddr, String address) {
+        if (TextUtils.isEmpty(address) || TextUtils.isEmpty(oldAddr)) {
+            return null;
+        }
+        byte ctrlCode = 0x1E;
+        String data = "82" + address;
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(oldAddr, ctrlCode, data);
+    }
+
+    public static String parseSetAddrFrame(byte[] frame) {
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+        if (protocol645Frame == null) {
+            return "false";
+        }
+
+        if (protocol645Frame.mCtrlCode == 0x9E) {
+            return "true";
+        } else {
+            return "false|" + DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, false);
+        }
     }
 }
