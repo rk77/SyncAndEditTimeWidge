@@ -78,4 +78,12 @@ public class Ltu645ProtocolHelper {
             return "false|" + DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, false);
         }
     }
+
+    public static byte[] makeResetFrame(String addr, String dataLable) {
+        if (TextUtils.isEmpty(addr) || TextUtils.isEmpty(dataLable)) {
+            return null;
+        }
+        byte ctrlCode = 0x1E;
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable);
+    }
 }
