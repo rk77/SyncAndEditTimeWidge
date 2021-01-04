@@ -222,7 +222,7 @@ public class LTUBluetoothInstance implements IBluethoothInstance{
     }
 
     private void broadcastUpdate(final String action, int status) {
-        Log.i(TAG, "broadcastUpdate, action: " + action);
+        Log.i(TAG, "broadcastUpdate, action: " + action + ", status: " + status);
         final Intent intent = new Intent(action);
         intent.putExtra("status", status);
         if (sContext != null) {
@@ -262,7 +262,7 @@ public class LTUBluetoothInstance implements IBluethoothInstance{
             if (ACTION_GATT_CONNECTED.equals(action)) {
                 discoveryGattServices();
             } else if (ACTION_GATT_DISCONNECTED.equals(action)) {
-                broadcastUpdate(IBluethoothInstance.DISCONNECT_ACTION);
+                broadcastUpdate(IBluethoothInstance.DISCONNECT_ACTION, intent.getIntExtra("status", -100));
             } else if (ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 getServicesAndCharacteristics();
                 enableCharacteristicNotify();
