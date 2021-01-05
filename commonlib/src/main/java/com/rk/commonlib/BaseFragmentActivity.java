@@ -119,6 +119,9 @@ public abstract class BaseFragmentActivity extends FragmentActivity {
     }
 
     public void setLoadingVisible(boolean show) {
+        if (mUiHandler == null) {
+            return;
+        }
         mUiHandler.removeMessages(UiHandler.SHOW_OR_DISMISS_LOADING_MSG);
         mUiHandler.sendMessage(mUiHandler.obtainMessage(UiHandler.SHOW_OR_DISMISS_LOADING_MSG, show));
     }

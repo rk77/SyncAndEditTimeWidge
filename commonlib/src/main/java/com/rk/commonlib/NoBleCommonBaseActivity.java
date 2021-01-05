@@ -100,12 +100,15 @@ public abstract class NoBleCommonBaseActivity extends Activity {
     protected void onDestroy() {
         Log.i(TAG, "onDestroy");
         mHandlerThread.quitSafely();
-        //mNonUiHandler = null;
-        //mUiHandler = null;
+        mNonUiHandler = null;
+        mUiHandler = null;
         super.onDestroy();
     }
 
     protected void setLoadingVisible(boolean show) {
+        if (mUiHandler == null) {
+            return;
+        }
         mUiHandler.removeMessages(SHOW_OR_DISMISS_LOADING_MSG);
         mUiHandler.sendMessage(mUiHandler.obtainMessage(SHOW_OR_DISMISS_LOADING_MSG, show));
     }
