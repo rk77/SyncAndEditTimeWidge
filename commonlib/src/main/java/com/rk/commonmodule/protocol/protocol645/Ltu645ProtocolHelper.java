@@ -119,4 +119,65 @@ public class Ltu645ProtocolHelper {
         }
         return null;
     }
+
+    public static byte[] makeReadTelesignalisationFrame(String addr, boolean hasTimeTag) {
+        if (TextUtils.isEmpty(addr)) {
+            return null;
+        }
+        byte ctrlCode = 0x1E;
+        String dataLable = "A8";
+        String data = "01";
+        if (hasTimeTag) {
+            data = "1E";
+        }
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable + data);
+    }
+
+    public static String parseReadTelesignalisationFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+
+        if (protocol645Frame.mCtrlCode == (byte) 0x9E) {
+            LogUtils.i("data: " + DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, false));
+            if (protocol645Frame.mData != null && protocol645Frame.mData.length >= 4) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(protocol645Frame.mData[2]).append("|");
+                if (protocol645Frame.mData[3] == (byte) 0x00) {
+                    sb.append("分");
+                } else {
+                    sb.append("合");
+                }
+                if (protocol645Frame.mData[1] == (byte) 0x1E && protocol645Frame.mData.length == 11) {
+                    sb.append("|");
+                    sb.append(parse_CP56_Time(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 4, 10)));
+                }
+
+                return sb.toString();
+            }
+        }
+        return null;
+
+    }
+
+    private static String parse_CP56_Time(byte[] data) {
+        if (data == null || data.length != 7) {
+            return null;
+        }
+        //String tst = "ac df 27 0d 06 01 15".replaceAll(" ", "");
+        //data = DataConvertUtils.convertHexStringToByteArray(tst, tst.length(), false);
+        StringBuilder sb = new StringBuilder();
+        sb.append((data[6] & 0x7F) + 2000).append("-")
+                .append(String.format("%02d", data[5] & 0x0F)).append("-")
+                .append(String.format("%02d", data[4] & 0x1F)).append(" ")
+                .append(String.format("%02d", data[3] & 0x1F)).append(":")
+                .append(String.format("%02d", data[2] & 0x3F)).append(":");
+        int second = (((data[1] << 8) & 0x0000FF00) | (data[0] & 0x000000FF)) / 1000;
+        int million_second = (((data[1] << 8) & 0x0000FF00) | (data[0] & 0x000000FF)) - second * 1000;
+        sb.append(String.format("%02d", second)).append(".").append(million_second);
+        return sb.toString();
+
+    }
 }
