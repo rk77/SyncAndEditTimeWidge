@@ -86,4 +86,37 @@ public class Ltu645ProtocolHelper {
         byte ctrlCode = 0x1E;
         return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable);
     }
+
+    public static byte[] makeReadCurrentFrame(String addr) {
+        if (TextUtils.isEmpty(addr)) {
+            return null;
+        }
+        byte ctrlCode = 0x1E;
+        String dataLable = "86";
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable);
+    }
+
+    public static String parseReadCurrentFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+
+        if (protocol645Frame.mCtrlCode == (byte) 0x9E) {
+            LogUtils.i("data: " + DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, false));
+            if (protocol645Frame.mData != null && protocol645Frame.mData.length == 9) {
+                StringBuilder sb = new StringBuilder();
+                int mainVoltage = ((protocol645Frame.mData[2] << 8) & 0x0000FF00) | (protocol645Frame.mData[1] & 0x000000FF);
+                sb.append((double) mainVoltage / 1000).append("V").append("|");
+                int capacitanceVoltage = ((protocol645Frame.mData[4] << 8) & 0x0000FF00) | (protocol645Frame.mData[3] & 0x000000FF);
+                sb.append((double) capacitanceVoltage / 1000).append("V").append("|");
+                int batteryVoltage = ((protocol645Frame.mData[6] << 8) & 0x0000FF00) | (protocol645Frame.mData[5] & 0x000000FF);
+                sb.append((double) batteryVoltage / 1000).append("V").append("|");
+                int systemTemperature = ((protocol645Frame.mData[8] << 8) & 0x0000FF00) | (protocol645Frame.mData[7] & 0x000000FF);
+                sb.append(systemTemperature).append("\u2103");
+                return sb.toString();
+            }
+        }
+        return null;
+    }
 }
