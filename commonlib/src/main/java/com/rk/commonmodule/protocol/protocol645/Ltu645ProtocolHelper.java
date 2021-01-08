@@ -72,7 +72,7 @@ public class Ltu645ProtocolHelper {
             return "false";
         }
 
-        if (protocol645Frame.mCtrlCode == 0x9E) {
+        if (protocol645Frame.mCtrlCode == (byte) 0x9E) {
             return "true";
         } else {
             return "false|" + DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, false);
