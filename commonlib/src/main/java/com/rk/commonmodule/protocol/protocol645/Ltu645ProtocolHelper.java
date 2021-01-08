@@ -187,7 +187,7 @@ public class Ltu645ProtocolHelper {
         }
 
         byte ctrlCode = 0x11;
-        String dataLable = "040001e0";
+        String dataLable = DataConvertUtils.reverse("040001e0", 2);
         return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable);
     }
 
