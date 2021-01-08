@@ -180,4 +180,67 @@ public class Ltu645ProtocolHelper {
         return sb.toString();
 
     }
+
+    public static byte[] makeReadClockTimeFrame(String addr) {
+        if (TextUtils.isEmpty(addr)) {
+            return null;
+        }
+
+        byte ctrlCode = 0x11;
+        String dataLable = "040001e0";
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable);
+    }
+
+    public static String parseReadClockTimeFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+        if (protocol645Frame != null && protocol645Frame.mData != null && protocol645Frame.mData.length == 11) {
+            return parse_CP56_Time(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 4, 10));
+        }
+        return null;
+    }
+
+    public static byte[] makeBroadcastResetTimeFrame(String date, String time) {
+        if (TextUtils.isEmpty(date) || TextUtils.isEmpty(time)) {
+            return null;
+        }
+        String address = "999999999999";
+        byte ctrlCode = 0x08;
+        String data = DataConvertUtils.reverse(time, 2) + DataConvertUtils.reverse(date, 2);
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(address, ctrlCode, data);
+    }
+    //date: yyDDMM; time:HHMMSS
+    public static byte[] makeResetTimeFrame(String date, String time) {
+        if (TextUtils.isEmpty(date) || TextUtils.isEmpty(time)) {
+            return null;
+        }
+        String address = "999999999999";
+        byte ctrlCode = 0x08;
+        byte[] data = make_CP56_Time(date, time);
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(address, ctrlCode, DataConvertUtils.convertByteArrayToString(data, false));
+    }
+
+    //date: yyMMDD; time:HHmmSS
+    private static byte[] make_CP56_Time(String date, String time) {
+        if (TextUtils.isEmpty(date) || TextUtils.isEmpty(time) || date.length() != 6 || time.length() != 6) {
+            return null;
+        }
+        byte[] cp56_time = new byte[7];
+        int mill_second = Integer.parseInt(time.substring(4)) * 1000;
+        cp56_time[1] = (byte) ((mill_second >> 8) & 0x000000FF);
+        cp56_time[0] = (byte) (mill_second & 0x000000FF);
+        int minute = Integer.parseInt(time.substring(2, 4));
+        cp56_time[2] = (byte) (minute & 0x3F);
+        int hour = Integer.parseInt(time.substring(0, 2));
+        cp56_time[3] = (byte) (hour & 0x1F);
+        int day = Integer.parseInt(date.substring(4));
+        cp56_time[4] = (byte) (day & 0x1F);
+        int month = Integer.parseInt(date.substring(2, 4));
+        cp56_time[5] = (byte) (month & 0x0F);
+        int year = Integer.parseInt(date.substring(0, 2));
+        cp56_time[6] = (byte) (year & 0x7F);
+        return cp56_time;
+    }
 }
