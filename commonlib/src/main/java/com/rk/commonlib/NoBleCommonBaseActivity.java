@@ -100,8 +100,8 @@ public abstract class NoBleCommonBaseActivity extends Activity {
     protected void onDestroy() {
         Log.i(TAG, "onDestroy");
         mHandlerThread.quitSafely();
-        mNonUiHandler = null;
-        mUiHandler = null;
+        //mNonUiHandler = null;
+        //mUiHandler = null;
         super.onDestroy();
     }
 
