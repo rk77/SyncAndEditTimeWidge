@@ -67,7 +67,7 @@ public class LTUBluetoothInstance implements IBluethoothInstance{
 
     private int MTU = 22/*247*/;
     private static final long WAIT_TIMEOUT = 3000;
-    private static final long RECV_WAIT_TIMEOUT = 5000;
+    private static final long RECV_WAIT_TIMEOUT = 10000;
 
     private static Context sContext;
     private BluetoothAdapter mBluetoothAdapter;
