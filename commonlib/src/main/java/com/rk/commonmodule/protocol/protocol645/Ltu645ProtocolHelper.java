@@ -4,6 +4,10 @@ import android.text.TextUtils;
 
 import com.rk.commonlib.util.LogUtils;
 import com.rk.commonmodule.utils.DataConvertUtils;
+import com.rk.commonmodule.utils.MeterProtocolDetector.METER_PROTOCOL_TYPE;
+import com.rk.commonmodule.utils.MeterProtocolDetector.MeterInfo;
+
+import java.util.ArrayList;
 
 public class Ltu645ProtocolHelper {
     public static byte[] makeGetVersionInfoFrame(String address) {
@@ -242,5 +246,42 @@ public class Ltu645ProtocolHelper {
         int year = Integer.parseInt(date.substring(0, 2));
         cp56_time[6] = (byte) (year & 0x7F);
         return cp56_time;
+    }
+
+    public static byte[] makeGetArchieveFrame(String addr) {
+        if (TextUtils.isEmpty(addr)) {
+            return null;
+        }
+        byte ctrlCode = 0x11;
+        String dataLable = "03000008";
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable);
+    }
+
+    public static ArrayList<MeterInfo> parseGetArchieveFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+        if (protocol645Frame.mCtrlCode == (byte)0x91 && protocol645Frame.mData != null && protocol645Frame.mData.length >= 13) {
+            int cnt = protocol645Frame.mData[4];
+            ArrayList<MeterInfo> meters = new ArrayList<>(cnt);
+            for (int i = 0; i < cnt; i++) {
+                String addr = DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, 6 + 7 * i, 6 + 7 * i + 5, true);
+                METER_PROTOCOL_TYPE protocol_type = METER_PROTOCOL_TYPE.PROTOCOL_NONE;
+                if (protocol645Frame.mData[6 + 7 * i + 5 + 1] == (byte) 0) {
+                    protocol_type = METER_PROTOCOL_TYPE.PROTOCOL_698;
+                } else if (protocol645Frame.mData[6 + 7 * i + 5 + 1] == (byte) 1) {
+                    protocol_type = METER_PROTOCOL_TYPE.PROTOCOL_645_97;
+                } else if (protocol645Frame.mData[6 + 7 * i + 5 + 1] == (byte) 2) {
+                    protocol_type = METER_PROTOCOL_TYPE.PROTOCOL_645_07;
+                } else if (protocol645Frame.mData[6 + 7 * i + 5 + 1] == (byte) 3) {
+                    protocol_type = METER_PROTOCOL_TYPE.PROTOCOL_698;
+                }
+                meters.add(new MeterInfo(protocol_type, addr));
+            }
+            return meters;
+
+        }
+        return null;
     }
 }
