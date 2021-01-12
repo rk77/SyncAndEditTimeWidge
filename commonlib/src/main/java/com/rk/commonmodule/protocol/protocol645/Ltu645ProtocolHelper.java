@@ -265,6 +265,7 @@ public class Ltu645ProtocolHelper {
         if (protocol645Frame.mCtrlCode == (byte)0x91 && protocol645Frame.mData != null && protocol645Frame.mData.length >= 13) {
             int cnt = protocol645Frame.mData[4];
             ArrayList<MeterInfo> meters = new ArrayList<>(cnt);
+            LogUtils.i("cnt: " + cnt);
             for (int i = 0; i < cnt; i++) {
                 String addr = DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, 6 + 7 * i, 6 + 7 * i + 5, true);
                 METER_PROTOCOL_TYPE protocol_type = METER_PROTOCOL_TYPE.PROTOCOL_NONE;
@@ -284,4 +285,90 @@ public class Ltu645ProtocolHelper {
         }
         return null;
     }
+
+    public static byte[] makeAddOneArchieveFrame(String addr, MeterInfo meterInfo) {
+        if (meterInfo == null || TextUtils.isEmpty(addr)) {
+            return null;
+        }
+        byte ctrlCode = 0x1E;
+        String dataLable = "AB";
+
+        byte[] data = new byte[9];
+        data[0] = 0x01;
+        byte[] addrData = DataConvertUtils.convertHexStringToByteArray(meterInfo.address, addr.length(), true);
+        if (addrData == null || addrData.length != 6) {
+            return null;
+        }
+        for (int i = 0; i < 6; i++) {
+            data[i + 1] = addrData[i];
+        }
+        data[7] = 0x00;
+        switch (meterInfo.baudRateOf485) {
+            case bps_1200:
+                data[7] = (byte) (data[7] | 0x10);
+                break;
+            case bps_2400:
+                data[7] = (byte) (data[7] | 0x20);
+                break;
+            case bps_4800:
+                data[7] = (byte) (data[7] | 0x30);
+                break;
+            case bps_9600:
+                data[7] = (byte) (data[7] | 0x40);
+                break;
+        }
+        switch (meterInfo.protocolType) {
+            case PROTOCOL_645_97:
+                data[7] = (byte) (data[7] | 0x01);
+                break;
+            case PROTOCOL_645_07:
+                data[7] = (byte) (data[7] | 0x02);
+                break;
+            case PROTOCOL_698:
+                data[7] = (byte) (data[7] | 0x03);
+                break;
+        }
+
+        data[8] = 0x00;
+        switch (meterInfo.meterType) {
+            case SINGLE_PHASE:
+                data[8] = (byte) (data[8] | 0x00);
+                break;
+            case THRESS_PHASE:
+                data[8] = (byte) (data[8] | 0x10);
+                break;
+        }
+        switch (meterInfo.port485ConnectLtu) {
+            case PORT_485_1:
+                data[8] = (byte) (data[8] | 0x01);
+                break;
+            case PORT_485_2:
+                data[8] = (byte) (data[8] | 0x02);
+                break;
+            case PORT_485_3:
+                data[8] = (byte) (data[8] | 0x03);
+                break;
+            case PORT_485_4:
+                data[8] = (byte) (data[8] | 0x04);
+                break;
+        }
+
+        String dataString = DataConvertUtils.convertByteArrayToString(data, false);
+
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable + dataString);
+    }
+
+    public static boolean parseAddOneArchieveFrame(byte[] frame) {
+        if (frame == null) {
+            return false;
+        }
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+        if (protocol645Frame != null && protocol645Frame.mCtrlCode == (byte) 0x9E) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
 }

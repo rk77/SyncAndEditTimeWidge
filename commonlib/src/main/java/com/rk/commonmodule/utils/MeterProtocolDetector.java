@@ -23,15 +23,38 @@ public class MeterProtocolDetector {
     private static final String TAG = MeterProtocolDetector.class.getSimpleName();
 
     public enum METER_PROTOCOL_TYPE {
-        PROTOCOL_NONE,
-        PROTOCOL_698,
-        PROTOCOL_645_07,
         PROTOCOL_645_97,
+        PROTOCOL_645_07,
+        PROTOCOL_698,
+        PROTOCOL_NONE,
+
+    }
+
+    public enum BAUD_RATE {
+        bps_1200,
+        bps_2400,
+        bps_4800,
+        bps_9600,
+    }
+
+    public enum METER_TYPE {
+        SINGLE_PHASE,
+        THRESS_PHASE,
+    }
+
+    public enum PORT_485 {
+        PORT_485_1,
+        PORT_485_2,
+        PORT_485_3,
+        PORT_485_4,
     }
 
     public static class MeterInfo {
         public METER_PROTOCOL_TYPE protocolType;
         public String address;
+        public METER_TYPE meterType;
+        public BAUD_RATE baudRateOf485;
+        public PORT_485 port485ConnectLtu;
         public MeterInfo(METER_PROTOCOL_TYPE type, String address) {
             this.protocolType = type;
             this.address = address;
