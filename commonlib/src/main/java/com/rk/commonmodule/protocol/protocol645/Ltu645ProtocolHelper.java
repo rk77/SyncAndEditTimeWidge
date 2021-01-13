@@ -4,6 +4,7 @@ import android.text.TextUtils;
 
 import com.rk.commonlib.util.LogUtils;
 import com.rk.commonmodule.utils.DataConvertUtils;
+import com.rk.commonmodule.utils.MeterProtocolDetector.PHASE_INFO;
 import com.rk.commonmodule.utils.MeterProtocolDetector.METER_PROTOCOL_TYPE;
 import com.rk.commonmodule.utils.MeterProtocolDetector.MeterInfo;
 
@@ -368,6 +369,52 @@ public class Ltu645ProtocolHelper {
         } else {
             return false;
         }
+    }
+
+    public static byte[] makeReadPhaseResultFrame(String addr) {
+        LogUtils.i("addr: " + addr);
+        if (TextUtils.isEmpty(addr)) {
+            return null;
+        }
+        String dataLable = "11000809";
+        byte ctrlCode = 0x11;
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable);
+    }
+
+    public static ArrayList<MeterInfo> parseReadPhaseResultFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+        if (protocol645Frame != null && protocol645Frame.mCtrlCode == (byte) 0x91) {
+            int cnt = protocol645Frame.mData[4];
+            ArrayList<MeterInfo> meters = new ArrayList<>(cnt);
+            LogUtils.i("cnt: " + cnt);
+            for (int i = 0; i < cnt; i++) {
+                String addr = DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, 5 + 7 * i, 5 + 7 * i + 5, true);
+                METER_PROTOCOL_TYPE protocol_type = METER_PROTOCOL_TYPE.PROTOCOL_NONE;
+                PHASE_INFO phase_info = PHASE_INFO.PHASE_UNKNOWN;
+                if (protocol645Frame.mData[5 + 7 * i + 5 + 1] == (byte) 0) {
+                    phase_info = PHASE_INFO.PHASE_UNKNOWN;
+                } else if (protocol645Frame.mData[5 + 7 * i + 5 + 1] == (byte) 1) {
+                    phase_info = PHASE_INFO.PHASE_A;
+                } else if (protocol645Frame.mData[5 + 7 * i + 5 + 1] == (byte) 2) {
+                    phase_info = PHASE_INFO.PHASE_B;
+                } else if (protocol645Frame.mData[5 + 7 * i + 5 + 1] == (byte) 3) {
+                    phase_info = PHASE_INFO.PHASE_C;
+                } else if (protocol645Frame.mData[5 + 7 * i + 5 + 1] == (byte) 0xFF) {
+                    phase_info = PHASE_INFO.PHASE_METER;
+                }
+                MeterInfo meterInfo = new MeterInfo(protocol_type, addr);
+                meterInfo.phaseInfo = phase_info;
+                meters.add(meterInfo);
+            }
+            return meters;
+        } else {
+            return null;
+        }
+
     }
 
 

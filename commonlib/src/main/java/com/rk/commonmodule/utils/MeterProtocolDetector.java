@@ -49,12 +49,21 @@ public class MeterProtocolDetector {
         PORT_485_4,
     }
 
+    public enum PHASE_INFO {
+        PHASE_UNKNOWN,
+        PHASE_A,
+        PHASE_B,
+        PHASE_C,
+        PHASE_METER,
+    }
+
     public static class MeterInfo {
         public METER_PROTOCOL_TYPE protocolType;
         public String address;
         public METER_TYPE meterType;
         public BAUD_RATE baudRateOf485;
         public PORT_485 port485ConnectLtu;
+        public PHASE_INFO phaseInfo;
         public MeterInfo(METER_PROTOCOL_TYPE type, String address) {
             this.protocolType = type;
             this.address = address;
