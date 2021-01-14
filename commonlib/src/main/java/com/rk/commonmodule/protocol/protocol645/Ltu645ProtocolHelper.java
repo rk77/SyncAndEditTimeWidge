@@ -417,5 +417,37 @@ public class Ltu645ProtocolHelper {
 
     }
 
+    public static byte[] makeReadImpedanceResultFrame(String addr) {
+        LogUtils.i("addr: " + addr);
+        if (TextUtils.isEmpty(addr)) {
+            return null;
+        }
+        String dataLable = "02000809";
+        byte ctrlCode = 0x11;
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable);
+    }
+
+    public static String parseReadImpedanceResultFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+        if (protocol645Frame != null && protocol645Frame.mCtrlCode == (byte) 0x91
+                && protocol645Frame.mData != null && protocol645Frame.mData.length == 13) {
+            String a_impedance = DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, 4, 6, true);
+            String b_impedance = DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, 7, 9, true);
+            String c_impedance = DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, 10, 12, true);
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(Integer.parseInt(a_impedance)).append(" \u006D\u03A9").append("|")
+                    .append(Integer.parseInt(b_impedance)).append(" \u006D\u03A9").append("|")
+                    .append(Integer.parseInt(c_impedance)).append(" \u006D\u03A9");
+            return stringBuilder.toString();
+
+        } else {
+            return null;
+        }
+
+    }
+
 
 }

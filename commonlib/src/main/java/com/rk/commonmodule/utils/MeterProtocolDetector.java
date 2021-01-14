@@ -64,6 +64,9 @@ public class MeterProtocolDetector {
         public BAUD_RATE baudRateOf485;
         public PORT_485 port485ConnectLtu;
         public PHASE_INFO phaseInfo;
+
+        //format:"A phase impedance|B phase impedance|C phase impedance"
+        public String impedance;
         public MeterInfo(METER_PROTOCOL_TYPE type, String address) {
             this.protocolType = type;
             this.address = address;
