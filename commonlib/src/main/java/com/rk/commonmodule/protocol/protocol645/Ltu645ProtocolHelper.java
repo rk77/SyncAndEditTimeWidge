@@ -446,7 +446,65 @@ public class Ltu645ProtocolHelper {
         } else {
             return null;
         }
+    }
 
+    public static byte[] makeReadLineLoseResultFrame(String addr) {
+        LogUtils.i("addr: " + addr);
+        if (TextUtils.isEmpty(addr)) {
+            return null;
+        }
+        String dataLable = "14000809";
+        byte ctrlCode = 0x11;
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable);
+    }
+
+    public static String parseReadLineLossResultFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+        if (protocol645Frame != null && protocol645Frame.mCtrlCode == (byte) 0x91
+                && protocol645Frame.mData != null && protocol645Frame.mData.length == 24) {
+            String timeLable = String.valueOf(protocol645Frame.mData[4] & 0xFF);
+            String apply_power = parsePower(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 5, 8));
+            String consumed_power = parsePower(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 9, 12));
+            String reverse_power = parsePower(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 13, 16));
+            String distributed_net_power = parsePower(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 17, 20));
+            String line_loss_rate = String.valueOf(((float)((protocol645Frame.mData[22] & 0xFF) * 256 + (protocol645Frame.mData[21] * 0xFF))) / 100);
+            String exception_flag = "正常";
+            if ((protocol645Frame.mData[23] & 0xFF) == 0x00) {
+                exception_flag = "正常";
+            } else if ((protocol645Frame.mData[23] & 0xFF) == 0x01) {
+                exception_flag = "总表电量异常";
+            } else if ((protocol645Frame.mData[23] & 0xFF) == 0x02) {
+                exception_flag = "户表电量异常";
+            }
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(Integer.parseInt(timeLable)).append("日").append("|")
+                    .append(apply_power).append("kWh").append("|")
+                    .append(consumed_power).append("kWh").append("|")
+                    .append(reverse_power).append("kWh").append("|")
+                    .append(distributed_net_power).append("kWh").append("|")
+                    .append(line_loss_rate).append("%").append("|")
+                    .append(exception_flag);
+            return stringBuilder.toString();
+
+        } else {
+            return null;
+        }
+    }
+
+    private static String parsePower(byte[] frame) {
+        if (frame == null || frame.length < 4) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.insert(0, DataConvertUtils.convertByteToString(frame[0]))
+                .insert(0, ".")
+                .insert(0, DataConvertUtils.convertByteToString(frame[1]))
+                .insert(0, DataConvertUtils.convertByteToString(frame[2]))
+                .insert(0, DataConvertUtils.convertByteToString(frame[3]));
+        return sb.toString();
     }
 
 
