@@ -465,12 +465,13 @@ public class Ltu645ProtocolHelper {
         Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
         if (protocol645Frame != null && protocol645Frame.mCtrlCode == (byte) 0x91
                 && protocol645Frame.mData != null && protocol645Frame.mData.length == 24) {
-            String timeLable = String.valueOf(protocol645Frame.mData[4] & 0xFF);
+            String timeLable = DataConvertUtils.convertByteToString(protocol645Frame.mData[4]);
             String apply_power = parsePower(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 5, 8));
             String consumed_power = parsePower(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 9, 12));
             String reverse_power = parsePower(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 13, 16));
             String distributed_net_power = parsePower(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 17, 20));
-            String line_loss_rate = String.valueOf(((float)((protocol645Frame.mData[22] & 0xFF) * 256 + (protocol645Frame.mData[21] * 0xFF))) / 100);
+            String line_loss_rate = DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, 21, 22, false);
+
             String exception_flag = "正常";
             if ((protocol645Frame.mData[23] & 0xFF) == 0x00) {
                 exception_flag = "正常";
@@ -478,6 +479,8 @@ public class Ltu645ProtocolHelper {
                 exception_flag = "总表电量异常";
             } else if ((protocol645Frame.mData[23] & 0xFF) == 0x02) {
                 exception_flag = "户表电量异常";
+            } else {
+                exception_flag = "未知";
             }
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append(Integer.parseInt(timeLable)).append("日").append("|")
