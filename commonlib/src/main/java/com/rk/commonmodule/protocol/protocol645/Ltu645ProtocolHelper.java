@@ -510,5 +510,66 @@ public class Ltu645ProtocolHelper {
         return sb.toString();
     }
 
+    public static byte[] makeReadLTUBaseInfoFrame(String addr) {
+        LogUtils.i("addr: " + addr);
+        if (TextUtils.isEmpty(addr)) {
+            return null;
+        }
+        String dataLable = "01";
+        byte ctrlCode = 0x1E;
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable);
+    }
+
+    public static String parseReadLTUBaseInfoFrame(byte[] frame) {
+        if (frame == null || frame.length < 4) {
+            return null;
+        }
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+        if (protocol645Frame != null && protocol645Frame.mData != null && protocol645Frame.mData.length == 0x23) {
+            LogUtils.i("data: " + DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, false));
+            StringBuilder sb = new StringBuilder();
+            String address = DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, 1, 6, true);
+            String sofware_version = DataConvertUtils.getByteArray2AsciiString(protocol645Frame.mData, 7, 12, false);
+            String sys_clock = parseTime(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 13, 18));
+            String real_time_search_meter_switch = ((protocol645Frame.mData[19] & 0xFF)) > 0 ? "开" : "关";
+            int time = (protocol645Frame.mData[21] & 0xFF) * 256 + (protocol645Frame.mData[20] & 0xFF);
+            String interval_time_per_round = ((protocol645Frame.mData[19] & 0xFF)) > 0 ? (time + "分") : "N/N";
+            String interval_time_per_frame = ((protocol645Frame.mData[19] & 0xFF)) > 0 ? ((protocol645Frame.mData[22] & 0xFF) + "秒") : "N/N";
+            String sys_reset_time = ((protocol645Frame.mData[24] & 0xFF) * 256 + (protocol645Frame.mData[23] & 0xFF)) + "";
+            String delay_time_of_485 = (protocol645Frame.mData[25] & 0xFF) + "秒";
+            String timing_switch = (protocol645Frame.mData[26] & 0xFF) > 0 ? "允许" : "不允许";
+            String tele_signal_switch = (protocol645Frame.mData[27] & 0xFF) > 0 ? "合" : "分";
+            String search_speed_ctrl = DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, 28, 29, true);
+            String baud_rate_485 = ((protocol645Frame.mData[31] & 0xFF) * 256 + (protocol645Frame.mData[30] & 0xFF)) + "";
+            String baud_rate_lora = ((protocol645Frame.mData[33] & 0xFF) * 256 + (protocol645Frame.mData[32] & 0xFF)) + "";
+
+            sb.append(address).append("|").append(sofware_version).append("|").append(sys_clock).append("|")
+                    .append(real_time_search_meter_switch).append("|").append(interval_time_per_round).append("|")
+                    .append(interval_time_per_frame).append("|").append(sys_reset_time).append("|")
+                    .append(delay_time_of_485).append("|").append(timing_switch).append("|")
+                    .append(tele_signal_switch).append("|").append(search_speed_ctrl).append("|")
+                    .append(baud_rate_485).append("|").append(baud_rate_lora);
+            return sb.toString();
+
+        }
+        return null;
+    }
+
+    //秒分时日月年, 6 bytes.
+    private static String parseTime(byte[] data) {
+        if (data == null || data.length != 6) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.insert(0, DataConvertUtils.convertByteToString(data[0])).insert(0, ":")
+                .insert(0, DataConvertUtils.convertByteToString(data[1])).insert(0, ":")
+                .insert(0, DataConvertUtils.convertByteToString(data[2]))
+                .insert(0, " ")
+                .insert(0, DataConvertUtils.convertByteToString(data[3])).insert(0, "-")
+                .insert(0, DataConvertUtils.convertByteToString(data[4])).insert(0, "-")
+                .insert(0, DataConvertUtils.convertByteToString(data[5]));
+        return sb.toString();
+    }
+
 
 }
