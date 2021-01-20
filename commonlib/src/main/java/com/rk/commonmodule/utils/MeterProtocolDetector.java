@@ -65,6 +65,8 @@ public class MeterProtocolDetector {
         public PORT_485 port485ConnectLtu;
         public PHASE_INFO phaseInfo;
         public String lineLossInfo;
+        public int baudRateOfMaintain485 = 0;
+        public int baudRateOfMaintainLora = 0;
 
         //format:"A phase impedance|B phase impedance|C phase impedance"
         public String impedance;

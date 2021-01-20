@@ -571,5 +571,22 @@ public class Ltu645ProtocolHelper {
         return sb.toString();
     }
 
+    public static byte[] makeSetLtuSearchMeterBaudRateParamsFrame(MeterInfo meterInfo) {
+        if (meterInfo == null || meterInfo.baudRateOfMaintainLora == 0 || meterInfo.baudRateOfMaintain485 == 0 || meterInfo.address == null) {
+            return null;
+        }
+        String dataLable = "93";
+        byte[] data_frame = new byte[6];
+        data_frame[0] = (byte) 0xFF;
+        data_frame[1] = (byte) 0xFF;
+        data_frame[2] = (byte) (meterInfo.baudRateOfMaintain485 & 0xFF);
+        data_frame[3] = (byte) ((meterInfo.baudRateOfMaintain485 >> 8) & 0xFF);
+        data_frame[4] = (byte) (meterInfo.baudRateOfMaintainLora & 0xFF);
+        data_frame[5] = (byte) ((meterInfo.baudRateOfMaintainLora >> 8) & 0xFF);
+        String data = dataLable + DataConvertUtils.convertByteArrayToString(data_frame, false);
+        byte ctrlCode = 0x1E;
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(meterInfo.address, ctrlCode, data);
+    }
+
 
 }
