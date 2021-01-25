@@ -76,6 +76,19 @@ public class MeterProtocolDetector {
         }
     }
 
+    public static class ModeOf485 {
+        public int mode_485_1 = 0;
+        public int mode_485_2 = 0;
+        public int mode_485_3 = 0;
+        public int mode_485_4 = 0;
+        public ModeOf485(int mode_1, int mode_2, int mode_3, int mode_4) {
+            this.mode_485_1 = mode_1;
+            this.mode_485_2 = mode_2;
+            this.mode_485_3 = mode_3;
+            this.mode_485_4 = mode_4;
+        }
+    }
+
     public static MeterInfo getMeterProtocol(Context context) {
 
         byte[] frame = make698Frame();

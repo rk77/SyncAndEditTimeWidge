@@ -7,6 +7,7 @@ import com.rk.commonmodule.utils.DataConvertUtils;
 import com.rk.commonmodule.utils.MeterProtocolDetector.PHASE_INFO;
 import com.rk.commonmodule.utils.MeterProtocolDetector.METER_PROTOCOL_TYPE;
 import com.rk.commonmodule.utils.MeterProtocolDetector.MeterInfo;
+import com.rk.commonmodule.utils.MeterProtocolDetector.ModeOf485;
 
 import java.util.ArrayList;
 
@@ -588,5 +589,31 @@ public class Ltu645ProtocolHelper {
         return Protocol645FrameBaseMaker.getInstance().makeFrame(meterInfo.address, ctrlCode, data);
     }
 
+    public static byte[] makeReadSearchModeOf485Frame(String addr) {
+        LogUtils.i("addr: " + addr);
+        if (TextUtils.isEmpty(addr)) {
+            return null;
+        }
+        String dataLable = "A2";
+        byte ctrlCode = 0x1E;
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable);
+    }
+
+    public static ModeOf485 parseReadSearchModeOf485Frame(byte[] frame) {
+        if (frame == null) {
+            return null;
+        }
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+        if (protocol645Frame != null && protocol645Frame.mData != null && protocol645Frame.mData.length == 0x09 && protocol645Frame.mCtrlCode == (byte) 0x9E) {
+            ModeOf485 modeOf485 = new ModeOf485(0, 0, 0, 0);
+            modeOf485.mode_485_1 = protocol645Frame.mData[2] & 0xFF;
+            modeOf485.mode_485_2 = protocol645Frame.mData[4] & 0xFF;
+            modeOf485.mode_485_3 = protocol645Frame.mData[6] & 0xFF;
+            modeOf485.mode_485_4 = protocol645Frame.mData[8] & 0xFF;
+            return modeOf485;
+
+        }
+        return null;
+    }
 
 }
