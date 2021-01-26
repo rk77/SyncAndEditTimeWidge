@@ -67,6 +67,7 @@ public class MeterProtocolDetector {
         public String lineLossInfo;
         public int baudRateOfMaintain485 = 0;
         public int baudRateOfMaintainLora = 0;
+        public ModeOf485 modeOf485;
 
         //format:"A phase impedance|B phase impedance|C phase impedance"
         public String impedance;

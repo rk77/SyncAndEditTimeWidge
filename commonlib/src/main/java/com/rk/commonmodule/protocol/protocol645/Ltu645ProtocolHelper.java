@@ -616,4 +616,17 @@ public class Ltu645ProtocolHelper {
         return null;
     }
 
+    public static byte[] makeSetSearchModeOf485Frame(MeterInfo meterInfo) {
+        if (meterInfo == null || TextUtils.isEmpty(meterInfo.address) || meterInfo.modeOf485 == null) {
+            return null;
+        }
+        String dataLable = "A2";
+        String data = "01" + DataConvertUtils.convertByteToString((byte) (meterInfo.modeOf485.mode_485_1))
+                + "02" + DataConvertUtils.convertByteToString((byte) (meterInfo.modeOf485.mode_485_2))
+                + "03" + DataConvertUtils.convertByteToString((byte) (meterInfo.modeOf485.mode_485_3))
+                + "04" + DataConvertUtils.convertByteToString((byte) (meterInfo.modeOf485.mode_485_4));
+        byte ctrlCode = 0x1E;
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(meterInfo.address, ctrlCode, dataLable + data);
+    }
+
 }
