@@ -72,6 +72,7 @@ public class BluetoothManager implements IBluethoothInstance{
         }
     }
 
+    @Override
     public boolean startScan(Activity activity, boolean isBle, BluetoothAdapter.LeScanCallback leScanCallback) {
         if (mCurrentBluetoothInstance == null) {
             return false;
@@ -80,6 +81,7 @@ public class BluetoothManager implements IBluethoothInstance{
 
     }
 
+    @Override
     public boolean stopScan(Activity activity, boolean isBle) {
         if (mCurrentBluetoothInstance == null) {
             return false;
@@ -87,6 +89,7 @@ public class BluetoothManager implements IBluethoothInstance{
         return mCurrentBluetoothInstance.stopScan(activity, isBle);
     }
 
+    @Override
     public boolean connect(final String address) {
         if (mCurrentBluetoothInstance == null) {
             return false;
@@ -94,6 +97,7 @@ public class BluetoothManager implements IBluethoothInstance{
         return mCurrentBluetoothInstance.connect(address);
     }
 
+    @Override
     public synchronized byte[] sendAndReceiveSync(byte[] frame) {
         if (mCurrentBluetoothInstance == null) {
             return null;
@@ -101,7 +105,7 @@ public class BluetoothManager implements IBluethoothInstance{
         return mCurrentBluetoothInstance.sendAndReceiveSync(frame);
     }
 
-
+    @Override
     public void disconnect() {
         if (mCurrentBluetoothInstance == null) {
             return;
@@ -109,6 +113,7 @@ public class BluetoothManager implements IBluethoothInstance{
         mCurrentBluetoothInstance.disconnect();
     }
 
+    @Override
     public void close() {
         if (mCurrentBluetoothInstance == null) {
             return;
@@ -116,6 +121,7 @@ public class BluetoothManager implements IBluethoothInstance{
         mCurrentBluetoothInstance.close();
     }
 
+    @Override
     public boolean isDeviceConnected(String deviceAddr) {
         if (mCurrentBluetoothInstance == null) {
             return false;

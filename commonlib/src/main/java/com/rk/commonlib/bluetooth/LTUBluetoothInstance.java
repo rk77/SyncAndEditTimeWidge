@@ -447,8 +447,9 @@ public class LTUBluetoothInstance implements IBluethoothInstance{
     }
 
     public List<BluetoothGattService> getSupportedGattServices() {
-        if (mBluetoothGatt == null)
+        if (mBluetoothGatt == null) {
             return null;
+        }
         return mBluetoothGatt.getServices();
     }
 
@@ -864,6 +865,7 @@ public class LTUBluetoothInstance implements IBluethoothInstance{
 
 
     /** IBluetooth Interface Implement **/
+    @Override
     public boolean startScan(Activity activity, boolean isBle, BluetoothAdapter.LeScanCallback leScanCallback) {
         if (isBle) {
             return scanLeDevice(true, activity, leScanCallback);
@@ -872,6 +874,7 @@ public class LTUBluetoothInstance implements IBluethoothInstance{
         }
     }
 
+    @Override
     public boolean stopScan(Activity activity, boolean isBle) {
         if (isBle) {
             return scanLeDevice(false, activity, null);
@@ -880,6 +883,7 @@ public class LTUBluetoothInstance implements IBluethoothInstance{
         }
     }
 
+    @Override
     public boolean connect(final String address) {
         if (mBluetoothAdapter == null || address == null) {
             Log.w(TAG, "connect, BluetoothAdapter not initialized or unspecified address.");
@@ -917,6 +921,7 @@ public class LTUBluetoothInstance implements IBluethoothInstance{
         return true;
     }
 
+    @Override
     public synchronized byte[] sendAndReceiveSync(byte[] frame) {
         Log.i(TAG, "sendAndReceiveSync, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
         if (frame == null) {
@@ -980,6 +985,7 @@ public class LTUBluetoothInstance implements IBluethoothInstance{
 
     }
 
+    @Override
     public void disconnect() {
         Log.i(TAG, "disconnect");
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
@@ -989,6 +995,7 @@ public class LTUBluetoothInstance implements IBluethoothInstance{
         mBluetoothGatt.disconnect();
     }
 
+    @Override
     public void close() {
         Log.i(TAG, "close");
         if (mBluetoothGatt == null) {
@@ -1004,6 +1011,7 @@ public class LTUBluetoothInstance implements IBluethoothInstance{
         mBluetoothDeviceAddress = null;
     }
 
+    @Override
     public boolean isDeviceConnected(String deviceAddr) {
         if (deviceAddr != null && deviceAddr.equals(mBluetoothDeviceAddress)) {
             return mIsConnected;
