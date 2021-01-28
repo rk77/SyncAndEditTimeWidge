@@ -68,6 +68,7 @@ public class MeterProtocolDetector {
         public int baudRateOfMaintain485 = 0;
         public int baudRateOfMaintainLora = 0;
         public ModeOf485 modeOf485;
+        public FuncSwitch funcSwitch;
 
         //format:"A phase impedance|B phase impedance|C phase impedance"
         public String impedance;
@@ -87,6 +88,23 @@ public class MeterProtocolDetector {
             this.mode_485_2 = mode_2;
             this.mode_485_3 = mode_3;
             this.mode_485_4 = mode_4;
+        }
+    }
+
+    public static class FuncSwitch {
+        public int switch_1 = 0;
+        public int switch_2 = 0;
+        public int switch_3 = 0;
+        public int switch_4 = 0;
+        public int switch_5 = 0;
+        public int switch_6 = 0;
+         public FuncSwitch(int switch_1, int switch_2, int switch_3, int switch_4, int switch_5, int switch_6) {
+            this.switch_1 = switch_1;
+            this.switch_2 = switch_2;
+            this.switch_3 = switch_3;
+            this.switch_4 = switch_4;
+            this.switch_5 = switch_5;
+            this.switch_6 = switch_6;
         }
     }
 

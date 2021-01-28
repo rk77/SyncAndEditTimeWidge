@@ -4,10 +4,12 @@ import android.text.TextUtils;
 
 import com.rk.commonlib.util.LogUtils;
 import com.rk.commonmodule.utils.DataConvertUtils;
+import com.rk.commonmodule.utils.MeterProtocolDetector;
 import com.rk.commonmodule.utils.MeterProtocolDetector.PHASE_INFO;
 import com.rk.commonmodule.utils.MeterProtocolDetector.METER_PROTOCOL_TYPE;
 import com.rk.commonmodule.utils.MeterProtocolDetector.MeterInfo;
 import com.rk.commonmodule.utils.MeterProtocolDetector.ModeOf485;
+import com.rk.commonmodule.utils.MeterProtocolDetector.FuncSwitch;
 
 import java.util.ArrayList;
 
@@ -617,6 +619,49 @@ public class Ltu645ProtocolHelper {
     }
 
     public static byte[] makeSetSearchModeOf485Frame(MeterInfo meterInfo) {
+        if (meterInfo == null || TextUtils.isEmpty(meterInfo.address) || meterInfo.modeOf485 == null) {
+            return null;
+        }
+        String dataLable = "A2";
+        String data = "01" + DataConvertUtils.convertByteToString((byte) (meterInfo.modeOf485.mode_485_1))
+                + "02" + DataConvertUtils.convertByteToString((byte) (meterInfo.modeOf485.mode_485_2))
+                + "03" + DataConvertUtils.convertByteToString((byte) (meterInfo.modeOf485.mode_485_3))
+                + "04" + DataConvertUtils.convertByteToString((byte) (meterInfo.modeOf485.mode_485_4));
+        byte ctrlCode = 0x1E;
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(meterInfo.address, ctrlCode, dataLable + data);
+    }
+
+    public static byte[] makeReadFuncSwitchFrame(String addr) {
+        LogUtils.i("addr: " + addr);
+        if (TextUtils.isEmpty(addr)) {
+            return null;
+        }
+        String dataLable = "9B";
+        byte ctrlCode = 0x1E;
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable);
+    }
+
+    public static FuncSwitch parseReadFuncSwitchFrame(byte[] frame) {
+        if (frame == null) {
+            return null;
+        }
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+        if (protocol645Frame != null && protocol645Frame.mData != null
+                && protocol645Frame.mData.length == 0x07 && protocol645Frame.mCtrlCode == (byte) 0x9E) {
+            FuncSwitch funcSwitch = new FuncSwitch(0, 0, 0, 0, 0, 0);
+            funcSwitch.switch_1 = protocol645Frame.mData[1] & 0xFF;
+            funcSwitch.switch_2 = protocol645Frame.mData[2] & 0xFF;
+            funcSwitch.switch_3 = protocol645Frame.mData[3] & 0xFF;
+            funcSwitch.switch_4 = protocol645Frame.mData[4] & 0xFF;
+            funcSwitch.switch_5 = protocol645Frame.mData[5] & 0xFF;
+            funcSwitch.switch_6 = protocol645Frame.mData[6] & 0xFF;
+            return funcSwitch;
+
+        }
+        return null;
+    }
+
+    public static byte[] makeSetFuncSwitchFrame(MeterInfo meterInfo) {
         if (meterInfo == null || TextUtils.isEmpty(meterInfo.address) || meterInfo.modeOf485 == null) {
             return null;
         }
