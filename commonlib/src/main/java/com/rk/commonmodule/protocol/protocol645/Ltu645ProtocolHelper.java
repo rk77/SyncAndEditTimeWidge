@@ -662,14 +662,16 @@ public class Ltu645ProtocolHelper {
     }
 
     public static byte[] makeSetFuncSwitchFrame(MeterInfo meterInfo) {
-        if (meterInfo == null || TextUtils.isEmpty(meterInfo.address) || meterInfo.modeOf485 == null) {
+        if (meterInfo == null || TextUtils.isEmpty(meterInfo.address) || meterInfo.funcSwitch == null) {
             return null;
         }
-        String dataLable = "A2";
-        String data = "01" + DataConvertUtils.convertByteToString((byte) (meterInfo.modeOf485.mode_485_1))
-                + "02" + DataConvertUtils.convertByteToString((byte) (meterInfo.modeOf485.mode_485_2))
-                + "03" + DataConvertUtils.convertByteToString((byte) (meterInfo.modeOf485.mode_485_3))
-                + "04" + DataConvertUtils.convertByteToString((byte) (meterInfo.modeOf485.mode_485_4));
+        String dataLable = "9B";
+        String data = DataConvertUtils.convertByteToString((byte) (meterInfo.funcSwitch.switch_1))
+                + DataConvertUtils.convertByteToString((byte) (meterInfo.funcSwitch.switch_2))
+                + DataConvertUtils.convertByteToString((byte) (meterInfo.funcSwitch.switch_3))
+                + DataConvertUtils.convertByteToString((byte) (meterInfo.funcSwitch.switch_4))
+                + DataConvertUtils.convertByteToString((byte) (meterInfo.funcSwitch.switch_5))
+                + DataConvertUtils.convertByteToString((byte) (meterInfo.funcSwitch.switch_6));
         byte ctrlCode = 0x1E;
         return Protocol645FrameBaseMaker.getInstance().makeFrame(meterInfo.address, ctrlCode, dataLable + data);
     }
