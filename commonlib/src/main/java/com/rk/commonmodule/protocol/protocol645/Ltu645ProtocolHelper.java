@@ -495,6 +495,34 @@ public class Ltu645ProtocolHelper {
                     .append(exception_flag);
             return stringBuilder.toString();
 
+        } else if (protocol645Frame != null && protocol645Frame.mCtrlCode == (byte) 0x91
+                && protocol645Frame.mData != null && protocol645Frame.mData.length == 26) {
+            String timeLable = DataConvertUtils.convertByteToString(protocol645Frame.mData[4]);
+            String apply_power = parsePower(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 5, 8));
+            String consumed_power = parsePower(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 9, 12));
+            String reverse_power = parsePower(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 13, 16));
+            String distributed_net_power = parsePower(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 17, 20));
+            String line_loss_rate = parsePower(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 21, 24));
+
+            String exception_flag = "正常";
+            if ((protocol645Frame.mData[25] & 0xFF) == 0x00) {
+                exception_flag = "正常";
+            } else if ((protocol645Frame.mData[25] & 0xFF) == 0x01) {
+                exception_flag = "总表电量异常";
+            } else if ((protocol645Frame.mData[25] & 0xFF) == 0x02) {
+                exception_flag = "户表电量异常";
+            } else {
+                exception_flag = "未知";
+            }
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(Integer.parseInt(timeLable)).append("日").append("|")
+                    .append(apply_power).append("kWh").append("|")
+                    .append(consumed_power).append("kWh").append("|")
+                    .append(reverse_power).append("kWh").append("|")
+                    .append(distributed_net_power).append("kWh").append("|")
+                    .append(line_loss_rate).append("%").append("|")
+                    .append(exception_flag);
+            return stringBuilder.toString();
         } else {
             return null;
         }
