@@ -71,6 +71,8 @@ public class BluetoothManager implements IBluethoothInstance{
             mCurrentBluetoothInstance = LTUBluetoothInstance.getInstance(sContext);
         } else if (type == 4) {
             mCurrentBluetoothInstance = LtuRTK8762BluetoothInstance.getInstance(sContext);
+        } else if (type == 5) {
+            mCurrentBluetoothInstance = LTUBluetoothInstance.getInstance(sContext);
         }
     }
 
