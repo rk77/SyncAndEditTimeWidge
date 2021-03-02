@@ -2,6 +2,7 @@ package com.rk.commonmodule.protocol.protocol698;
 
 import android.util.Log;
 
+import com.rk.commonmodule.protocol.protocol645.Protocol645Frame;
 import com.rk.commonmodule.utils.DataConvertUtils;
 
 import java.util.ArrayList;
@@ -662,6 +663,7 @@ public enum Protocol698 {
                         if (apduFrame.length < 3) {
                             return null;
                         }
+                        map.put(ProtocolConstant.GET_RESPONSE_NORMAL_KEY, new Protocol698Frame.GetResponseNormal(apduFrame, 2));
                         map.put(ProtocolConstant.PIID_ACD_KEY, new Protocol698Frame.PIID_ACD(apduFrame[2]));
                         if (apduFrame.length < 7) {
                             return null;

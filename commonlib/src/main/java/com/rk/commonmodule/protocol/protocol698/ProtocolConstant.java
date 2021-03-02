@@ -14,6 +14,7 @@ public class ProtocolConstant {
     public final static String TIME_LABLE_KEY = "TIME_LABLE_KEY";
     public final static String DAR_KEY = "dar";
     public final static String GET_RECORD_KEY = "GET_RECORD_KEY";
+    public final static String GET_RESPONSE_NORMAL_KEY = "GET_RESPONSE_NORMAL_KEY";
 
     public final static String DATA_UNIT_KEY = "DATA_UNIT_KEY";
     public final static String DATA_VERIFY_INFO_KEY = "DATA_VERIFY_INFO_KEY";

@@ -3,6 +3,7 @@ package com.rk.commonmodule.protocol.protocol698;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.rk.commonmodule.protocol.protocol698.Protocol698Frame.A_ResultNormal;
 import com.rk.commonmodule.utils.BitUtils;
 import com.rk.commonmodule.utils.DataConvertUtils;
 
@@ -1987,6 +1988,29 @@ public class Protocol698Frame {
                     System.arraycopy(oad.data, 0, this.data, 0, oad.data.length);
                     System.arraycopy(getResult.data, 0, this.data, oad.data.length, getResult.data.length);
                 }
+            }
+        }
+    }
+
+    public static class GetResponseNormal {
+        public PIID_ACD piid_acd;
+        public A_ResultNormal a_resultNormal;
+        public byte[] data;
+
+        public GetResponseNormal(byte[] frame, int begin) {
+            if (frame == null || frame.length <= 0) {
+                return;
+            }
+            if (begin <= frame.length - 1) {
+                piid_acd = new PIID_ACD(frame[begin]);
+            }
+            if (piid_acd != null && begin + 1 <= frame.length - 1) {
+                a_resultNormal = new A_ResultNormal(frame, begin + 1);
+            }
+            if (a_resultNormal != null && a_resultNormal.data != null) {
+                data = new byte[1 + a_resultNormal.data.length];
+                data[0] = piid_acd.data;
+                System.arraycopy(a_resultNormal.data, 0, data, 1, a_resultNormal.data.length);
             }
         }
     }
