@@ -72,7 +72,7 @@ public class BluetoothManager implements IBluethoothInstance{
         } else if (type == 4) {
             mCurrentBluetoothInstance = LtuRTK8762BluetoothInstance.getInstance(sContext);
         } else if (type == 5) {
-            mCurrentBluetoothInstance = LTUBluetoothInstance.getInstance(sContext);
+            mCurrentBluetoothInstance = LtuIS1871NoEncryptBluetoothInstance.getInstance(sContext);
         }
     }
 

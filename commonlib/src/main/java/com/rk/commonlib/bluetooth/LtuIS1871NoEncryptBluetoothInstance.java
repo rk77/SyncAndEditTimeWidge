@@ -18,10 +18,15 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.os.Message;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -31,39 +36,39 @@ import com.rk.commonmodule.protocol.protocol698.Protocol698Frame;
 import com.rk.commonmodule.protocol.protocol698.ProtocolConstant;
 import com.rk.commonmodule.utils.DataConvertUtils;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
-public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
-    private static final String TAG = LtuRTK8762BluetoothInstance.class.getSimpleName();
+public class LtuIS1871NoEncryptBluetoothInstance implements IBluethoothInstance{
+    private static final String TAG = LtuIS1871NoEncryptBluetoothInstance.class.getSimpleName();
 
-    public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
-    public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
 
-    public final static String ACTION_GATT_CONNECTED = "com.rk.commonlib.bluetooth.LtuRTK8762BluetoothInstance.ACTION_GATT_CONNECTED";
-    public final static String ACTION_GATT_DISCONNECTED = "com.rk.commonlib.bluetooth.LtuRTK8762BluetoothInstance.ACTION_GATT_DISCONNECTED";
-    public final static String ACTION_GATT_SERVICES_DISCOVERED = "com.rk.commonlib.bluetooth.LtuRTK8762BluetoothInstance.ACTION_GATT_SERVICES_DISCOVERED";
-    public final static String ACTION_GATT_CHARACTERISTIC_READ = "com.rk.commonlib.bluetooth.LtuRTK8762BluetoothInstance.ACTION_GATT_CHARACTERISTIC_READ";
-    public final static String ACTION_GATT_CHARACTERISTIC_WRITE = "com.rk.commonlib.bluetooth.LtuRTK8762BluetoothInstance.ACTION_GATT_CHARACTERISTIC_WRITE";
-    public final static String ACTION_GATT_DESCRIPTOR_READ = "com.rk.commonlib.bluetooth.LtuRTK8762BluetoothInstance.ACTION_GATT_DESCRIPTOR_READ";
-    public final static String ACTION_GATT_DESCRIPTOR_WRITE = "com.rk.commonlib.bluetooth.LtuRTK8762BluetoothInstance.ACTION_GATT_DESCRIPTOR_WRITE";
-    public final static String ACTION_GATT_MTU_WRITE = "com.rk.commonlib.bluetooth.LtuRTK8762BluetoothInstance.ACTION_GATT_MTU_WRITE";
+    private final static String ACTION_GATT_CONNECTED = "com.rk.commonlib.bluetooth.LtuIS1871NoEncryptBluetoothInstance.ACTION_GATT_CONNECTED";
+    private final static String ACTION_GATT_DISCONNECTED = "com.rk.commonlib.bluetooth.LtuIS1871NoEncryptBluetoothInstance.ACTION_GATT_DISCONNECTED";
+    private final static String ACTION_GATT_SERVICES_DISCOVERED = "com.rk.commonlib.bluetooth.LtuIS1871NoEncryptBluetoothInstance.ACTION_GATT_SERVICES_DISCOVERED";
+    private final static String ACTION_GATT_CHARACTERISTIC_READ = "com.rk.commonlib.bluetooth.LtuIS1871NoEncryptBluetoothInstance.ACTION_GATT_CHARACTERISTIC_READ";
+    private final static String ACTION_GATT_CHARACTERISTIC_WRITE = "com.rk.commonlib.bluetooth.LtuIS1871NoEncryptBluetoothInstance.ACTION_GATT_CHARACTERISTIC_WRITE";
+    private final static String ACTION_GATT_DESCRIPTOR_READ = "com.rk.commonlib.bluetooth.LtuIS1871NoEncryptBluetoothInstance.ACTION_GATT_DESCRIPTOR_READ";
+    private final static String ACTION_GATT_DESCRIPTOR_WRITE = "com.rk.commonlib.bluetooth.LtuIS1871NoEncryptBluetoothInstance.ACTION_GATT_DESCRIPTOR_WRITE";
+    private final static String ACTION_GATT_MTU_WRITE = "com.rk.commonlib.bluetooth.LtuIS1871NoEncryptBluetoothInstance.ACTION_GATT_MTU_WRITE";
 
     private final static String SERVICE_COMMUNICATION_UUID = "6e400001-b5a3-f393-e0a9-e50e24dc4179";
-    private final static String CHARACTERISTIC_WRITE_UUID = "6e400002-b5a3-f393-e0a9-e50e24dc4179";
-    private final static String CHARACTERISTIC_NOTIFY_UUID = "6e400003-b5a3-f393-e0a9-e50e24dc4179";
+    private final static String CHARACTERISTIC_WRITE_UUID = "0000fff6-0000-1000-8000-00805f9b34fb";
+    private final static String CHARACTERISTIC_NOTIFY_UUID = "0000fff4-0000-1000-8000-00805f9b34fb";
+    private final static String CHARACTERISTIC_CONFIRM_UUID = "0000fff3-0000-1000-8000-00805f9b34fb";
     private final static String DESCRIPTOR_CCCD_UUID = "00002902-0000-1000-8000-00805f9b34fb";
     private BluetoothGattService mCommunicationService;
     private BluetoothGattCharacteristic mWriteCharacteristic;
     private BluetoothGattCharacteristic mNotifyCharacteristic;
+    private BluetoothGattCharacteristic mConfirmCharacteristic;
 
-    private int MTU = 247/*247*/;
+    private int MTU = 22/*247*/;
     private static final long WAIT_TIMEOUT = 3000;
-    private static final long RECV_WAIT_TIMEOUT = 20000;
-    private Object mWriteSync = new Object();
-    private Object mReadSync = new Object();
-    private ArrayList<Byte> mReceivedFrame = new ArrayList<>();
+    private static final long RECV_WAIT_TIMEOUT = 10000;
 
     private static Context sContext;
     private BluetoothAdapter mBluetoothAdapter;
@@ -72,17 +77,50 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
 
     private boolean mIsConnected = false;
 
+    private Object mWriteSync = new Object();
+    private Object mReadSync = new Object();
+    private ArrayList<Byte> mReceivedFrame = new ArrayList<>();
+
+    private NonUIHandler mNonUIHandler;
+    private HandlerThread mHandlerThread;
+    private class NonUIHandler extends Handler {
+        public static final int NON_UI_CONFIRM_MSG = 0;
+        public static final int NON_UI_ENCRYPT_MSG = 1;
+
+        public NonUIHandler(Looper looper) {
+            super(looper);
+        }
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            switch (msg.what) {
+                case NON_UI_CONFIRM_MSG:
+                    byte[] recvFrame = sendConfirm();
+                    if (recvFrame != null) {
+                        recvFrame = sendEncryptInfo(recvFrame);
+                        if (recvFrame != null) {
+                            broadcastUpdate(IBluethoothInstance.CONNECT_ACTION);
+                            return;
+                        }
+                    }
+                    broadcastUpdate(IBluethoothInstance.DISCONNECT_ACTION);
+                    break;
+                default:
+                    super.handleMessage(msg);
+            }
+        }
+    }
+
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 Log.i(TAG, "onConnectionStateChange, Connected to GATT server.");
                 mIsConnected = true;
-                broadcastUpdate(ACTION_GATT_CONNECTED);
+                broadcastUpdate(ACTION_GATT_CONNECTED, status);
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.i(TAG, "onConnectionStateChange, Disconnected from GATT server.");
                 mIsConnected = false;
-                broadcastUpdate(ACTION_GATT_DISCONNECTED);
+                broadcastUpdate(ACTION_GATT_DISCONNECTED, status);
             }
         }
 
@@ -105,9 +143,9 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            Log.i(TAG, "onCharacteristicChanged");
             byte[] recvFrame = characteristic.getValue();
             Log.i(TAG, "onCharacteristicChanged, recvFrame: " + DataConvertUtils.convertByteArrayToString(recvFrame, false));
+
             if (mReceivedFrame != null && recvFrame != null && recvFrame.length > 0) {
                 for (int i = 0; i < recvFrame.length; i++) {
                     mReceivedFrame.add(recvFrame[i]);
@@ -123,18 +161,12 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            super.onCharacteristicWrite(gatt, characteristic, status);
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                try {
-                    Log.i(TAG, "onCharacteristicWrite, UUID: " + characteristic.getUuid().toString()
-                            + ", write data: " + DataConvertUtils.convertByteArrayToString(characteristic.getValue(), false));
-                } catch (Exception e) {
-                    Log.e(TAG, "onCharacteristicWrite, error: " + e.getMessage());
-                }
+                Log.i(TAG, "onCharacteristicWrite, UUID: " + characteristic.getUuid().toString()
+                        + ", write data: " + DataConvertUtils.convertByteArrayToString(characteristic.getValue(), false));
                 synchronized (mWriteSync) {
                     mWriteSync.notify();
                 }
-
             }
         }
 
@@ -170,6 +202,24 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
 
     }
 
+    private void broadcastUpdate(final String action, int status) {
+        Log.i(TAG, "broadcastUpdate, action: " + action + ", status: " + status);
+        final Intent intent = new Intent(action);
+        intent.putExtra("status", status);
+        if (sContext != null) {
+            sContext.sendBroadcast(intent);
+        }
+
+    }
+
+    private void broadcastUpdate(final String action, final byte[] bytes) {
+        final Intent intent = new Intent(action);
+        intent.putExtra("value", bytes);
+        if (sContext != null) {
+            sContext.sendBroadcast(intent);
+        }
+    }
+
     private void broadcastUpdate(final String action, final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
         if (sContext != null) {
@@ -193,7 +243,7 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
             if (ACTION_GATT_CONNECTED.equals(action)) {
                 discoveryGattServices();
             } else if (ACTION_GATT_DISCONNECTED.equals(action)) {
-                broadcastUpdate(IBluethoothInstance.DISCONNECT_ACTION);
+                broadcastUpdate(IBluethoothInstance.DISCONNECT_ACTION, intent.getIntExtra("status", -100));
             } else if (ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 getServicesAndCharacteristics();
                 enableCharacteristicNotify();
@@ -204,9 +254,11 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
             } else if (ACTION_GATT_DESCRIPTOR_READ.equals(action)) {
 
             } else if (ACTION_GATT_DESCRIPTOR_WRITE.equals(action)) {
-                setMtu();
-            } else if (ACTION_GATT_MTU_WRITE.equals(action)) {
+                //mNonUIHandler.removeMessages(NonUIHandler.NON_UI_CONFIRM_MSG);
+                //mNonUIHandler.sendMessage(mNonUIHandler.obtainMessage(NonUIHandler.NON_UI_CONFIRM_MSG));
                 broadcastUpdate(IBluethoothInstance.CONNECT_ACTION);
+            } else if (ACTION_GATT_MTU_WRITE.equals(action)) {
+                //broadcastUpdate(IBluethoothInstance.CONNECT_ACTION);
             }
         }
     };
@@ -224,19 +276,22 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
         return intentFilter;
     }
 
-    private LtuRTK8762BluetoothInstance() {
+    private LtuIS1871NoEncryptBluetoothInstance() {
         if (sContext != null) {
             final BluetoothManager bluetoothManager = (BluetoothManager) sContext.getSystemService(Context.BLUETOOTH_SERVICE);
             mBluetoothAdapter = bluetoothManager.getAdapter();
             sContext.registerReceiver(mBroadcastReceiver, makeGattUpdateIntentFilter());
+            mHandlerThread = new HandlerThread(LtuIS1871NoEncryptBluetoothInstance.class.getName() + ".HandlerThread");
+            mHandlerThread.start();
+            mNonUIHandler = new NonUIHandler(mHandlerThread.getLooper());
         }
     }
 
     private static class InstanceHolder {
-        private static final LtuRTK8762BluetoothInstance INSTANCE = new LtuRTK8762BluetoothInstance();
+        private static final LtuIS1871NoEncryptBluetoothInstance INSTANCE = new LtuIS1871NoEncryptBluetoothInstance();
     }
 
-    public static LtuRTK8762BluetoothInstance getInstance(Context context) {
+    public static LtuIS1871NoEncryptBluetoothInstance getInstance(Context context) {
         sContext = context.getApplicationContext();
         return InstanceHolder.INSTANCE;
     }
@@ -265,12 +320,14 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
                 return false;
             }
         }
-        return mBluetoothAdapter.startDiscovery();
+        mBluetoothAdapter.startDiscovery();
+        return true;
     }
 
     private boolean stopScan(Activity activity) {
         if (mBluetoothAdapter != null) {
-            return mBluetoothAdapter.cancelDiscovery();
+            mBluetoothAdapter.cancelDiscovery();
+            return true;
         }
         return false;
     }
@@ -300,10 +357,11 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
                     return false;
                 }
             }
-            return mBluetoothAdapter.startLeScan(leScanCallback);
-        } else {
-            mBluetoothAdapter.stopLeScan(null);
+            mBluetoothAdapter.startLeScan(leScanCallback);
             return true;
+        } else {
+            mBluetoothAdapter.stopLeScan(leScanCallback);
+            return false;
         }
     }
 
@@ -331,10 +389,27 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
                 Toast.makeText(sContext, "需要蓝牙权限....", Toast.LENGTH_SHORT).show();
             }
             return false;
+        } else {
+            return true;
         }
-        return true;
     }
 
+    public boolean refreshDeviceCache() {
+        if (mBluetoothGatt != null) {
+            try {
+                Method localMethod = mBluetoothGatt.getClass().getMethod(
+                        "refresh", new Class[0]);
+                if (localMethod != null) {
+                    boolean bool = ((Boolean) localMethod.invoke(
+                            mBluetoothGatt, new Object[0])).booleanValue();
+                    return bool;
+                }
+            } catch (Exception localException) {
+                LogUtils.i("An exception occured while refreshing device");
+            }
+        }
+        return false;
+    }
 
     public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
@@ -354,8 +429,9 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
     }
 
     public List<BluetoothGattService> getSupportedGattServices() {
-        if (mBluetoothGatt == null)
+        if (mBluetoothGatt == null) {
             return null;
+        }
         return mBluetoothGatt.getServices();
     }
 
@@ -363,7 +439,9 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
         if (mBluetoothGatt == null) {
             return;
         }
-        mBluetoothGatt.discoverServices();
+
+        boolean isOK = mBluetoothGatt.discoverServices();
+        LogUtils.i("isOk: " + isOK);
     }
 
     public String getCharacteristicProperty(int prop) {
@@ -413,6 +491,8 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
                     mWriteCharacteristic = characteristic;
                 } else if (CHARACTERISTIC_NOTIFY_UUID.equals(characteristic.getUuid().toString())) {
                     mNotifyCharacteristic = characteristic;
+                } else if (CHARACTERISTIC_CONFIRM_UUID.equals(characteristic.getUuid().toString())) {
+                    mConfirmCharacteristic = characteristic;
                 }
             }
         }
@@ -445,6 +525,16 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
                 tmpFrame[i] = frame.get(i);
             }
             return (verify645Frame(tmpFrame) || verify698Frame(tmpFrame));
+        }
+        return false;
+    }
+
+    public boolean verifyFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return false;
+        }
+        if ((frame[0] & 0x80) == 0x80) {
+            return true;
         }
         return false;
     }
@@ -662,8 +752,167 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
         return false;
     }
 
+    private byte[] sendConfirm() {
+        if (mConfirmCharacteristic == null) {
+            LogUtils.i("mConfirmCharacteristic is null");
+            return null;
+        }
 
-    /** Interface implements **/
+
+        mReceivedFrame.clear();
+
+        if (mBluetoothGatt != null) {
+
+            synchronized (mWriteSync) {
+                try {
+                    byte[] confirmValue = {(byte) 0xAA};
+                    mConfirmCharacteristic.setValue(confirmValue);
+                    mBluetoothGatt.writeCharacteristic(mConfirmCharacteristic);
+                    mWriteSync.wait(WAIT_TIMEOUT);
+                } catch (Exception e) {
+                    Log.e(TAG, "sendConfirm, wait for writing error: " + e.getMessage());
+                }
+            }
+        }
+
+        // wait for finishing receiving message
+        synchronized (mReadSync) {
+            try {
+                mReadSync.wait(RECV_WAIT_TIMEOUT);
+            } catch (Exception e) {
+                Log.e(TAG, "sendConfirm, wait for reading error: " + e.getMessage());
+            }
+        }
+        Log.i(TAG, "sendConfirm, receive done.");
+        byte[] recvFrame = null;
+        if (mReceivedFrame != null && mReceivedFrame.size() > 0) {
+            recvFrame = new byte[mReceivedFrame.size()];
+            for (int i = 0; i < recvFrame.length; i++) {
+                recvFrame[i] = mReceivedFrame.get(i);
+            }
+        }
+        return recvFrame;
+    }
+
+
+    private byte[] encryptFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+
+        byte[] cipSource = new byte[8];
+        if (frame.length > 9) {
+            for (int i = 1; i < 9; i++) {
+                cipSource[i - 1] = frame[i];
+            }
+            byte[] encryptData = encrypt(cipSource);
+
+
+            int length = encryptData.length;
+            byte[] encryptFrame = new byte[length + 3];
+            encryptFrame[0] = (byte) 0xff;
+            for (int i = 0; i < length; i++) {
+                encryptFrame[i + 1] = encryptData[i];
+            }
+            Random random = new Random();
+            encryptFrame[length + 1] = (byte) random.nextInt(256);//不含256
+            encryptFrame[length + 2] = (byte) random.nextInt(256);
+
+            return encryptFrame;
+        }
+        return null;
+    }
+
+    private byte[] sendEncryptInfo(byte[] frame) {
+        Log.i(TAG, "sendEncryptInfo, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
+        if (frame == null) {
+            return null;
+        }
+        byte[] encryptFrame = encryptFrame(frame);
+        if (encryptFrame == null) {
+            return null;
+        }
+        mReceivedFrame.clear();
+
+        int sendTime = (encryptFrame.length + (MTU - 3 - 1)) / (MTU - 3);
+        for (int i = 0; i < sendTime; i++) {
+            int begin = i * (MTU - 3);
+            int end = (i + 1) * (MTU - 3) - 1;
+            if (end > frame.length - 1) {
+                end = frame.length - 1;
+            }
+            if (mWriteCharacteristic != null && mBluetoothGatt != null) {
+                byte[] subFrame = DataConvertUtils.getSubByteArray(encryptFrame, begin, end);
+                Log.i(TAG, "sendEncryptInfo, total: " + encryptFrame.length + ", begin: " + begin + ", end: " + end
+                        + ", sub frame: " + DataConvertUtils.convertByteArrayToString(subFrame, false));
+
+                synchronized (mWriteSync) {
+                    try {
+                        mWriteCharacteristic.setValue(subFrame);
+                        mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
+                        Log.i(TAG, "sendEncryptInfo, send chara: " + mWriteCharacteristic);
+                        mWriteSync.wait(WAIT_TIMEOUT);
+                    } catch (Exception e) {
+                        Log.e(TAG, "sendEncryptInfo, wait for writing error: " + e.getMessage());
+                    }
+                }
+            }
+        }
+        Log.i(TAG, "sendEncryptInfo, send done.");
+
+        // wait for finishing receiving message
+        synchronized (mReadSync) {
+            try {
+                mReadSync.wait(RECV_WAIT_TIMEOUT);
+            } catch (Exception e) {
+                Log.e(TAG, "sendEncryptInfo, wait for reading error: " + e.getMessage());
+            }
+        }
+        Log.i(TAG, "sendEncryptInfo, receive done.");
+        byte[] recvFrame = null;
+        if (mReceivedFrame != null && mReceivedFrame.size() > 0) {
+            recvFrame = new byte[mReceivedFrame.size()];
+            for (int i = 0; i < recvFrame.length; i++) {
+                recvFrame[i] = mReceivedFrame.get(i);
+            }
+        }
+        return recvFrame;
+    }
+
+
+    private byte[] encrypt(byte[] cipSource) {
+        int C1 = 52845;
+        int C2 = 22719;
+        int Key = 0x35ac;
+        //  LogUtil.d(TAG,"取出的8字节待加密信息："+TopscommUtils.byteArrayToHexString(cipSource));
+        byte[] cipResult = new byte[2 * cipSource.length];
+        for (int i = 0; i < 8; i++) {
+            int temp = cipSource[i] & 0xFF;
+            temp = (temp ^ (Key >>> 8)) & 0xFF;
+            cipSource[i] = (byte) temp;
+            Key = ((temp + Key) * C1 + C2) & 0xFFFF;
+
+/*                    cipSource[i] = (byte) (cipSource[i] ^ ((byte) (Key>>>8)));
+                    Key = (short) (((cipSource[i]+Key)*C1+C2)&(short)0xffff);*/
+        }
+        // LogUtil.d(TAG,"经过第一次加密后的8字节信息："+TopscommUtils.byteArrayToHexString(cipSource));
+        //对加密结果进行转换
+        for (int i = 0; i < 8; i++) {
+            int temp = cipSource[i] & 0xFF;
+            cipResult[i * 2] = (byte) (temp / 26 + 65);
+            cipResult[i * 2 + 1] = (byte) (temp % 26 + 65);
+/*                    cipResult[i*2] = (byte) (cipSource[i]/26 + 65);
+                    cipResult[i*2+1] = (byte)(cipSource[i]%26+65);*/
+        }
+        // LogUtil.d(TAG,"经过第二次加密后的16字节信息："+TopscommUtils.byteArrayToHexString(cipResult));
+        return cipResult;
+    }
+
+
+
+
+    /** IBluetooth Interface Implement **/
+    @Override
     public boolean startScan(Activity activity, boolean isBle, BluetoothAdapter.LeScanCallback leScanCallback) {
         if (isBle) {
             return scanLeDevice(true, activity, leScanCallback);
@@ -672,6 +921,7 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
         }
     }
 
+    @Override
     public boolean stopScan(Activity activity, boolean isBle) {
         if (isBle) {
             return scanLeDevice(false, activity, null);
@@ -680,13 +930,12 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
         }
     }
 
+    @Override
     public boolean connect(final String address) {
         if (mBluetoothAdapter == null || address == null) {
             Log.w(TAG, "connect, BluetoothAdapter not initialized or unspecified address.");
             return false;
         }
-
-
         // Previously connected device.  Try to reconnect.
         if (mBluetoothDeviceAddress != null && address.equals(mBluetoothDeviceAddress) && mBluetoothGatt != null) {
             Log.d(TAG, "connect, Trying to use an existing mBluetoothGatt for connection.");
@@ -704,9 +953,9 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
         }
         // We want to directly connect to the device, so we are setting the autoConnect
         // parameter to false.
-        /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback, BluetoothDevice.TRANSPORT_LE);
-        } else {*/
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        //    mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback, BluetoothDevice.TRANSPORT_LE);
+        //} else {
         mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback);
         //}
 
@@ -715,9 +964,11 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
         mNotifyCharacteristic = null;
         mWriteCharacteristic = null;
         mCommunicationService = null;
+
         return true;
     }
 
+    @Override
     public synchronized byte[] sendAndReceiveSync(byte[] frame) {
         Log.i(TAG, "sendAndReceiveSync, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
         if (frame == null) {
@@ -768,10 +1019,9 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
             }
         }
         return recvFrame;
-
     }
 
-
+    @Override
     public void disconnect() {
         Log.i(TAG, "disconnect");
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
@@ -781,6 +1031,7 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
         mBluetoothGatt.disconnect();
     }
 
+    @Override
     public void close() {
         Log.i(TAG, "close");
         if (mBluetoothGatt == null) {
@@ -790,17 +1041,18 @@ public class LtuRTK8762BluetoothInstance implements IBluethoothInstance{
         mNotifyCharacteristic = null;
         mWriteCharacteristic = null;
         mCommunicationService = null;
+        mConfirmCharacteristic = null;
         mBluetoothGatt = null;
         mIsConnected = false;
         mBluetoothDeviceAddress = null;
     }
 
+    @Override
     public boolean isDeviceConnected(String deviceAddr) {
         if (deviceAddr != null && deviceAddr.equals(mBluetoothDeviceAddress)) {
             return mIsConnected;
         }
         return false;
     }
-
 
 }
