@@ -104,6 +104,69 @@ public class Ltu645ProtocolHelper {
         return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable);
     }
 
+    public static byte[] makeReadTmprtrSensorFrame(String addr) {
+        if (TextUtils.isEmpty(addr)) {
+            return null;
+        }
+        byte ctrlCode = 0x11;
+        String dataLable = "FE002602";
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, dataLable);
+    }
+
+    public static String parseTmprtrSensorFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+
+        if (protocol645Frame.mCtrlCode == (byte) 0x91) {
+            LogUtils.i("data: " + DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, false));
+            if (protocol645Frame.mData != null && protocol645Frame.mData.length == 10) {
+                StringBuilder sb = new StringBuilder();
+                if (protocol645Frame.mData[4] != (byte) 0xFF && protocol645Frame.mData[5] != (byte)0xFF) {
+                    if ((protocol645Frame.mData[5] & 0x80) == 0x80) {
+                        sb.append("-");
+                    }
+                    sb.append(DataConvertUtils.convertByteToString((byte) (protocol645Frame.mData[5] & 0x7F)))
+                            .append(DataConvertUtils.convertByteToString(protocol645Frame.mData[4]).charAt(0))
+                            .append(".")
+                            .append(DataConvertUtils.convertByteToString(protocol645Frame.mData[4]).charAt(1))
+                            .append("\u2103").append("|");
+                } else {
+                    sb.append("无效").append("|");
+                }
+
+                if (protocol645Frame.mData[6] != (byte) 0xFF && protocol645Frame.mData[7] != (byte)0xFF) {
+                    if ((protocol645Frame.mData[7] & 0x80) == 0x80) {
+                        sb.append("-");
+                    }
+                    sb.append(DataConvertUtils.convertByteToString((byte) (protocol645Frame.mData[7] & 0x7F)))
+                            .append(DataConvertUtils.convertByteToString(protocol645Frame.mData[6]).charAt(0))
+                            .append(".")
+                            .append(DataConvertUtils.convertByteToString(protocol645Frame.mData[6]).charAt(1))
+                            .append("\u2103").append("|");
+                } else {
+                    sb.append("无效").append("|");
+                }
+
+                if (protocol645Frame.mData[8] != (byte) 0xFF && protocol645Frame.mData[9] != (byte)0xFF) {
+                    if ((protocol645Frame.mData[9] & 0x80) == 0x80) {
+                        sb.append("-");
+                    }
+                    sb.append(DataConvertUtils.convertByteToString((byte) (protocol645Frame.mData[9] & 0x7F)))
+                            .append(DataConvertUtils.convertByteToString(protocol645Frame.mData[8]).charAt(0))
+                            .append(".")
+                            .append(DataConvertUtils.convertByteToString(protocol645Frame.mData[8]).charAt(1))
+                            .append("\u2103");
+                } else {
+                    sb.append("无效");
+                }
+                return sb.toString();
+            }
+        }
+        return null;
+    }
+
     public static String parseReadCurrentFrame(byte[] frame) {
         if (frame == null || frame.length <= 0) {
             return null;
