@@ -767,4 +767,42 @@ public class Ltu645ProtocolHelper {
         return Protocol645FrameBaseMaker.getInstance().makeFrame(meterInfo.address, ctrlCode, dataLable + data);
     }
 
+    /****************************** Standard 645 Protocol ********************************/
+
+    public static  byte[] makeReadVoltageFrame_07(MeterInfo meterInfo)
+    {
+        if (meterInfo == null || TextUtils.isEmpty(meterInfo.address)
+                || meterInfo.protocolType == null || meterInfo.protocolType == METER_PROTOCOL_TYPE.PROTOCOL_NONE) {
+            return null;
+        }
+        byte ctrlCode = 0x11;
+        String dataLable = "00FF0102";
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(meterInfo.address, ctrlCode, dataLable);
+    }
+
+    public static  byte[] makeReadVoltageFrame_97(MeterInfo meterInfo, PHASE_INFO phase_info)
+    {
+        if (meterInfo == null || TextUtils.isEmpty(meterInfo.address)
+                || meterInfo.protocolType == null || meterInfo.protocolType == METER_PROTOCOL_TYPE.PROTOCOL_NONE) {
+            return null;
+        }
+        byte ctrlCode = 0x01;
+        String dataLable = "";
+        switch (phase_info) {
+            case PHASE_A:
+                dataLable = "11B6";
+                break;
+            case PHASE_B:
+                dataLable = "12B6";
+                break;
+            case PHASE_C:
+                dataLable = "13B6";
+                break;
+            default:
+                dataLable = "11B6";
+                break;
+        }
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(meterInfo.address, ctrlCode, dataLable);
+    }
+
 }
