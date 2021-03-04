@@ -69,6 +69,7 @@ public class MeterProtocolDetector {
         public int baudRateOfMaintainLora = 0;
         public ModeOf485 modeOf485;
         public FuncSwitch funcSwitch;
+        public String[] voltages;
 
         //format:"A phase impedance|B phase impedance|C phase impedance"
         public String impedance;
