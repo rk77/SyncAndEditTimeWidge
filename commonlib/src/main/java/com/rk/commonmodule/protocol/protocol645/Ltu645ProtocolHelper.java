@@ -829,4 +829,24 @@ public class Ltu645ProtocolHelper {
         return Protocol645FrameBaseMaker.getInstance().makeFrame(meterInfo.address, ctrlCode, dataLable);
     }
 
+    public static String parseReadVoltageFrame_97(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+        if (protocol645Frame != null && protocol645Frame.mData != null
+                && protocol645Frame.mData.length == 0x06 && protocol645Frame.mCtrlCode == (byte) 0x81) {
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(DataConvertUtils.convertByteToString(protocol645Frame.mData[3]))
+                    .append(DataConvertUtils.convertByteToString(protocol645Frame.mData[2]).charAt(0))
+                    .append(".")
+                    .append(DataConvertUtils.convertByteToString(protocol645Frame.mData[2]).charAt(1))
+                    .append("V");
+            return sb.toString();
+
+        }
+        return null;
+    }
+
 }
