@@ -237,6 +237,10 @@ public class Ltu645ProtocolHelper {
         if (data == null || data.length != 7) {
             return null;
         }
+        if ("ffffffffffffff".equals(DataConvertUtils.convertByteArrayToString(data, false))
+                || "FFFFFFFFFFFFFF".equals(DataConvertUtils.convertByteArrayToString(data, false))) {
+            return "无效";
+        }
         //String tst = "ac df 27 0d 06 01 15".replaceAll(" ", "");
         //data = DataConvertUtils.convertHexStringToByteArray(tst, tst.length(), false);
         StringBuilder sb = new StringBuilder();
