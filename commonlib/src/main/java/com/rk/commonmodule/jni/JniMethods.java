@@ -83,6 +83,10 @@ public class JniMethods {
     public static native int getNetPort();
     //获取远端IP地址
     public static native int getRemoteIp();
+    //设置子网掩码
+    public static native int setSubMask(int mask);
+    //设置默认网关
+    public static native int setGateway(int gateway);
 
 
     //载波操作
