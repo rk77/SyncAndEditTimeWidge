@@ -9,6 +9,7 @@ import com.rk.commonmodule.utils.DataConvertUtils;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Date;
 
 public class Protocol698Frame {
 
@@ -1453,6 +1454,28 @@ public class Protocol698Frame {
                         }
                     }
                     break;
+                case COMDCB_TYPE:
+                    if (obj != null && obj instanceof COMDCB) {
+                        COMDCB comdcb = (COMDCB) obj;
+                        if (comdcb.data == null || comdcb.data.length <= 0) {
+                            return;
+                        }
+                        this.data = new byte[1 + comdcb.data.length];
+                        this.data[0] = (byte) 95;
+                        System.arraycopy(comdcb.data, 0, this.data, 1, comdcb.data.length);
+                    }
+                    break;
+                case DATE_TYPE:
+                    if (obj != null && obj instanceof Date) {
+                        Date date = (Date) obj;
+                        if (date.data == null || date.data.length <= 0) {
+                            return;
+                        }
+                        this.data = new byte[1 + date.data.length];
+                        this.data[0] = (byte) 26;
+                        System.arraycopy(date.data, 0, this.data, 1, date.data.length);
+                    }
+                    break;
             }
         }
 
@@ -1696,6 +1719,18 @@ public class Protocol698Frame {
                             this.obj = frame[begin + 1];
                         }
                         break;
+                    case 26:
+                        this.type = Data_Type.DATE_TYPE;
+                        if (begin + 1 <= frame.length - 1) {
+                            Date date = new Date(frame, begin + 1);
+                            if (date.data != null && date.data.length > 0) {
+                                this.obj = date;
+                                this.data = new byte[1 + date.data.length];
+                                this.data[0] = (byte) 26;
+                                System.arraycopy(date.data, 0, this.data, 1, date.data.length);
+                            }
+                        }
+                        break;
                     case 28:
                         this.type = Data_Type.DATE_TIME_S_TYPE;
                         this.data = new byte[8];
@@ -1762,6 +1797,17 @@ public class Protocol698Frame {
                             }
                         }
                         */
+                        break;
+                    case (byte)95:
+                        this.type = Data_Type.COMDCB_TYPE;
+                        if (begin + 1 <= frame.length - 1) {
+                            COMDCB comdcb = new COMDCB(frame, begin + 1);
+                            if (comdcb.data != null) {
+                                this.data = new byte[1 + 5];
+                                this.data[0] = (byte) 95;
+                                System.arraycopy(frame, begin + 1, this.data, 1, 5);
+                            }
+                        }
                         break;
                 }
             }
@@ -2266,5 +2312,112 @@ public class Protocol698Frame {
 
         }
 
+    }
+
+    public enum BaudRate {
+        bps_300, bps_600, bps_1200, bps_2400, bps_4800, bps_7200,
+        bps_9600, bps_19200, bps_38400, bps_57600, bps_115200,
+        self_adaption,
+    }
+    public enum ChkBit {
+        no_check, odd_check, even_check,
+    }
+    public enum DataBit {
+        bit_5, bit_6, bit_7, bit_8,
+    }
+    public enum StopBit {
+        bit_1, bit_2,
+    }
+    public enum SteamCtrl {
+        no, hardware, software,
+    }
+    public static class COMDCB {
+        public BaudRate baudRate;
+        public ChkBit chkBit;
+        public DataBit dataBit;
+        public StopBit stopBit;
+        public SteamCtrl steamCtrl;
+        public byte[] data;
+        public COMDCB(BaudRate baudRate, ChkBit chkBit, DataBit dataBit, StopBit stopBit, SteamCtrl steamCtrl) {
+            this.baudRate = baudRate;
+            this.chkBit = chkBit;
+            this.dataBit = dataBit;
+            this.stopBit = stopBit;
+            this.steamCtrl = steamCtrl;
+
+            this.data = new byte[5];
+            if (this.baudRate == BaudRate.self_adaption) {
+                this.data[0] = (byte) 255;
+            } else {
+                this.data[0] = (byte) (this.baudRate.ordinal());
+            }
+            this.data[1] = (byte) (this.chkBit.ordinal());
+            this.data[2] = (byte) (this.dataBit.ordinal() + 5);
+            this.data[3] = (byte) (this.stopBit.ordinal() + 1);
+            this.data[4] = (byte) (this.steamCtrl.ordinal());
+        }
+
+        public COMDCB(byte[] frame, int begin) {
+            if (frame == null || frame.length <= 0 || begin < 0
+                    || begin > frame.length - 1 || begin + 4 > frame.length - 1) {
+                return;
+            }
+            if (frame[begin] == (byte)255) {
+                this.baudRate = BaudRate.self_adaption;
+            } else {
+                this.baudRate = BaudRate.values()[frame[begin]];
+            }
+            this.chkBit = ChkBit.values()[frame[begin + 1]];
+            this.dataBit = DataBit.values()[frame[begin + 2] - 5];
+            this.stopBit = StopBit.values()[frame[begin + 3] - 1];
+            this.steamCtrl = SteamCtrl.values()[frame[begin + 4]];
+            this.data = new byte[5];
+            System.arraycopy(frame, begin, this.data, 0, 5);
+        }
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(this.baudRate).append("|").append(this.chkBit).append("|").append(this.dataBit)
+                    .append("|").append(this.stopBit).append("|").append(this.steamCtrl);
+            return sb.toString();
+        }
+    }
+
+    public static class Date {
+        public int year;
+        public int month;
+        public int dayOfMonth;
+        public int dayOfWeek;
+        public byte[] data;
+        public Date(int year, int month, int dayOfMonth, int dayOfWeek) {
+            this.year = year;
+            this.month = month;
+            this.dayOfMonth = dayOfMonth;
+            this.dayOfWeek = dayOfWeek;
+            this.data = new byte[5];
+            this.data[0] = (byte) ((year >> 8) & 0xFF);
+            this.data[1] = (byte) (year & 0xFF);
+            this.data[2] = (byte) (month & 0xFF);
+            this.data[3] = (byte) (dayOfMonth & 0xFF);
+            this.data[4] = (byte) (dayOfWeek & 0xFF);
+        }
+
+        public Date(byte[] frame, int begin) {
+            if (frame == null || frame.length <= 0 || begin < 0
+                    || begin > frame.length - 1 || begin + 4 > frame.length - 1) {
+                return;
+            }
+            this.year = frame[begin] * 256 + frame[begin + 1];
+            this.month = frame[begin + 2] & 0xFF;
+            this.dayOfMonth = frame[begin + 3] & 0xFF;
+            this.dayOfWeek = frame[begin + 4] & 0xFF;
+            this.data = new byte[5];
+            System.arraycopy(frame, begin, this.data, 0, 5);
+        }
+
+        @Override
+        public String toString() {
+            return this.year + "-" + this.month + "-" + this.dayOfMonth + " " + this.dayOfWeek;
+        }
     }
 }
