@@ -20,6 +20,7 @@ import java.util.Map;
 
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.ARRAY_TYPE;
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.CSD_TYPE;
+import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.LONG_TYPE;
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE;
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.OCTET_STRING_TYPE;
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.STRUCTURE_TYPE;
@@ -2969,6 +2970,28 @@ public class OopProtocolHelper {
 
         }
         return false;
+    }
+
+    public static short parseGetSimSignalFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return -255;
+        }
+        boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        Log.i(TAG, "parseLocalCommModuleUnitFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
+        if (isOK) {
+            Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+                    Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
+
+            if (map != null && map.containsKey("data")) {
+                Protocol698Frame.Data data = (Protocol698Frame.Data) map.get("data");
+                if (data.type == LONG_TYPE) {
+                    return ((short) data.obj);
+                }
+            }
+            return -255;
+
+        }
+        return -255;
     }
 
 }

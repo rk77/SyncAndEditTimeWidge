@@ -1476,6 +1476,14 @@ public class Protocol698Frame {
                         System.arraycopy(date.data, 0, this.data, 1, date.data.length);
                     }
                     break;
+                case LONG_TYPE:
+                    if (obj instanceof Short) {
+                        short value = (short) obj;
+                        this.data = new byte[1+ 2];
+                        this.data[0] = (byte) 16;
+                        this.data[1] = (byte) ((value>>8) | 0xFF);
+                        this.data[2] = (byte) (value & 0xFF);
+                    }
             }
         }
 
@@ -1683,6 +1691,19 @@ public class Protocol698Frame {
                                         DataConvertUtils.getSubByteArray(this.data, 2, this.data.length - 1));
                                 this.obj = s;
                             }
+                        }
+                        break;
+                    case 16:
+                        this.type = Data_Type.LONG_TYPE;
+                        if (begin + 2 <= frame.length - 1) {
+                            this.data = new byte[3];
+                            this.data[0] = (byte) 16;
+                            this.data[1] = frame[begin + 1];
+                            this.data[2] = frame[begin + 2];
+                            short o = 0;
+                            o = (short) ((frame[begin + 1] << 8) & 0xFF00);
+                            o = (short) (frame[begin + 2] & 0x00FF | o);
+                            this.obj = o;
                         }
                         break;
                     case 17:
