@@ -853,4 +853,41 @@ public class Ltu645ProtocolHelper {
         return null;
     }
 
+    public static  byte[] makeReadCurrentFrame_07(MeterInfo meterInfo)
+    {
+        if (meterInfo == null || TextUtils.isEmpty(meterInfo.address)
+                || meterInfo.protocolType == null || meterInfo.protocolType == METER_PROTOCOL_TYPE.PROTOCOL_NONE) {
+            return null;
+        }
+        byte ctrlCode = 0x11;
+        String dataLable = "00FF0202";
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(meterInfo.address, ctrlCode, dataLable);
+    }
+
+    public static  String[] parseReadCurrentFrame_07(byte[] frame)
+    {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+        LogUtils.i("data: " + DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, false));
+        if (protocol645Frame != null && protocol645Frame.mData != null
+                && protocol645Frame.mData.length == 13 && protocol645Frame.mCtrlCode == (byte) 0x91) {
+            String[] current = new String[3];
+            for (int i = 0; i < 3; i++) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(DataConvertUtils.convertByteToString(protocol645Frame.mData[6 + i * 3]))
+                        .append(DataConvertUtils.convertByteToString(protocol645Frame.mData[5 + i * 3]).charAt(0))
+                        .append(".")
+                        .append(DataConvertUtils.convertByteToString(protocol645Frame.mData[5 + i * 3]).charAt(1))
+                        .append(DataConvertUtils.convertByteToString(protocol645Frame.mData[4 + i * 3]))
+                        .append("A");
+                current[i] = sb.toString();
+            }
+            return current;
+
+        }
+        return null;
+    }
+
 }

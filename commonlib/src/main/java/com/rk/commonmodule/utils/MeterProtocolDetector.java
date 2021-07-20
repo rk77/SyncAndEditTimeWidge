@@ -70,6 +70,7 @@ public class MeterProtocolDetector {
         public ModeOf485 modeOf485;
         public FuncSwitch funcSwitch;
         public String[] voltages;
+        public String[] currents;
 
         //format:"A phase impedance|B phase impedance|C phase impedance"
         public String impedance;
