@@ -8,6 +8,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 
 import com.rk.commonlib.R;
+import com.rk.commonmodule.protocol.protocol698.Protocol698Frame.GetRecord;
 import com.rk.commonmodule.utils.DataConvertUtils;
 import com.rk.commonmodule.utils.MeterProtocolDetector;
 import com.rk.module.ArchiveManageRow;
@@ -2992,6 +2993,29 @@ public class OopProtocolHelper {
 
         }
         return -255;
+    }
+
+    public static byte[] makeGetRequestRecord(String address, Protocol698Frame.OAD oad, Protocol698Frame.RSD rsd, Protocol698Frame.RCSD rcsd) {
+        GetRecord getRecord = new GetRecord(oad, rsd, rcsd);
+        byte[] addr = DataConvertUtils.convertHexStringToByteArray(address, address.length(), true);
+        if (addr == null || addr.length <= 0) {
+            addr = new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA};
+        }
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, addr);
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+        Map map = new HashMap();
+        map.put(ProtocolConstant.GET_RECORD_KEY, getRecord);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.GET_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.GET_REQUEST.GET_REQUEST_RECORD.CLASS_ID, map);
+        Log.i(TAG, "makeGetRequestRecord, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "makeGetRequestRecord, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+        return frame;
     }
 
 }
