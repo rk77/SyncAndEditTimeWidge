@@ -2,7 +2,14 @@
     <string name="app_name">commonLib</string>
     <string name="rk_file">rk_file</string>
     <string name="no_soft_find">sorry, on file!</string>
-
+    <string name="time_picker_cancel">取消</string>
+    <string name="time_picker_title">时间选择</string>
+    <string name="time_picker_commit">确认</string>
+    <string name="year">年</string>
+    <string name="month">月</string>
+    <string name="day">日</string>
+    <string name="hour">时</string>
+    <string name="minute">分</string>
     <string-array name="baut_rate">
         <item>300</item>
         <item>600</item>
@@ -66,6 +73,21 @@
         <item>3-ERROR</item>
         <item>4-FATAL</item>
         <item>5-OFF</item>
+    </string-array>
+
+    <string-array name="frozen_type">
+        <item>分钟冻结</item>
+        <item>日冻结</item>
+    </string-array>
+
+    <string-array name="rsd_type">
+        <item>冻结时间区间内连续间隔值</item>
+        <item>选取上第n次</item>
+    </string-array>
+
+    <string-array name="unit_type">
+        <item>分</item>
+        <item>日</item>
     </string-array>
 
 </resources>

@@ -10,4 +10,9 @@
     <color name="gray_bg">#f2f2f2</color>
     <color name="base_color">#e6e4e7</color>
     <color name="test">#FFDDDDDD</color>
+    <color name="color_59B29C">#59B29C</color>
+    <color name="color_333333">#333333</color>
+    <color name="color_ffffff">#ffffff</color>
+    <color name="color_999999">#999999</color>
+    <color name="date_picker_bg">#FFFFFF</color>
 </resources>
