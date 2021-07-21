@@ -4,6 +4,8 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.rk.commonmodule.protocol.protocol698.Protocol698Frame.A_ResultNormal;
+import com.rk.commonmodule.protocol.protocol698.Protocol698Frame.CSD;
+import com.rk.commonmodule.protocol.protocol698.Protocol698Frame.RCSD;
 import com.rk.commonmodule.utils.BitUtils;
 import com.rk.commonmodule.utils.DataConvertUtils;
 
@@ -90,6 +92,17 @@ public class Protocol698Frame {
         public int propertyInnerIdx;
         public OAD(byte[] data) {
             this.data = data;
+            if (data.length >= 4) {
+                OI[0] = data[0];
+                OI[1] = data[1];
+                OI_VALUE = OI[1] * 16 + OI[0];
+                propertyNum = data[2] & 0x1F;
+                propertyChara = (data[2] & 0xE0) / 32;
+                propertyInnerIdx = data[3];
+            }
+        }
+        public OAD(byte[] frame, int begin) {
+            this.data = DataConvertUtils.getSubByteArray(frame, begin, begin + 3);
             if (data.length >= 4) {
                 OI[0] = data[0];
                 OI[1] = data[1];
@@ -812,6 +825,79 @@ public class Protocol698Frame {
         }
     }
 
+    public static class NewRCSD {
+        public byte[] data;
+        public ArrayList<CSD> csds;
+        public NewRCSD(ArrayList<CSD> csdList) {
+            if (csdList == null || csdList.size() <= 0) {
+                return;
+            }
+            this.csds = csdList;
+            int size = 1;
+            for (int i = 0; i < csdList.size(); i++) {
+                CSD csd = csdList.get(i);
+                if (csd != null && csd.data != null && csd.data.length > 0) {
+                    size = size + csd.data.length;
+                }
+            }
+            this.data = new byte[size];
+            int pos = 0;
+            this.data[pos] = (byte) (csdList.size() & 0xFF);
+            pos = pos + 1;
+            for (int i = 0; i < csdList.size(); i++) {
+                CSD csd = csdList.get(i);
+                if (csd != null && csd.data != null && csd.data.length > 0) {
+                    System.arraycopy(csd.data, 0, this.data, pos, csd.data.length);
+                    pos = pos + csd.data.length;
+                }
+            }
+        }
+
+        public NewRCSD(byte[] frame, int begin) {
+            try {
+                int pos = begin;
+                int length = frame[pos];
+                pos = pos + 1;
+                if (length >= 128) {
+                    int lengthAreaLength = length & 0x7F;
+                    int lengthAreaBegin = pos;
+                    int lengthAreaEnd = pos + lengthAreaLength - 1;
+                    int size = 0;
+                    for (int i = 0; i <= lengthAreaEnd - lengthAreaBegin; i++) {
+                         size = size + (int)(frame[pos] * Math.pow(256, i));
+                         pos = pos + 1;
+                    }
+                    for (int i = 0; i < size; i++) {
+                        CSD csd = new CSD(frame, pos);
+                        if (csd.data != null && csd.data.length > 0) {
+                            this.csds.add(csd);
+                            pos = pos + csd.data.length;
+                        } else {
+                            break;
+                        }
+                    }
+                    this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
+
+                } else {
+                    this.csds = new ArrayList<CSD>();
+                    for (int i = 0; i < length; i++) {
+                        CSD csd = new CSD(frame, pos);
+                        if (csd.data != null && csd.data.length > 0) {
+                            this.csds.add(csd);
+                            pos = pos + csd.data.length;
+                        } else {
+                            break;
+                        }
+                    }
+                    this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
+                }
+
+            } catch (Exception err) {
+
+            }
+        }
+    }
+
     public static class ROAD {
         public OAD oad;
         public ArrayList<OAD> oadArrayList = new ArrayList<>();
@@ -1055,9 +1141,19 @@ public class Protocol698Frame {
             }
         }
 
-        public GetRecord(byte[] data) {
-            if (data != null) {
-                this.data = data;
+        public GetRecord(byte[] frame, int begin) {
+            try {
+                int pos = begin;
+                this.oad = new OAD(frame, begin);
+                pos = pos + this.oad.data.length;
+                this.rsd = new RSD(frame, pos);
+                pos = pos + this.rsd.data.length;
+                this.rcsd = new RCSD(frame, pos);
+                pos = pos + this.rcsd.data.length;
+                this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
+
+            } catch (Exception err) {
+
             }
         }
     }
