@@ -101,4 +101,8 @@ public abstract class CommonBaseFragment extends Fragment {
         mHandlerThread.quitSafely();
     }
 
+    public void showToast(String s) {
+        mUIHandler.sendMessage(mUIHandler.obtainMessage(SHOW_TOAST_MSG, s));
+    }
+
 }

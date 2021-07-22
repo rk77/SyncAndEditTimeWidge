@@ -5,18 +5,27 @@ import android.util.Log;
 
 import com.rk.commonmodule.protocol.protocol698.Protocol698Frame.A_ResultNormal;
 import com.rk.commonmodule.protocol.protocol698.Protocol698Frame.CSD;
+import com.rk.commonmodule.protocol.protocol698.Protocol698Frame.DateTimeS;
+import com.rk.commonmodule.protocol.protocol698.Protocol698Frame.OAD;
 import com.rk.commonmodule.protocol.protocol698.Protocol698Frame.RCSD;
+import com.rk.commonmodule.protocol.protocol698.Protocol698Frame.TimeUnit;
 import com.rk.commonmodule.utils.BitUtils;
 import com.rk.commonmodule.utils.DataConvertUtils;
 
+import org.apache.xmlbeans.impl.xb.xmlconfig.Extensionconfig;
+
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Calendar;
 import java.util.Date;
 
 public class Protocol698Frame {
 
     private static final String TAG = Protocol698Frame.class.getSimpleName();
 
+    public interface IData {
+        Data toData();
+    }
     public static class PIID {
         public int priority;
         public int serviceNum;
@@ -101,6 +110,12 @@ public class Protocol698Frame {
                 propertyInnerIdx = data[3];
             }
         }
+
+        public OAD (String oadString) {
+            //byte[] oad_data = DataConvertUtils.convertHexStringToByteArray(oadString, oadString.length(), false);
+            this(DataConvertUtils.convertHexStringToByteArray(oadString, oadString.length(), false));
+        }
+
         public OAD(byte[] frame, int begin) {
             this.data = DataConvertUtils.getSubByteArray(frame, begin, begin + 3);
             if (data.length >= 4) {
@@ -504,7 +519,7 @@ public class Protocol698Frame {
 
     }
 
-    public static class DateTimeS {
+    public static class DateTimeS implements IData {
         public int year;
         public int month;
         public int day;
@@ -520,6 +535,27 @@ public class Protocol698Frame {
             this.hour = hour;
             this.minute = minute;
             this.second = second;
+            data = new byte[7];
+            data[1] = (byte) (year & 0xFF);
+            data[0] = (byte) ((year >> 8) & 0xFF);
+            data[2] = (byte) (month & 0xFF);
+            data[3] = (byte) (day & 0xFF);
+            data[4] = (byte) (hour & 0xFF);
+            data[5] = (byte) (minute & 0xFF);
+            data[6] = (byte) (second & 0xFF);
+
+        }
+
+        public DateTimeS(java.util.Date date) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(date);
+
+            this.year = cal.get(Calendar.YEAR);
+            this.month = cal.get(Calendar.MONTH) + 1;
+            this.day = cal.get(Calendar.DAY_OF_MONTH);
+            this.hour = cal.get(Calendar.HOUR_OF_DAY);
+            this.minute = cal.get(Calendar.MINUTE);
+            this.second = cal.get(Calendar.SECOND);
             data = new byte[7];
             data[1] = (byte) (year & 0xFF);
             data[0] = (byte) ((year >> 8) & 0xFF);
@@ -548,6 +584,10 @@ public class Protocol698Frame {
             return (this.year + "-" + postD(this.month) + "-" + postD(this.day) + " " + postD(this.hour) + ":" + postD(this.minute) + ":" + postD(this.second));
         }
 
+        @Override
+        public Data toData() {
+            return new Data(Data_Type.DATE_TIME_S_TYPE, this);
+        }
     }
 
     private static String postD(int a) {
@@ -569,13 +609,32 @@ public class Protocol698Frame {
         public final static TimeUnit SECOND = new TimeUnit(0, "秒");
         public final static TimeUnit MINUTE = new TimeUnit(1, "分");
         public final static TimeUnit HOUR = new TimeUnit(2, "时");
-        public final static TimeUnit DAT = new TimeUnit(3, "日");
+        public final static TimeUnit DAY = new TimeUnit(3, "日");
         public final static TimeUnit MONTH = new TimeUnit(4, "月");
         public final static TimeUnit YEAR = new TimeUnit(5, "年");
 
+        public static TimeUnit getTimeUnit(int value) {
+            switch (value) {
+                case 0:
+                    return SECOND;
+                case 1:
+                    return MINUTE;
+                case 2:
+                    return HOUR;
+                case 3:
+                    return DAY;
+                case 4:
+                    return MONTH;
+                case 5:
+                    return YEAR;
+                default:
+                    return null;
+            }
+        }
+
     }
 
-    public static class TI {
+    public static class TI implements IData {
         public byte[] data;
         public TimeUnit unit;
         public int delayTime;
@@ -585,10 +644,13 @@ public class Protocol698Frame {
             this.delayTime = delayTime;
             data = new byte[3];
             data[0] = (byte) unit.value;
-            data[1] = (byte) (delayTime & 0xFF);
-            data[2] = (byte) ((delayTime / 256) & 0xFF);
+            data[1] = (byte) ((delayTime >> 8) & 0xFF);
+            data[2] = (byte) ((delayTime) & 0xFF);
         }
 
+        public TI(byte[] frame, int begin) {
+            this(DataConvertUtils.getSubByteArray(frame, begin, begin + 2));
+        }
         public TI(byte[] data) {
             this.data = data;
             if (data != null && data.length >= 3) {
@@ -603,7 +665,7 @@ public class Protocol698Frame {
                         this.unit = TimeUnit.HOUR;
                         break;
                     case 3:
-                        this.unit = TimeUnit.DAT;
+                        this.unit = TimeUnit.DAY;
                         break;
                     case 4:
                         this.unit = TimeUnit.MONTH;
@@ -613,11 +675,15 @@ public class Protocol698Frame {
                         break;
 
                 }
-                this.delayTime = data[2] * 256 + (data[1] & 0xFF);
+                this.delayTime = data[1] * 256 + (data[2] & 0xFF);
 
             }
         }
 
+        @Override
+        public Data toData() {
+            return new Data(Data_Type.TI_TYPE, this);
+        }
     }
 
     public static class RSD {
@@ -1580,6 +1646,13 @@ public class Protocol698Frame {
                         this.data[1] = (byte) ((value>>8) | 0xFF);
                         this.data[2] = (byte) (value & 0xFF);
                     }
+                case TI_TYPE:
+                    if (obj instanceof TI) {
+                        TI ti = (TI) obj;
+                        this.data = new byte[1 + ti.data.length];
+                        this.data[0] = 84;
+                        System.arraycopy(ti.data, 0, this.data, 1, ti.data.length);
+                    }
             }
         }
 
@@ -1877,6 +1950,14 @@ public class Protocol698Frame {
                                 this.data[i] = oad.data[i - 1];
                             }
                         }
+                        break;
+                    case 84:
+                        this.type = Data_Type.TI_TYPE;
+                        int pos = begin + 1;
+                        TI ti = new TI(frame, pos);
+                        pos = pos + ti.data.length;
+                        this.obj = ti;
+                        this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
                         break;
                     case 85:
                         this.type = Data_Type.TSA_TYPE;

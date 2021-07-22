@@ -2995,15 +2995,19 @@ public class OopProtocolHelper {
         return -255;
     }
 
-    public static byte[] makeGetRequestRecord(String address, Protocol698Frame.OAD oad, Protocol698Frame.RSD rsd, Protocol698Frame.RCSD rcsd) {
+    public static byte[] makeGetRequestRecordFrame(String address, Protocol698Frame.OAD oad, Protocol698Frame.RSD rsd, Protocol698Frame.RCSD rcsd) {
         GetRecord getRecord = new GetRecord(oad, rsd, rcsd);
         byte[] addr = DataConvertUtils.convertHexStringToByteArray(address, address.length(), true);
         if (addr == null || addr.length <= 0) {
             addr = new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA};
         }
         Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
-        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.SINGLE, false,
                 0, 6, addr);
+        if (addr == null || addr.length <= 0) {
+            serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                    0, 6, addr);
+        }
         Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
 
         Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
