@@ -143,6 +143,11 @@ public class Protocol698Frame {
 
         }
 
+        @Override
+        public String toString() {
+            return DataConvertUtils.convertByteArrayToString(this.data, false);
+        }
+
     }
 
     public static class OMD {

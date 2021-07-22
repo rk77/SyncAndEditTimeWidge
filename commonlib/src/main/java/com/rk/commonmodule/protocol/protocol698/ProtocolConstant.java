@@ -255,4 +255,83 @@ public class ProtocolConstant {
         put("60420200", "采集存储时标");
 
     }};
+
+    public static final Map<String, String> OAD_MAP = new HashMap<String, String>() {{
+        put("20210200", "冻结时标");
+        put("45100200", "以太网通信模块1");
+        put("20230200", "冻结记录序号");
+        put("50020200", "分钟冻结");
+        put("50040200", "日冻结");
+        put("00100200", "正向有功电能");
+        put("00100201", "正向有功总电能");
+        put("00200200", "反向有功电能");
+        put("00200201", "反向有功总电能");
+        put("202A0200", "目标服务器地址");
+        put("40010200", "通信地址");
+        put("60400200", "采集启动时标");
+        put("60410200", "采集成功时标");
+        put("60420200", "采集存储时标");
+
+        put("20000200", "电压");
+        put("20010200", "电流");
+        put("20040200", "有功功率");
+        put("20050200", "无功功率");
+        put("200A0200", "功率因数");
+
+    }};
+
+    public static final Map<String, String[]> OAD_GROUP_MAP = new HashMap<String, String[]>() {{
+
+        put("00100200", new String[]{"总", "费率1", "费率2", "费率3", "费率4"});
+        put("00200200", new String[]{"总", "费率1", "费率2", "费率3", "费率4"});
+
+        put("20000200", new String[]{"A相", "B相", "C相"});
+        put("20010200", new String[]{"A相", "B相", "C相"});
+
+    }};
+
+    public static final Map<String, Protocol698Frame.Data_Type> OAD_DATA_TYPE_MAP = new HashMap<String, Protocol698Frame.Data_Type>() {{
+        put("20210200", Protocol698Frame.Data_Type.DATE_TIME_S_TYPE);
+        put("20230200", Protocol698Frame.Data_Type.DOUBLE_LONG_UNSIGNED_TYPE);
+        put("00100200", Protocol698Frame.Data_Type.DOUBLE_LONG_UNSIGNED_TYPE);
+        put("00100201", Protocol698Frame.Data_Type.DOUBLE_LONG_UNSIGNED_TYPE);
+        put("00200200", Protocol698Frame.Data_Type.DOUBLE_LONG_UNSIGNED_TYPE);
+        put("00200201", Protocol698Frame.Data_Type.DOUBLE_LONG_UNSIGNED_TYPE);
+        put("202A0200", Protocol698Frame.Data_Type.TSA_TYPE);
+        put("40010200", Protocol698Frame.Data_Type.OCTET_STRING_TYPE);
+        put("60400200", Protocol698Frame.Data_Type.DATE_TIME_S_TYPE);
+        put("60410200", Protocol698Frame.Data_Type.DATE_TIME_S_TYPE);
+        put("60420200", Protocol698Frame.Data_Type.DATE_TIME_S_TYPE);
+
+        put("20000200", Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE);
+        put("20010200", Protocol698Frame.Data_Type.DOUBLE_LONG_TYPE);
+        put("20040200", Protocol698Frame.Data_Type.DOUBLE_LONG_TYPE);
+        put("20050200", Protocol698Frame.Data_Type.DOUBLE_LONG_TYPE);
+        put("200A0200", Protocol698Frame.Data_Type.LONG_TYPE);
+
+    }};
+
+    public static final Map<String, String> OAD_DATA_UNIT_MAP = new HashMap<String, String>() {{
+        put("00100200", "kWh");
+        put("00100201", "kWh");
+        put("00200200", "kWh");
+        put("00200201", "kWh");
+
+        put("20000200", "V");
+        put("20010200", "A");
+        put("20040200", "W");
+        put("20050200", "var");
+    }};
+
+    public static final Map<String, Integer> OAD_DATA_SCALE_MAP = new HashMap<String, Integer>() {{
+        put("00100200", -2);
+        put("00100201", -2);
+        put("00200200", -2);
+        put("00200201", -2);
+
+        put("20000200", -1);
+        put("20010200", -3);
+        put("20040200", -1);
+        put("20050200", -1);
+    }};
 }
