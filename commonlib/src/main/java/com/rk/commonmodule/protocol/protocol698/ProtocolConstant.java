@@ -288,6 +288,10 @@ public class ProtocolConstant {
         put("20000200", new String[]{"A相", "B相", "C相"});
         put("20010200", new String[]{"A相", "B相", "C相"});
 
+        put("20040200", new String[]{"总", "A相", "B相", "C相"});
+        put("20050200", new String[]{"总", "A相", "B相", "C相"});
+        put("200A0200", new String[]{"总", "A相", "B相", "C相"});
+
     }};
 
     public static final Map<String, Protocol698Frame.Data_Type> OAD_DATA_TYPE_MAP = new HashMap<String, Protocol698Frame.Data_Type>() {{
@@ -333,5 +337,6 @@ public class ProtocolConstant {
         put("20010200", -3);
         put("20040200", -1);
         put("20050200", -1);
+        put("200A0200", -3);
     }};
 }
