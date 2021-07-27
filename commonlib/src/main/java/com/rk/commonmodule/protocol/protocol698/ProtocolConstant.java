@@ -256,6 +256,7 @@ public class ProtocolConstant {
 
     }};
 
+    /******************************* OAD Defind Begin *******************************/
     public static final Map<String, String> OAD_MAP = new HashMap<String, String>() {{
         put("20210200", "冻结时标");
         put("45100200", "以太网通信模块1");
@@ -339,4 +340,5 @@ public class ProtocolConstant {
         put("20050200", -1);
         put("200A0200", -3);
     }};
+    /******************************* OAD Defind End *******************************/
 }
