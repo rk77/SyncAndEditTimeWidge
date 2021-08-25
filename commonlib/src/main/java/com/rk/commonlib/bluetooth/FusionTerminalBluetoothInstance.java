@@ -49,9 +49,9 @@ public class FusionTerminalBluetoothInstance implements IBluethoothInstance{
     public final static String ACTION_GATT_DESCRIPTOR_WRITE = "com.rk.commonlib.bluetooth.FusionTerminalBluetoothInstance.ACTION_GATT_DESCRIPTOR_WRITE";
     public final static String ACTION_GATT_MTU_WRITE = "com.rk.commonlib.bluetooth.FusionTerminalBluetoothInstance.ACTION_GATT_MTU_WRITE";
 
-    private final static String SERVICE_COMMUNICATION_UUID = "6e400001-b5a3-f393-e0a9-e50e24dc4179";
-    private final static String CHARACTERISTIC_WRITE_UUID = "6e400002-b5a3-f393-e0a9-e50e24dc4179";
-    private final static String CHARACTERISTIC_NOTIFY_UUID = "6e400003-b5a3-f393-e0a9-e50e24dc4179";
+    private final static String SERVICE_COMMUNICATION_UUID = "0000ff00-0000-1000-8000-00805f9b34fb";
+    private final static String CHARACTERISTIC_WRITE_UUID = "0000ff02-0000-1000-8000-00805f9b34fb";
+    private final static String CHARACTERISTIC_NOTIFY_UUID = "0000ff01-0000-1000-8000-00805f9b34fb";
     private final static String DESCRIPTOR_CCCD_UUID = "00002902-0000-1000-8000-00805f9b34fb";
     private BluetoothGattService mCommunicationService;
     private BluetoothGattCharacteristic mWriteCharacteristic;
@@ -353,8 +353,9 @@ public class FusionTerminalBluetoothInstance implements IBluethoothInstance{
     }
 
     public List<BluetoothGattService> getSupportedGattServices() {
-        if (mBluetoothGatt == null)
+        if (mBluetoothGatt == null) {
             return null;
+        }
         return mBluetoothGatt.getServices();
     }
 
@@ -596,6 +597,7 @@ public class FusionTerminalBluetoothInstance implements IBluethoothInstance{
 
 
     /** Interface implements **/
+    @Override
     public boolean startScan(Activity activity, boolean isBle, BluetoothAdapter.LeScanCallback leScanCallback) {
         if (isBle) {
             return scanLeDevice(true, activity, leScanCallback);
@@ -604,6 +606,7 @@ public class FusionTerminalBluetoothInstance implements IBluethoothInstance{
         }
     }
 
+    @Override
     public boolean stopScan(Activity activity, boolean isBle) {
         if (isBle) {
             return scanLeDevice(false, activity, null);
@@ -612,6 +615,7 @@ public class FusionTerminalBluetoothInstance implements IBluethoothInstance{
         }
     }
 
+    @Override
     public boolean connect(final String address) {
         if (mBluetoothAdapter == null || address == null) {
             Log.w(TAG, "connect, BluetoothAdapter not initialized or unspecified address.");
@@ -650,6 +654,7 @@ public class FusionTerminalBluetoothInstance implements IBluethoothInstance{
         return true;
     }
 
+    @Override
     public synchronized byte[] sendAndReceiveSync(byte[] frame) {
         Log.i(TAG, "sendAndReceiveSync, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
         if (frame == null) {
@@ -704,6 +709,7 @@ public class FusionTerminalBluetoothInstance implements IBluethoothInstance{
     }
 
 
+    @Override
     public void disconnect() {
         Log.i(TAG, "disconnect");
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
@@ -713,6 +719,7 @@ public class FusionTerminalBluetoothInstance implements IBluethoothInstance{
         mBluetoothGatt.disconnect();
     }
 
+    @Override
     public void close() {
         Log.i(TAG, "close");
         if (mBluetoothGatt == null) {
@@ -727,6 +734,7 @@ public class FusionTerminalBluetoothInstance implements IBluethoothInstance{
         mBluetoothDeviceAddress = null;
     }
 
+    @Override
     public boolean isDeviceConnected(String deviceAddr) {
         if (deviceAddr != null && deviceAddr.equals(mBluetoothDeviceAddress)) {
             return mIsConnected;

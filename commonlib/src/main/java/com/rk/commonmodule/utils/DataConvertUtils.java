@@ -1,5 +1,6 @@
 package com.rk.commonmodule.utils;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.math.BigDecimal;
@@ -241,6 +242,18 @@ public class DataConvertUtils {
         } else {
             return asciiString;
         }
+    }
+
+    public static byte[] assicString2ByteArray(String s) {
+        if (TextUtils.isEmpty(s)) {
+            return null;
+        }
+        int size = s.length();
+        byte[] data = new byte[size];
+        for (int i = 0; i < size; i++) {
+            data[i] = (byte) (s.charAt(i));
+        }
+        return data;
     }
 
     public static boolean isNumberString(String s) {
