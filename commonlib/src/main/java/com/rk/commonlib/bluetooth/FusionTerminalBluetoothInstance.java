@@ -798,6 +798,7 @@ public class FusionTerminalBluetoothInstance implements IBluethoothInstance{
 
     @Override
     public boolean isDeviceConnected(String deviceAddr) {
+        LogUtils.i("ble address: " + deviceAddr + ", connect: " + mIsConnected);
         if (deviceAddr != null && deviceAddr.equals(mBluetoothDeviceAddress)) {
             return mIsConnected;
         }

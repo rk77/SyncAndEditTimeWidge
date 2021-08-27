@@ -63,13 +63,13 @@ public class TtuBlutoothRawDataFactory {
                 return btConnectSetRawData;
             case BL_CONNECT_RESPOND:
                 BtConnectRespondRawData btConnectRespondRawData = new BtConnectRespondRawData();
+                btConnectRespondRawData.parse(data, 0);
                 return btConnectRespondRawData;
             default:
                 return null;
         }
-
     }
-    public class SegConfirmRawData implements ITtuBluetoothRawData {
+    public static class SegConfirmRawData implements ITtuBluetoothRawData {
 
         @Override
         public void parse(byte[] frame, int begin) {
@@ -91,7 +91,7 @@ public class TtuBlutoothRawDataFactory {
         }
     }
 
-    public class MqttRequestRawData implements ITtuBluetoothRawData {
+    public static class MqttRequestRawData implements ITtuBluetoothRawData {
 
         public byte[] topic;
         public byte[] payload;
@@ -160,7 +160,7 @@ public class TtuBlutoothRawDataFactory {
         }
     }
 
-    public class MqttRespondRawData implements ITtuBluetoothRawData {
+    public static class MqttRespondRawData implements ITtuBluetoothRawData {
 
         public byte[] topic;
         public byte[] payload;
@@ -229,7 +229,7 @@ public class TtuBlutoothRawDataFactory {
         }
     }
 
-    public class ShellRequestRawData implements ITtuBluetoothRawData {
+    public static class ShellRequestRawData implements ITtuBluetoothRawData {
 
         public String shellCmd;
         public byte[] data;
@@ -272,7 +272,7 @@ public class TtuBlutoothRawDataFactory {
         }
     }
 
-    public class ShellRespondRawData implements ITtuBluetoothRawData {
+    public static class ShellRespondRawData implements ITtuBluetoothRawData {
 
         public String shellCmd;
         public byte[] data;
@@ -315,7 +315,7 @@ public class TtuBlutoothRawDataFactory {
         }
     }
 
-    public class FileWriteRequestRawData implements ITtuBluetoothRawData {
+    public static class FileWriteRequestRawData implements ITtuBluetoothRawData {
 
         public String filePath;
         public byte[] content;
@@ -390,7 +390,7 @@ public class TtuBlutoothRawDataFactory {
         }
     }
 
-    public class FileWriteRespondRawData implements ITtuBluetoothRawData {
+    public static class FileWriteRespondRawData implements ITtuBluetoothRawData {
 
         public FileWriteRespondRawData() {
 
@@ -416,7 +416,7 @@ public class TtuBlutoothRawDataFactory {
         }
     }
 
-    public class FileReadRequestRawData implements ITtuBluetoothRawData {
+    public static class FileReadRequestRawData implements ITtuBluetoothRawData {
 
         public String filePath;
         public byte[] data;
@@ -474,7 +474,7 @@ public class TtuBlutoothRawDataFactory {
         }
     }
 
-    public class FileReadRespondRawData implements ITtuBluetoothRawData {
+    public static class FileReadRespondRawData implements ITtuBluetoothRawData {
 
         public byte[] content;
         public byte[] data;
@@ -532,7 +532,7 @@ public class TtuBlutoothRawDataFactory {
         }
     }
 
-    public class BtConnectSetRawData implements ITtuBluetoothRawData {
+    public static class BtConnectSetRawData implements ITtuBluetoothRawData {
 
         public String btName;
         public byte[] data;
@@ -575,14 +575,59 @@ public class TtuBlutoothRawDataFactory {
         }
     }
 
-    public class BtConnectRespondRawData implements ITtuBluetoothRawData {
+    public enum BT_CON_RSPND_TYPE {
+        SUCC(0),
+        SCAN_FAIL(1),
+        CON_FAIL(2),
+        OTHER(3);
+
+        private final int value;
+
+        private BT_CON_RSPND_TYPE(int value) {
+            this.value = value;
+        }
+
+        public static BT_CON_RSPND_TYPE valueOf(int value) {
+            switch (value) {
+                case 0:
+                    return SUCC;
+                case 1:
+                    return SCAN_FAIL;
+                case 2:
+                    return CON_FAIL;
+                case 3:
+                    return OTHER;
+                default:
+                    return null;
+            }
+        }
+    }
+
+    public static class BtConnectRespondRawData implements ITtuBluetoothRawData {
+
+        public BT_CON_RSPND_TYPE respondType;
+
+        public byte[] data;
 
         public BtConnectRespondRawData() {
 
         }
 
+        public BtConnectRespondRawData(BT_CON_RSPND_TYPE type) {
+            this.respondType = type;
+            this.data = new byte[1];
+            this.data[0] = (byte) type.value;
+        }
+
         @Override
         public void parse(byte[] frame, int begin) {
+            try {
+                this.respondType = BT_CON_RSPND_TYPE.valueOf(frame[begin]);
+                this.data = new byte[1];
+                this.data[0] = frame[begin];
+            } catch (Exception e) {
+
+            }
 
         }
 
@@ -592,7 +637,7 @@ public class TtuBlutoothRawDataFactory {
 
         @Override
         public byte[] getData() {
-            return null;
+            return data;
         }
 
         @Override
