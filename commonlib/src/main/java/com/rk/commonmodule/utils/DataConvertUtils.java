@@ -271,4 +271,13 @@ public class DataConvertUtils {
         return false;
     }
 
+    public static String IntToBCDString(int a) {
+        String s =String.valueOf(a);
+        if (s.length() % 2 != 0)
+        {
+            s = "0" + s;
+        }
+        return s;
+    }
+
 }
