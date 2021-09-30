@@ -894,6 +894,42 @@ public class Ltu645ProtocolHelper {
         return null;
     }
 
+    public static String parseDisplaceUnitEventAcceleratedSpeedFrame(byte[] frame) {
+        if (frame == null) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+        LogUtils.i("data: " + DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, false));
+
+        if (protocol645Frame != null && protocol645Frame.mData != null && protocol645Frame.mData.length == 0x10 && protocol645Frame.mCtrlCode == (byte) 0x91) {
+            sb.append(ParseXXXX_XXXX(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 4, 7))).append("g");
+            sb.append("|");
+            sb.append(ParseXXXX_XXXX(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 8, 11))).append("g");
+            sb.append("|");
+            sb.append(ParseXXXX_XXXX(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 12, 15))).append("g");
+            sb.append("|");
+            sb.append(ParseXXXX_XXXX(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 16, 19))).append("g");
+            sb.append("|");
+            sb.append(ParseXXXX_XXXX(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 20, 23))).append("g");
+            sb.append("|");
+            sb.append(ParseXXXX_XXXX(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 24, 27))).append("g");
+            LogUtils.i("speeds: " + sb.toString());
+            return sb.toString();
+        }
+        return null;
+    }
+
+    public static byte[] makeDisplaceUnitEventAcceleratedSpeedFrame(String addr) {
+        LogUtils.i("addr: " + addr);
+        if (TextUtils.isEmpty(addr)) {
+            return null;
+        }
+        String data = "00012712";
+        byte ctrlCode = 0x11;
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, data);
+    }
+
     // reversed parse
     public static String ParseXXXX_XXXX(byte[] data) {
         if (data == null || data.length < 4) {
