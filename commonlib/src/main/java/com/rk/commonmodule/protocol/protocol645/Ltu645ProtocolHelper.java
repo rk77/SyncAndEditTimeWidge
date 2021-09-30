@@ -864,6 +864,36 @@ public class Ltu645ProtocolHelper {
         return null;
     }
 
+    public static byte[] makeDisplaceUnitGPSFrame(String addr) {
+        LogUtils.i("addr: " + addr);
+        if (TextUtils.isEmpty(addr)) {
+            return null;
+        }
+        String data = "0F040004";
+        byte ctrlCode = 0x11;
+        return Protocol645FrameBaseMaker.getInstance().makeFrame(addr, ctrlCode, data);
+    }
+
+    public static String parseDisplaceUnitGPSFrame(byte[] frame) {
+        if (frame == null) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
+        LogUtils.i("data: " + DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, false));
+
+        if (protocol645Frame != null && protocol645Frame.mData != null && protocol645Frame.mData.length == 0x0F && protocol645Frame.mCtrlCode == (byte) 0x91) {
+            sb.append(ParseXXXX_XXXX(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 4, 7))).append("度");
+            sb.append("|");
+            sb.append(ParseXXXX_XXXX(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 8, 11))).append("度");
+            sb.append("|");
+            sb.append(ParseXXXX_XX(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 12, 14))).append("米");
+            LogUtils.i("gps: " + sb.toString());
+            return sb.toString();
+        }
+        return null;
+    }
+
     // reversed parse
     public static String ParseXXXX_XXXX(byte[] data) {
         if (data == null || data.length < 4) {
@@ -871,14 +901,31 @@ public class Ltu645ProtocolHelper {
         }
 
         StringBuilder sb = new StringBuilder();
-        if (((byte)(data[0] & 0x80)) != 0x00) {
+        if (((byte)(data[3] & 0x80)) != 0x00) {
             sb.append("-");
         }
-        sb.append(DataConvertUtils.convertByteToString(data[3]));
+        sb.append(DataConvertUtils.convertByteToString((byte) (data[3] & 0x7F)));
         sb.append(DataConvertUtils.convertByteToString(data[2]));
         sb.append(".");
         sb.append(DataConvertUtils.convertByteToString(data[1]));
-        sb.append(DataConvertUtils.convertByteToString((byte) (data[0] & 0x7F)));
+        sb.append(DataConvertUtils.convertByteToString(data[0]));
+        return sb.toString();
+    }
+
+    // reversed parse
+    public static String ParseXXXX_XX(byte[] data) {
+        if (data == null || data.length < 3) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        if (((byte)(data[2] & 0x80)) != 0x00) {
+            sb.append("-");
+        }
+        sb.append(DataConvertUtils.convertByteToString((byte) (data[2] & 0x7F)));
+        sb.append(DataConvertUtils.convertByteToString(data[1]));
+        sb.append(".");
+        sb.append(DataConvertUtils.convertByteToString(data[0]));
         return sb.toString();
     }
 
