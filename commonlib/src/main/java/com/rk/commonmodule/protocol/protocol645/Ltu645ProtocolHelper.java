@@ -894,7 +894,7 @@ public class Ltu645ProtocolHelper {
         return null;
     }
 
-    public static String parseDisplaceUnitEventAcceleratedSpeedFrame(byte[] frame) {
+    public static String parseDisplaceUnitShakeEvent(byte[] frame) {
         if (frame == null) {
             return null;
         }
@@ -902,7 +902,7 @@ public class Ltu645ProtocolHelper {
         Protocol645Frame protocol645Frame = Protocol645FrameBaseParser.getInstance().parse(frame);
         LogUtils.i("data: " + DataConvertUtils.convertByteArrayToString(protocol645Frame.mData, false));
 
-        if (protocol645Frame != null && protocol645Frame.mData != null && protocol645Frame.mData.length == 0x10 && protocol645Frame.mCtrlCode == (byte) 0x91) {
+        if (protocol645Frame != null && protocol645Frame.mData != null && protocol645Frame.mData.length == 28 && protocol645Frame.mCtrlCode == (byte) 0x91) {
             sb.append(ParseXXXX_XXXX(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 4, 7))).append("g");
             sb.append("|");
             sb.append(ParseXXXX_XXXX(DataConvertUtils.getSubByteArray(protocol645Frame.mData, 8, 11))).append("g");
@@ -920,7 +920,7 @@ public class Ltu645ProtocolHelper {
         return null;
     }
 
-    public static byte[] makeDisplaceUnitEventAcceleratedSpeedFrame(String addr) {
+    public static byte[] makeDisplaceUnitShakeEventFrame(String addr) {
         LogUtils.i("addr: " + addr);
         if (TextUtils.isEmpty(addr)) {
             return null;
