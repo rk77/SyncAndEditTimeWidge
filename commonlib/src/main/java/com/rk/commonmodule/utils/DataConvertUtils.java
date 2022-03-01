@@ -13,6 +13,30 @@ import java.util.ArrayList;
 public class DataConvertUtils {
     private static final String TAG = DataConvertUtils.class.getSimpleName();
 
+    public static final String alignFrontZeroString(String a, int size) {
+        if (size <= 0) {
+            return "";
+        }
+        if (!TextUtils.isEmpty(a)) {
+            if (a.length() >= size) {
+                return a.substring(a.length() - size);
+            } else {
+                StringBuilder sb = new StringBuilder(a);
+                for (int i = 0; i < size - a.length(); i++) {
+                    sb.insert(0, "0");
+                }
+                return sb.toString();
+            }
+
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < size; i++) {
+                sb.append("0");
+            }
+            return sb.toString();
+        }
+    }
+
     public static final String convertByteToString(byte data) {
         String item = Integer.toHexString(data & 0xFF);
         if (item == null || item.trim().equals("")) {

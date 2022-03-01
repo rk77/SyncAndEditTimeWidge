@@ -4,6 +4,7 @@ import org.litepal.annotation.Column;
 import org.litepal.crud.LitePalSupport;
 
 public class AreaInfo extends LitePalSupport {
+    private int id;
     private String terminalAddr;
     private String mountPosition;
 
@@ -21,5 +22,13 @@ public class AreaInfo extends LitePalSupport {
 
     public void setMountPosition(String mountPosition) {
         this.mountPosition = mountPosition;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 }
