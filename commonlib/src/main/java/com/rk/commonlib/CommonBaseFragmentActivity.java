@@ -79,8 +79,8 @@ public abstract class CommonBaseFragmentActivity extends FragmentActivity {
         mHandlerThread.start();
         mNonUiHandler = new NonUiHandler(mHandlerThread.getLooper());
         registerReceiver(mBroadcastReceiver, makeGattUpdateIntentFilter());
-        handleIntent();
         initView();
+        handleIntent();
         initEvent();
     }
 

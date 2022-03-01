@@ -21,6 +21,7 @@
         android:textColor="@color/gray"
         android:textSize="22dp"
         android:layout_marginLeft="8dp"
+        android:layout_marginRight="1dp"
         android:maxLines="1"
         android:ellipsize="end"
         />

@@ -33,6 +33,8 @@
     -->
     <list>
         <mapping class="com.rk.module.ArchiveManageRow" />
+        <mapping class="com.rk.module.AreaInfo"/>
+        <mapping class="com.rk.module.LineToolBoxInfo"/>
     </list>
 
     <!--

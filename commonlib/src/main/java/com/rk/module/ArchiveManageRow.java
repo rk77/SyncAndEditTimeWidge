@@ -23,6 +23,8 @@ public class ArchiveManageRow extends LitePalSupport {
     private int voltageTransRatio;
     private int currentTransRatio;
 
+    private int areaId;
+
     public int getConfigSerialNum() {
         return configSerialNum;
     }
@@ -141,5 +143,13 @@ public class ArchiveManageRow extends LitePalSupport {
 
     public void setCurrentTransRatio(int currentTransRatio) {
         this.currentTransRatio = currentTransRatio;
+    }
+
+    public int getAreaId() {
+        return areaId;
+    }
+
+    public void setAreaId(int areaId) {
+        this.areaId = areaId;
     }
 }
