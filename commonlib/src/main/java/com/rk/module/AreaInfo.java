@@ -3,6 +3,9 @@ package com.rk.module;
 import org.litepal.annotation.Column;
 import org.litepal.crud.LitePalSupport;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class AreaInfo extends LitePalSupport {
     private int id;
     private String terminalAddr;

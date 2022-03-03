@@ -2,6 +2,9 @@ package com.rk.module;
 
 import org.litepal.crud.LitePalSupport;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class LineToolBoxInfo extends LitePalSupport {
     private int id;
     private String address;
