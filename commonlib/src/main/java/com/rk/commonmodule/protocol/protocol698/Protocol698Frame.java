@@ -689,6 +689,13 @@ public class Protocol698Frame {
         public Data toData() {
             return new Data(Data_Type.TI_TYPE, this);
         }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(delayTime).append(unit.valueName);
+            return sb.toString();
+        }
     }
 
     public static class RSD {
@@ -1020,6 +1027,20 @@ public class Protocol698Frame {
                 this.data = DataConvertUtils.getSubByteArray(data, begin, begin + this.data.length - 1);
             }
         }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(oad.toString()).append(":[");
+            for (int i = 0; i < oadArrayList.size(); i++) {
+                sb.append(oadArrayList.get(i).toString());
+                if (i < oadArrayList.size() - 1) {
+                    sb.append(",");
+                }
+            }
+            sb.append("]");
+            return sb.toString();
+        }
     }
 
     public static class CSD {
@@ -1093,6 +1114,17 @@ public class Protocol698Frame {
                         break;
                 }
             }
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            if (type == 0 && object instanceof OAD) {
+                sb.append(((OAD)object).toString());
+            } else if (type == 0 && object instanceof ROAD) {
+                sb.append(((ROAD)object).toString());
+            }
+            return sb.toString();
         }
     }
 
@@ -1174,6 +1206,18 @@ public class Protocol698Frame {
             }
             return length_nextPos;
 
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < csdArrayList.size(); i++) {
+                sb.append(csdArrayList.get(i));
+                if (i < csdArrayList.size() - 1) {
+                    sb.append(",");
+                }
+            }
+            return sb.toString();
         }
     }
 
@@ -2015,6 +2059,128 @@ public class Protocol698Frame {
                 }
             }
         }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            switch (type) {
+                case NULL_TYPE:
+                    sb.append("NULL");
+                    break;
+                case DOUBLE_LONG_UNSIGNED_TYPE:
+                    sb.append(obj.toString());
+                    break;
+                case DATE_TIME_S_TYPE:
+                    if (obj instanceof DateTimeS) {
+                        sb.append(((DateTimeS)obj).toString());
+                    }
+                    break;
+                case ARRAY_TYPE:
+                    if (obj != null && obj instanceof ArrayList) {
+                        sb.append("{");
+                        ArrayList<Data> array = (ArrayList<Data>) obj;
+                        if (array != null) {
+                            for (int i = 0; i < array.size(); i++) {
+                                sb.append(array.get(i).toString());
+                                if (i < array.size() - 1) {
+                                    sb.append(",");
+                                }
+                            }
+                        }
+                        sb.append("}");
+                    } else {
+                        sb.append("{").append("}");
+                    }
+                    break;
+                case DOUBLE_LONG_TYPE:
+                    if (obj instanceof Integer) {
+                        sb.append((obj).toString());
+                    }
+                    break;
+                case LONG_UNSIGNED_TYPE:
+                    if (obj instanceof Integer) {
+                        sb.append((obj).toString());
+                    }
+                    break;
+                case VISIBLE_STRING_TYPE:
+                    if (obj != null && obj instanceof String) {
+                        sb.append(obj);
+                    }
+                    break;
+                case STRUCTURE_TYPE:
+                    if (obj != null && obj instanceof ArrayList) {
+                        sb.append("{");
+                        ArrayList<Data> array = (ArrayList<Data>) obj;
+                        if (array != null) {
+                            for (int i = 0; i < array.size(); i++) {
+                                sb.append(array.get(i).toString());
+                                if (i < array.size() - 1) {
+                                    sb.append(",");
+                                }
+                            }
+                        }
+                        sb.append("}");
+                    } else {
+                        sb.append("{").append("}");
+                    }
+                    break;
+                case ENUM_TYPE:
+                    if (obj instanceof Byte) {
+                        sb.append(obj.toString());
+                    }
+                    break;
+                case BIT_STRING_TYPE:
+                    if (obj instanceof String) {
+                        sb.append(obj);
+                    }
+                    break;
+                case OCTET_STRING_TYPE:
+                    if (obj != null && obj instanceof byte[]) {
+                        byte[] d = (byte[])obj;
+                        sb.append(DataConvertUtils.convertByteArrayToString(d, false));
+
+                    }
+                    break;
+                case UNSIGNED_TYPE:
+                    if (obj instanceof Byte) {
+                        sb.append(obj.toString());
+                    }
+                    break;
+                case TSA_TYPE:
+                    if (obj != null && obj instanceof byte[]) {
+                        byte[] d = (byte[])obj;
+                        sb.append(DataConvertUtils.convertByteArrayToString(d, 1, d.length - 1, true));
+                    }
+                    break;
+                case OAD_TYPE:
+                    if (obj != null && obj instanceof OAD) {
+                        sb.append(((OAD) obj).toString());
+                    }
+                    break;
+                case COMDCB_TYPE:
+                    if (obj != null && obj instanceof COMDCB) {
+                        COMDCB comdcb = (COMDCB) obj;
+                        sb.append(comdcb.toString());
+                    }
+                    break;
+                case DATE_TYPE:
+                    if (obj != null && obj instanceof Date) {
+                        Date date = (Date) obj;
+                        sb.append(date.toString());
+                    }
+                    break;
+                case LONG_TYPE:
+                    if (obj instanceof Short) {
+                        sb.append(obj.toString());
+                    }
+                case TI_TYPE:
+                    if (obj instanceof TI) {
+                        TI ti = (TI) obj;
+                        sb.append(ti.toString());
+                    }
+            }
+            return sb.toString();
+        }
     }
 
 
@@ -2301,6 +2467,27 @@ public class Protocol698Frame {
             this.endData = endData;
             this.data = new byte[1 + beginData.data.length + endData.data.length];
             System.arraycopy(frame, begin, this.data, 0, this.data.length);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            switch (unit) {
+                case 0:
+                    sb.append("[").append(beginData.toString()).append(", ").append(endData.toString()).append(")");
+                    break;
+                case 1:
+                    sb.append("(").append(beginData.toString()).append(", ").append(endData.toString()).append("]");
+                    break;
+                case 2:
+                    sb.append("[").append(beginData.toString()).append(", ").append(endData.toString()).append("]");
+                    break;
+                case 3:
+                    sb.append("(").append(beginData.toString()).append(", ").append(endData.toString()).append(")");
+                    break;
+            }
+            return sb.toString();
+
         }
     }
 
@@ -2621,6 +2808,41 @@ public class Protocol698Frame {
         @Override
         public String toString() {
             return this.year + "-" + this.month + "-" + this.dayOfMonth + " " + this.dayOfWeek;
+        }
+    }
+
+    public static class TSA {
+        public String addr;
+        public byte[] data;
+        public TSA(String addr) {
+            byte[] addr_data = DataConvertUtils.convertHexStringToByteArray(addr, 12, true);
+            if (addr_data != null) {
+
+                this.addr = addr;
+                this.data = new byte[8];
+                this.data[0] = 0x07;
+                this.data[1] = 0x05;
+                System.arraycopy(addr_data, 0, this.data, 2, 6);
+
+            }
+        }
+
+        public TSA(byte[] frame, int begin) {
+            try {
+                this.data = new byte[8];
+                System.arraycopy(frame, 0, this.data, 0, 8);
+                this.addr = DataConvertUtils.convertByteArrayToString(frame, begin + 2, begin + 2 + 5, true);
+
+            } catch (Exception e) {
+                this.data = null;
+                this.addr = null;
+            }
+
+        }
+
+        @Override
+        public String toString() {
+            return addr;
         }
     }
 }

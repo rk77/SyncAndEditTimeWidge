@@ -94,4 +94,25 @@
         <item>年</item>
     </string-array>
 
+    <string-array name="normal_col_type">
+        <item>采集当前数据</item>
+        <item>采集上第N次</item>
+        <item>按冻结时标采集</item>
+        <item>按时标间隔采集</item>
+        <item>补抄</item>
+    </string-array>
+
+    <string-array name="save_time_tag_type">
+        <item>未定义</item>
+        <item>任务开始时间</item>
+        <item>相对当日0点0分</item>
+        <item>相对上日23点59分</item>
+        <item>相对上日0点0分</item>
+        <item>相对当月1日0点0分</item>
+        <item>数据冻结时标</item>
+        <item>相对上月月末23点59分</item>
+    </string-array>
+
+
+
 </resources>
