@@ -3,6 +3,7 @@ package com.rk.commonmodule.protocol.protocol698;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.rk.commonlib.util.LogUtils;
 import com.rk.commonmodule.protocol.protocol698.Protocol698Frame.A_ResultNormal;
 import com.rk.commonmodule.protocol.protocol698.Protocol698Frame.CSD;
 import com.rk.commonmodule.protocol.protocol698.Protocol698Frame.DateTimeS;
@@ -1695,6 +1696,7 @@ public class Protocol698Frame {
                         this.data[1] = (byte) ((value>>8) | 0xFF);
                         this.data[2] = (byte) (value & 0xFF);
                     }
+                    break;
                 case TI_TYPE:
                     if (obj instanceof TI) {
                         TI ti = (TI) obj;
@@ -1702,6 +1704,23 @@ public class Protocol698Frame {
                         this.data[0] = 84;
                         System.arraycopy(ti.data, 0, this.data, 1, ti.data.length);
                     }
+                    break;
+                case CSD_TYPE:
+                    if (obj instanceof CSD) {
+                        CSD csd = (CSD) obj;
+                        this.data = new byte[1 + csd.data.length];
+                        this.data[0] = 91;
+                        System.arraycopy(csd.data, 0, this.data, 1, csd.data.length);
+                    }
+                    break;
+                case MS_TYPE:
+                    if (obj instanceof MS) {
+                        MS ms = (MS) obj;
+                        this.data = new byte[1 + ms.data.length];
+                        this.data[0] = 92;
+                        System.arraycopy(ms.data, 0, this.data, 1, ms.data.length);
+                    }
+                    break;
             }
         }
 
@@ -1736,6 +1755,7 @@ public class Protocol698Frame {
                                     dataArrayList.add(data);
                                     pos = pos + data.data.length;
                                 }
+                                LogUtils.i("array parse, size: " + size + ", i: " + i);
                                 if (i == size) {
                                     this.obj = dataArrayList;
                                     this.data = new byte[bytes.size()];
@@ -2044,6 +2064,26 @@ public class Protocol698Frame {
                             }
                         }
                         */
+                        break;
+                    case (byte)91:
+                        this.type = Data_Type.CSD_TYPE;
+                        CSD csd = new CSD(frame, begin + 1);
+                        if (csd.data != null && csd.data.length > 0) {
+                            this.obj = csd;
+                            this.data = new byte[1 + csd.data.length];
+                            this.data[0] = (byte)91;
+                            System.arraycopy(frame, begin + 1, this.data, 1, csd.data.length);
+                        }
+                        break;
+                    case (byte)92:
+                        this.type = Data_Type.MS_TYPE;
+                        MS ms = new MS(frame, begin + 1);
+                        if (ms.data != null && ms.data.length > 0) {
+                            this.obj = ms;
+                            this.data = new byte[1 + ms.data.length];
+                            this.data[0] = (byte)92;
+                            System.arraycopy(frame, begin + 1, this.data, 1, ms.data.length);
+                        }
                         break;
                     case (byte)95:
                         this.type = Data_Type.COMDCB_TYPE;
@@ -2511,8 +2551,40 @@ public class Protocol698Frame {
                         this.data[0] = (byte) 1;
                         break;
                     case 2:
+                        if (list != null && list.size() > 0) {
+                            int size = 1 + 1 + list.size();
+                            this.data = new byte[size];
+                            this.data[0] = (byte) 2;
+                            this.data[1] = (byte) list.size();
+                            for (int i = 0; i < list.size(); i++) {
+                                Object item = list.get(i);
+                                if (item instanceof Byte) {
+                                    this.data[2 + i] = (byte)item;
+                                }
+                            }
+                        }
                         break;
                     case 3:
+                        if (list != null && list.size() > 0) {
+                            int size = 1 + 1;
+                            for (int i = 0; i < list.size(); i++) {
+                                Object item = list.get(i);
+                                if (item instanceof TSA && ((TSA) item).data != null) {
+                                    size = size + ((TSA) item).data.length;
+                                }
+                            }
+                            this.data = new byte[size];
+                            this.data[0] = (byte) 3;
+                            this.data[1] = (byte) list.size();
+                            int pos = 2;
+                            for (int i = 0; i < list.size(); i++) {
+                                Object item = list.get(i);
+                                if (item instanceof TSA && ((TSA) item).data != null) {
+                                    System.arraycopy(((TSA) item).data, 0, this.data, pos, ((TSA) item).data.length);
+                                    pos = pos + ((TSA) item).data.length;
+                                }
+                            }
+                        }
                         break;
                     case 4:
                         if (list != null && list.size() > 0) {
@@ -2543,10 +2615,70 @@ public class Protocol698Frame {
                         }
                         break;
                     case 5:
+                        if (list != null && list.size() > 0) {
+                            int size = 1 + 1;
+                            for (int i = 0; i < list.size(); i++) {
+                                Object item = list.get(i);
+                                if (item instanceof Regin && ((Regin) item).data != null) {
+                                    size = size + ((Regin) item).data.length;
+                                }
+                            }
+                            this.data = new byte[size];
+                            this.data[0] = (byte) 3;
+                            this.data[1] = (byte) list.size();
+                            int pos = 2;
+                            for (int i = 0; i < list.size(); i++) {
+                                Object item = list.get(i);
+                                if (item instanceof Regin && ((Regin) item).data != null) {
+                                    System.arraycopy(((Regin) item).data, 0, this.data, pos, ((Regin) item).data.length);
+                                    pos = pos + ((Regin) item).data.length;
+                                }
+                            }
+                        }
                         break;
                     case 6:
+                        if (list != null && list.size() > 0) {
+                            int size = 1 + 1;
+                            for (int i = 0; i < list.size(); i++) {
+                                Object item = list.get(i);
+                                if (item instanceof Regin && ((Regin) item).data != null) {
+                                    size = size + ((Regin) item).data.length;
+                                }
+                            }
+                            this.data = new byte[size];
+                            this.data[0] = (byte) 3;
+                            this.data[1] = (byte) list.size();
+                            int pos = 2;
+                            for (int i = 0; i < list.size(); i++) {
+                                Object item = list.get(i);
+                                if (item instanceof Regin && ((Regin) item).data != null) {
+                                    System.arraycopy(((Regin) item).data, 0, this.data, pos, ((Regin) item).data.length);
+                                    pos = pos + ((Regin) item).data.length;
+                                }
+                            }
+                        }
                         break;
                     case 7:
+                        if (list != null && list.size() > 0) {
+                            int size = 1 + 1;
+                            for (int i = 0; i < list.size(); i++) {
+                                Object item = list.get(i);
+                                if (item instanceof Regin && ((Regin) item).data != null) {
+                                    size = size + ((Regin) item).data.length;
+                                }
+                            }
+                            this.data = new byte[size];
+                            this.data[0] = (byte) 3;
+                            this.data[1] = (byte) list.size();
+                            int pos = 2;
+                            for (int i = 0; i < list.size(); i++) {
+                                Object item = list.get(i);
+                                if (item instanceof Regin && ((Regin) item).data != null) {
+                                    System.arraycopy(((Regin) item).data, 0, this.data, pos, ((Regin) item).data.length);
+                                    pos = pos + ((Regin) item).data.length;
+                                }
+                            }
+                        }
                         break;
                 }
             }
@@ -2570,8 +2702,27 @@ public class Protocol698Frame {
                     this.data[0] = (byte) 1;
                     break;
                 case 2:
+                    this.type = 2;
+                    int size = frame[begin + 1];
+                    this.objectArrayList = new ArrayList<>();
+                    for (int i = 0; i < size; i++) {
+                        this.objectArrayList.add(frame[begin + 1 + 1 + i]);
+                    }
+                    this.data = DataConvertUtils.getSubByteArray(frame, begin, begin + 1 + size);
                     break;
                 case 3:
+                    this.type = frame[begin];
+                    int cnt = frame[begin + 1];
+                    int pos = begin + 2;
+                    this.objectArrayList = new ArrayList<>();
+                    for (int i = 0; i < cnt; i++) {
+                        TSA item = new TSA(frame, pos);
+                        if (item != null && item.data != null) {
+                            pos = pos + item.data.length;
+                            this.objectArrayList.add(item);
+                        }
+                    }
+                    this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
                     break;
                 case 4:
                     ArrayList<Byte> bytes = new ArrayList<>();
@@ -2581,7 +2732,7 @@ public class Protocol698Frame {
                     if (begin + 1 > frame.length - 1) {
                         return;
                     }
-                    int cnt = frame[begin + 1] & 0xFF;
+                    cnt = frame[begin + 1] & 0xFF;
                     bytes.add((byte) cnt);
                     if (begin + 1 + cnt * 2 > frame.length - 1) {
                         return;
@@ -2603,14 +2754,146 @@ public class Protocol698Frame {
                     }
                     break;
                 case 5:
+                    this.type = frame[begin];
+                    cnt = frame[begin + 1];
+                    pos = begin + 2;
+                    this.objectArrayList = new ArrayList<>();
+                    for (int i = 0; i < cnt; i++) {
+                        Regin item = new Regin(frame, pos);
+                        if (item != null && item.data != null) {
+                            pos = pos + item.data.length;
+                            this.objectArrayList.add(item);
+                        }
+                    }
+                    this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
                     break;
                 case 6:
+                    this.type = frame[begin];
+                    cnt = frame[begin + 1];
+                    pos = begin + 2;
+                    this.objectArrayList = new ArrayList<>();
+                    for (int i = 0; i < cnt; i++) {
+                        Regin item = new Regin(frame, pos);
+                        if (item != null && item.data != null) {
+                            pos = pos + item.data.length;
+                            this.objectArrayList.add(item);
+                        }
+                    }
+                    this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
                     break;
                 case 7:
+                    this.type = frame[begin];
+                    cnt = frame[begin + 1];
+                    pos = begin + 2;
+                    this.objectArrayList = new ArrayList<>();
+                    for (int i = 0; i < cnt; i++) {
+                        Regin item = new Regin(frame, pos);
+                        if (item != null && item.data != null) {
+                            pos = pos + item.data.length;
+                            this.objectArrayList.add(item);
+                        }
+                    }
+                    this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
                     break;
             }
 
         }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            switch (this.type) {
+                case 0:
+                    sb.append("无表计");
+                    break;
+                case 1:
+                    sb.append("全部用户地址:");
+                    break;
+                case 2:
+                    sb.append("一组用户类型:");
+                    if (this.objectArrayList == null || this.objectArrayList.size() <= 0) {
+                        break;
+                    }
+                    for (int i = 0; i < this.objectArrayList.size(); i++) {
+                        sb.append(this.objectArrayList.get(i).toString());
+                        if (i < this.objectArrayList.size()) {
+                            sb.append(",");
+                        }
+                    }
+                    break;
+                case 3:
+                    sb.append("一组用户地址:");
+                    if (this.objectArrayList == null || this.objectArrayList.size() <= 0) {
+                        break;
+                    }
+                    for (int i = 0; i < this.objectArrayList.size(); i++) {
+                        sb.append(this.objectArrayList.get(i).toString());
+                        if (i < this.objectArrayList.size()) {
+                            sb.append(",");
+                        }
+                    }
+                    break;
+                case 4:
+                    sb.append("一组配置序号:");
+                    if (this.objectArrayList == null || this.objectArrayList.size() <= 0) {
+                        break;
+                    }
+                    for (int i = 0; i < this.objectArrayList.size(); i++) {
+                        sb.append(this.objectArrayList.get(i).toString());
+                        if (i < this.objectArrayList.size()) {
+                            sb.append(",");
+                        }
+                    }
+                    break;
+                case 5:
+                    sb.append("一组用户类型区间:");
+                    if (this.objectArrayList == null || this.objectArrayList.size() <= 0) {
+                        break;
+                    }
+                    for (int i = 0; i < this.objectArrayList.size(); i++) {
+                        sb.append(this.objectArrayList.get(i).toString());
+                        if (i < this.objectArrayList.size()) {
+                            sb.append(",");
+                        }
+                    }
+                    break;
+                case 6:
+                    sb.append("一组用户地址区间:");
+                    if (this.objectArrayList == null || this.objectArrayList.size() <= 0) {
+                        break;
+                    }
+                    for (int i = 0; i < this.objectArrayList.size(); i++) {
+                        sb.append(this.objectArrayList.get(i).toString());
+                        if (i < this.objectArrayList.size()) {
+                            sb.append(",");
+                        }
+                    }
+                    break;
+                case 7:
+                    sb.append("一组配置序号区间:");
+                    if (this.objectArrayList == null || this.objectArrayList.size() <= 0) {
+                        break;
+                    }
+                    for (int i = 0; i < this.objectArrayList.size(); i++) {
+                        sb.append(this.objectArrayList.get(i).toString());
+                        if (i < this.objectArrayList.size()) {
+                            sb.append(",");
+                        }
+                    }
+                    break;
+            }
+            return sb.toString();
+        }
+    }
+
+    public static class NormalCollectSch {
+        public byte num;
+        public int saveDeep;
+        public byte collType;
+        public Data collContent;
+        public ArrayList<CSD> recordColumes;
+        public MS meters;
+        public byte saveTimeTagChoice;
     }
 
     public static class Check_Info {

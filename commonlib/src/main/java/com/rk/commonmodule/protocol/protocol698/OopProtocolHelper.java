@@ -2812,6 +2812,29 @@ public class OopProtocolHelper {
         return null;
     }
 
+    public static Protocol698Frame.Data parseGetResponseNormalFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        Log.i(TAG, "parseGetResponseNormalFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
+        if (isOK) {
+            Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+                    Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
+            if (map == null) {
+                Log.i(TAG, "1");
+                return null;
+            }
+            if (map.containsKey(DAR_KEY)) {
+                return null;
+            } else if (map.containsKey("data")) {
+                Protocol698Frame.Data data = (Protocol698Frame.Data) map.get("data");
+                return data;
+            }
+        }
+        return null;
+    }
+
     public static String parseTimeReadFrame(byte[] frame) {
         if (frame == null || frame.length <= 0) {
             return null;
