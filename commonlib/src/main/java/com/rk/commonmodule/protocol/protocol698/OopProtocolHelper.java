@@ -1859,6 +1859,27 @@ public class OopProtocolHelper {
 
     }
 
+    public static byte[] makeGetRequestNextFrame(int end_frame_num) {
+
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+        Map map = new HashMap();
+        map.put("end_frame_num", end_frame_num);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.GET_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.GET_REQUEST.GET_REQUEST_NEXT.CLASS_ID, map);
+        Log.i(TAG, "makeGetRequestNextFrame, ctrlArea: " + DataConvertUtils.convertByteToString(ctrlArea.data));
+        Log.i(TAG, "makeGetRequestNextFrame, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "makeGetRequestNextFrame, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+        Log.i(TAG, "makeGetRequestNextFrame, frame: " + DataConvertUtils.convertByteArrayToString(frame, false));
+        return frame;
+    }
+
     public final static String CONFIG_SERIAL_NUM_KEY = "CONFIG_SERIAL_NUM";
     public final static String COMMU_ADDRESS_KEY = "COMMU_ADDRESS";
     public final static String USER_TYPE_KEY = "USER_TYPE";
@@ -2833,6 +2854,42 @@ public class OopProtocolHelper {
             }
         }
         return null;
+    }
+
+    public static Map parseGetResponseNextFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        Log.i(TAG, "GetResponseNext, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
+        if (isOK) {
+            Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+                    Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
+            if (map == null) {
+                Log.i(TAG, "1");
+                return null;
+            }
+            return map;
+        }
+        return null;
+    }
+
+    public static byte parseGetResponseTypeFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return (byte)0xFF;
+        }
+        boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        Log.i(TAG, "parseGetResponseTypeFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
+        if (isOK) {
+            byte[] apdu = DataConvertUtils.getSubByteArray(frame, Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd);
+            if (apdu[0] == (byte)0x85) {
+                return apdu[1];
+            } else {
+                return (byte)0xFF;
+            }
+
+        }
+        return (byte)0xFF;
     }
 
     public static String parseTimeReadFrame(byte[] frame) {

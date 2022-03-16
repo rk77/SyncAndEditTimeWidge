@@ -66,6 +66,10 @@ public class ProtocolConstant {
             public final static class GET_REQUEST_RECORD {
                 public final static int CLASS_ID = 3;
             }
+
+            public final static class GET_REQUEST_NEXT {
+                public final static int CLASS_ID = 5;
+            }
         }
 
         public final static class SET_REQUEST {
@@ -124,6 +128,12 @@ public class ProtocolConstant {
 
             public final static class GET_RESPONSE_RECORD {
                 public final static int CLASS_ID = 3;
+            }
+            public final static class GET_RESPONSE_RECORD_LIST {
+                public final static int CLASS_ID = 4;
+            }
+            public final static class GET_RESPONSE_NEXT {
+                public final static int CLASS_ID = 5;
             }
         }
 

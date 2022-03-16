@@ -248,6 +248,46 @@ public enum Protocol698 {
                             bytes[i] = byteArray.get(i);
                         }
                         return bytes;
+                    case ProtocolConstant.CLIENT_APDU.GET_REQUEST.GET_REQUEST_NEXT.CLASS_ID:
+                        byteArray.add((byte) ProtocolConstant.CLIENT_APDU.GET_REQUEST.GET_REQUEST_NEXT.CLASS_ID);
+                        if (map != null && map.containsKey(ProtocolConstant.PIID_KEY)) {
+                            Protocol698Frame.PIID piid = (Protocol698Frame.PIID) map.get(ProtocolConstant.PIID_KEY);
+                            if (piid != null) {
+                                byteArray.add(piid.data);
+                            } else {
+                                byteArray.add((byte)0x00); // set default priority and service number
+                            }
+
+                        } else {
+                            byteArray.add((byte)0x00); // set default priority and service number
+                        }
+
+                        if (map != null && map.containsKey("end_frame_num") && map.get("end_frame_num") != null) {
+                            int frameEndNum = (int) map.get("end_frame_num");
+                            byteArray.add((byte)((frameEndNum >> 8) & 0xFF));
+                            byteArray.add((byte)((frameEndNum) & 0xFF));
+                        } else {
+                            return null;
+                        }
+
+                        if (map != null && map.containsKey(ProtocolConstant.TIME_LABLE_KEY)) {
+                            Protocol698Frame.TimeTag timeTag = (Protocol698Frame.TimeTag) map.get(ProtocolConstant.TIME_LABLE_KEY);
+                            if (timeTag != null && timeTag.data != null) {
+                                for (int i = 0; i < timeTag.data.length; i++) {
+                                    byteArray.add(timeTag.data[i]);
+                                }
+                            } else {
+                                byteArray.add((byte) 0x00);
+                            }
+
+                        } else {
+                            byteArray.add((byte)0x00);
+                        }
+                        bytes = new byte[byteArray.size()];
+                        for (int i = 0; i < bytes.length; i++) {
+                            bytes[i] = byteArray.get(i);
+                        }
+                        return bytes;
                 }
                 break;
             case ProtocolConstant.CLIENT_APDU.CONNECT_REQUEST.CLASS_ID:
@@ -897,6 +937,52 @@ public enum Protocol698 {
 
                         } else {
                             return null;
+                        }
+                        break;
+                    case ProtocolConstant.SERVER_APDU.GET_RESPONSE.GET_RESPONSE_NEXT.CLASS_ID:
+                        Log.i(TAG, "GET_RESPONSE_NEXT");
+                        if (apduFrame.length < 7) {
+                            Log.i(TAG, "GET_RESPONSE_NEXT， length null");
+                            return null;
+                        }
+                        int pos = 2;
+                        map.put(ProtocolConstant.PIID_ACD_KEY, new Protocol698Frame.PIID_ACD(apduFrame[pos]));
+                        pos++;
+                        boolean isEndFrame = false;
+                        if (apduFrame[pos] == 0x01) {
+                            isEndFrame = true;
+                        }
+                        map.put("end_frame_flag", isEndFrame);
+                        pos++;
+                        int frameNum = apduFrame[pos] * 256 + apduFrame[pos+1];
+                        map.put("frame_num", frameNum);
+                        pos = pos + 2;
+                        byte choice = apduFrame[pos];
+                        map.put("choice", choice);
+                        pos++;
+                        if (choice == 0x00) {
+                            if (pos < apduFrame.length) {
+                                map.put(DAR_KEY, apduFrame[pos]);
+                            } else {
+                                Log.i(TAG, "GET_RESPONSE_NEXT, pos index out");
+                            }
+                        } else if (choice == 0x01) {
+                            int cnt = apduFrame[pos];
+                            pos++;
+                            ArrayList<Protocol698Frame.A_ResultNormal> resultNormals = new ArrayList<>();
+                            for (int i = 0; i < cnt; i++) {
+                                Protocol698Frame.A_ResultNormal resultNormal = new Protocol698Frame.A_ResultNormal(apduFrame, pos);
+                                if (resultNormal.data != null && resultNormal.data.length > 0) {
+                                    resultNormals.add(resultNormal);
+                                    pos = pos + resultNormal.data.length;
+                                } else {
+                                    break;
+                                }
+                            }
+                            map.put("a_result_normal_list", resultNormals);
+                            return map;
+                        } else if (choice == 0x02) {
+                            Log.i(TAG, "parseApud, A-ResultRecord no implement");
                         }
                         break;
                     default:
