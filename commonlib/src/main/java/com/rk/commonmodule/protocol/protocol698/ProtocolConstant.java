@@ -340,5 +340,32 @@ public class ProtocolConstant {
         put("20050200", -1);
         put("200A0200", -3);
     }};
+
+    public static final Map<String, String> NORMAL_DATA_ITEMS_MAP = new HashMap<String, String>() {{
+        put("00000200", "组合有功电能");
+        put("00100200", "正向有功电能");
+        put("00200200", "反向有功电能");
+        put("00300200", "组合无功1电能");
+
+        put("00400200", "组合无功2电能");
+        put("10100200", "正向有功最大需量");
+        put("10200200", "反向有功最大需量");
+        put("20000200", "电压");
+        put("20010200", "电流");
+
+        put("20040200", "有功功率");
+        put("20050200", "无功功率");
+        put("200A0200", "功率因数");
+    }};
+
+    public static final Map<String, String> FROZEN_DATA_ITEMS_MAP = new HashMap<String, String>() {{
+        put("50020200", "分钟冻结");
+        put("50030200", "小时冻结");
+        put("50040200", "日冻结");
+        put("50060200", "月冻结");
+
+        put("50050200", "结算日冻结");
+    }};
+
     /******************************* OAD Defind End *******************************/
 }

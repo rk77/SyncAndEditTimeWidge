@@ -1122,7 +1122,7 @@ public class Protocol698Frame {
             StringBuilder sb = new StringBuilder();
             if (type == 0 && object instanceof OAD) {
                 sb.append(((OAD)object).toString());
-            } else if (type == 0 && object instanceof ROAD) {
+            } else if (type == 1 && object instanceof ROAD) {
                 sb.append(((ROAD)object).toString());
             }
             return sb.toString();
@@ -1771,6 +1771,7 @@ public class Protocol698Frame {
                                 for (int k = 0; k < bytes.size(); k++) {
                                     this.data[k] = bytes.get(k);
                                 }
+                                this.obj = new ArrayList<>();
                             }
                         }
                         break;
@@ -2213,11 +2214,20 @@ public class Protocol698Frame {
                     if (obj instanceof Short) {
                         sb.append(obj.toString());
                     }
+                    break;
                 case TI_TYPE:
                     if (obj instanceof TI) {
                         TI ti = (TI) obj;
                         sb.append(ti.toString());
                     }
+                    break;
+                case CSD_TYPE:
+                    if (obj instanceof CSD) {
+                        CSD csd = (CSD) obj;
+                        sb.append(csd.toString());
+                    }
+                    break;
+
             }
             return sb.toString();
         }
@@ -2807,7 +2817,7 @@ public class Protocol698Frame {
                     sb.append("无表计");
                     break;
                 case 1:
-                    sb.append("全部用户地址:");
+                    sb.append("全部用户地址");
                     break;
                 case 2:
                     sb.append("一组用户类型:");

@@ -57,4 +57,11 @@
         <item name="android:windowBackground">@color/date_picker_bg</item>
     </style>
 
+    <style name="Spinner" parent="Widget.AppCompat.Light.DropDownItem.Spinner">
+        <item name="android:paddingStart">0dp</item>
+        <item name="android:paddingEnd">0dp</item>
+        <item name="android:textColor">@color/gray</item>
+        <item name="android:textSize">15dp</item>
+    </style>
+
 </resources>
