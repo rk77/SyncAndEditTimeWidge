@@ -23,6 +23,7 @@ import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Typ
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.CSD_TYPE;
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.LONG_TYPE;
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE;
+import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.NULL_TYPE;
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.OCTET_STRING_TYPE;
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.STRUCTURE_TYPE;
 import static com.rk.commonmodule.protocol.protocol698.Protocol698Frame.Data_Type.UNSIGNED_TYPE;
@@ -1910,11 +1911,13 @@ public class OopProtocolHelper {
 
         Protocol698Frame.OAD oad = new Protocol698Frame.OAD(new byte[]{(byte) 0x60, (byte) 0x00, (byte) 0x02, (byte) 0x00});
 
-        Protocol698Frame.OAD selector_oad = new Protocol698Frame.OAD(new byte[]{(byte) 0x60, (byte) 0x01, (byte) 0x02, (byte) 0x00});
+        Protocol698Frame.OAD selector_oad = new Protocol698Frame.OAD(new byte[]{(byte) 0x60, (byte) 0x01, (byte) 0x02, (byte) 0x01});
         Protocol698Frame.Data beginData = new Protocol698Frame.Data(Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE, begin);
         Protocol698Frame.Data endData = new Protocol698Frame.Data(Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE, end);
         Protocol698Frame.Data intervalData = new Protocol698Frame.Data(Protocol698Frame.Data_Type.LONG_UNSIGNED_TYPE, interval);
-        Protocol698Frame.Selector2 selector2 = new Protocol698Frame.Selector2(selector_oad, beginData, endData,intervalData);
+
+        Protocol698Frame.Data nullData = new Protocol698Frame.Data(NULL_TYPE, null);
+        Protocol698Frame.Selector2 selector2 = new Protocol698Frame.Selector2(selector_oad, beginData, endData, nullData);
 
         Protocol698Frame.RSD rsd = new Protocol698Frame.RSD(2, selector2);
 
