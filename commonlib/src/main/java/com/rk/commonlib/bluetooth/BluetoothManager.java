@@ -75,6 +75,8 @@ public class BluetoothManager implements IBluethoothInstance{
             mCurrentBluetoothInstance = LtuIS1871NoEncryptBluetoothInstance.getInstance(sContext);
         } else if (type == 6) {
             mCurrentBluetoothInstance = FusionTerminalBluetoothInstance.getInstance(sContext);
+        } else if (type == 7) {
+            mCurrentBluetoothInstance = LineToolBox8762BluetoothInstance.getInstance(sContext);
         }
     }
 
