@@ -3080,14 +3080,16 @@ public class OopProtocolHelper {
 
     public static byte[] makeGetRequestRecordFrame(String address, Protocol698Frame.OAD oad, Protocol698Frame.RSD rsd, Protocol698Frame.RCSD rcsd) {
         GetRecord getRecord = new GetRecord(oad, rsd, rcsd);
-        byte[] addr = DataConvertUtils.convertHexStringToByteArray(address, address.length(), true);
-        if (addr == null || addr.length <= 0) {
+        byte[] addr = null;
+        if (address != null) {
+            addr = DataConvertUtils.convertHexStringToByteArray(address, address.length(), true);
+        } else {
             addr = new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA};
         }
         Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
         Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.SINGLE, false,
                 0, 6, addr);
-        if (addr == null || addr.length <= 0) {
+        if (address == null || address.length() <= 0) {
             serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
                     0, 6, addr);
         }

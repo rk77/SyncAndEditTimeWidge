@@ -1105,6 +1105,42 @@ public class Protocol698Frame {
             }
         }
 
+        public  ROAD(String oadS, ArrayList<String> oadListS) {
+
+            OAD oad = new OAD(oadS);
+            ArrayList<OAD> oadArrayList = new ArrayList<>();
+            for (int i = 0; i < oadListS.size(); i++) {
+                oadArrayList.add(new OAD(oadListS.get(i)));
+            }
+
+            this.oad = oad;
+            this.oadArrayList = oadArrayList;
+            ArrayList<Byte> bytes = new ArrayList<>();
+            if (oad != null && oad.data != null && oad.data.length > 0) {
+                for (int i = 0; i < oad.data.length; i++) {
+                    bytes.add(oad.data[i]);
+                }
+            }
+
+            if (oadArrayList != null && oadArrayList.size() > 0) {
+                bytes.add((byte)(oadArrayList.size()));
+                for (int i = 0; i < oadArrayList.size(); i++) {
+                    OAD oadItem = oadArrayList.get(i);
+                    if (oadItem != null && oadItem.data != null && oadItem.data.length > 0) {
+                        for (int j = 0; j < oadItem.data.length; j++) {
+                            bytes.add(oadItem.data[j]);
+                        }
+                    }
+                }
+            }
+
+            this.data = new byte[bytes.size()];
+            for (int i = 0; i < data.length; i++) {
+                this.data[i] = bytes.get(i);
+            }
+
+        }
+
         public ROAD(byte[] data, int begin) {
             //this.data = data;
 
