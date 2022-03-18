@@ -15,6 +15,7 @@ import com.rk.commonmodule.utils.DataConvertUtils;
 
 import org.apache.xmlbeans.impl.xb.xmlconfig.Extensionconfig;
 
+import java.nio.channels.Selector;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Calendar;
@@ -585,6 +586,22 @@ public class Protocol698Frame {
             }
         }
 
+        public DateTimeS(byte[] data, int begin) {
+            try {
+                this.year = ((data[begin] << 8) & 0xFF00) | (data[begin + 1] & 0xFF);
+                this.month = data[begin + 2];
+                this.day = data[begin + 3];
+                this.hour = data[begin + 4];
+                this.minute = data[begin + 5];
+                this.second = data[begin + 6];
+                this.data = DataConvertUtils.getSubByteArray(data, begin, begin + 6);
+
+            } catch (Exception err) {
+                LogUtils.i("err: " + err.getMessage());
+                this.data = null;
+            }
+        }
+
         @Override
         public String toString() {
             return (this.year + "-" + postD(this.month) + "-" + postD(this.day) + " " + postD(this.hour) + ":" + postD(this.minute) + ":" + postD(this.second));
@@ -728,6 +745,11 @@ public class Protocol698Frame {
                 case 5:
                     break;
                 case 6:
+                    if (obj != null && obj instanceof Selector6) {
+                        this.data = new byte[1 + ((Selector6) obj).data.length];
+                        this.data[0] = (byte) 6;
+                        System.arraycopy(((Selector6) obj).data, 0, this.data, 1, ((Selector6) obj).data.length);
+                    }
                     break;
                 case 7:
                     break;
@@ -776,6 +798,15 @@ public class Protocol698Frame {
                     case 5:
                         break;
                     case 6:
+                        this.type = 6;
+                        if (begin + 1 <= data.length - 1) {
+                            this.obj = new Selector6(data, begin + 1);
+                            Selector6 selector6 = (Selector6) this.obj;
+                            int size = selector6.data.length + 1;
+                            this.data = new byte[size];
+                            this.data[0] = (byte)6;
+                            System.arraycopy(selector6.data, 0, this.data, 1, selector6.data.length);
+                        }
                         break;
                     case 7:
                         break;
@@ -857,6 +888,70 @@ public class Protocol698Frame {
             this.data = new byte[4 + beginData.data.length + endData.data.length + intervalData.data.length];
             this.data = DataConvertUtils.getSubByteArray(data, begin, begin + this.data.length - 1);
         }
+    }
+
+    public static class Selector6 {
+        public DateTimeS begin;
+        public DateTimeS end;
+        public TI intv;
+        public MS ms;
+
+        public byte[] data;
+
+        public Selector6(DateTimeS b, DateTimeS e, TI intv, MS ms) {
+            try {
+                this.begin = b;
+                this.end = e;
+                this.intv = intv;
+                this.ms = ms;
+                int size = begin.data.length + e.data.length + intv.data.length + ms.data.length;
+
+                this.data = new byte[size];
+                int pos = 0;
+                System.arraycopy(begin.data, 0, this.data, pos, begin.data.length);
+                pos = pos + begin.data.length;
+
+                System.arraycopy(end.data, 0, this.data, pos, end.data.length);
+                pos = pos + end.data.length;
+
+                System.arraycopy(intv.data, 0, this.data, pos, intv.data.length);
+                pos = pos + intv.data.length;
+
+                System.arraycopy(ms.data, 0, this.data, pos, ms.data.length);
+
+            } catch (Exception err) {
+                LogUtils.i("err: " + err.getMessage());
+
+            }
+
+        }
+
+        public Selector6(byte[] frame, int begin) {
+            try {
+                int pos = begin;
+                this.begin = new DateTimeS(frame, pos);
+                pos = pos + this.begin.data.length;
+
+                this.end = new DateTimeS(frame, pos);
+                pos = pos + this.end.data.length;
+
+                this.intv = new TI(frame, pos);
+                pos = pos + this.intv.data.length;
+
+                this.ms = new MS(frame, pos);
+                pos = pos + this.ms.data.length;
+
+                this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
+
+
+            } catch (Exception err) {
+                LogUtils.i("err: " + err.getMessage());
+                this.data = null;
+            }
+
+        }
+
+
     }
 
     public static class Selector9 {
