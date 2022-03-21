@@ -78,6 +78,7 @@
     <string-array name="frozen_type">
         <item>分钟冻结</item>
         <item>日冻结</item>
+        <item>小时冻结</item>
     </string-array>
 
     <string-array name="rsd_type">
