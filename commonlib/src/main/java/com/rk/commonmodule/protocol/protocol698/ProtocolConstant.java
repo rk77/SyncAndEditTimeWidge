@@ -97,6 +97,17 @@ public class ProtocolConstant {
                 public final static int CLASS_ID = 2;
             }
         }
+
+        //代理请求
+        public final static class PROXY_REQUEST {
+            public final static int CLASS_ID = 9;
+
+            public final static class PROXY_TRANS_COMMAND_REQUEST {
+                public final static int CLASS_ID = 7;
+            }
+
+
+        }
     }
 
     public final static class SERVER_APDU {
@@ -159,6 +170,15 @@ public class ProtocolConstant {
             //操作一个对象方法的响应
             public final static class ACTION_RESPONSE_NORMAL {
                 public final static int CLASS_ID = 1;
+            }
+        }
+
+        //代理响应
+        public final static class PROXY_RESPONSE {
+            public final static int CLASS_ID = 137;
+            //操作一个对象方法的响应
+            public final static class PROXY_TRANS_COMMAND_RESPONSE {
+                public final static int CLASS_ID = 7;
             }
         }
     }

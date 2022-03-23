@@ -2810,6 +2810,44 @@ public class OopProtocolHelper {
 
     }
 
+    public static byte[] makeProxyTransCommandRequestFrame(Protocol698Frame.OAD portOad,
+        Protocol698Frame.COMDCB comdcb, int waitFrameTo, int waitByteTo, String cmd) {
+
+        Protocol698Frame.CtrlArea ctrlArea = new Protocol698Frame.CtrlArea(Protocol698Frame.DIR_PRM.CLIENT_REQUEST, false, false, 3);
+        Protocol698Frame.SERV_ADDR serv_addr = new Protocol698Frame.SERV_ADDR(Protocol698Frame.ADDRESS_TYPE.WILDCARD, false,
+                0, 6, new byte[]{(byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA});
+        Protocol698Frame.AddressArea addressArea = new Protocol698Frame.AddressArea(serv_addr, (byte) 0x10);
+
+        Protocol698Frame.PIID piid = new Protocol698Frame.PIID(0, 1);
+        Map map = new HashMap();
+        map.put(ProtocolConstant.OAD_KEY, portOad);
+        map.put(ProtocolConstant.PIID_KEY, piid);
+        map.put("comdcb_key", comdcb);
+        map.put("wait_timeout_key", waitFrameTo);
+        map.put("wait_byte_timeout_key", waitByteTo);
+        map.put("trans_cmd", cmd);
+
+        byte[] apdu = Protocol698.PROTOCOL_698.makeAPDU(ProtocolConstant.CLIENT_APDU.PROXY_REQUEST.CLASS_ID, ProtocolConstant.CLIENT_APDU.PROXY_REQUEST.PROXY_TRANS_COMMAND_REQUEST.CLASS_ID, map);
+        Log.i(TAG, "makeEventReadFrame, addrArea: " + DataConvertUtils.convertByteArrayToString(addressArea.data, false));
+        Log.i(TAG, "makeEventReadFrame, apdu: " + DataConvertUtils.convertByteArrayToString(apdu, false));
+        byte[] frame = Protocol698.PROTOCOL_698.makeFrame(ctrlArea, addressArea, apdu);
+        return frame;
+    }
+
+    public static Map parseProxyTransCommandResponseFrame(byte[] frame) {
+        if (frame == null || frame.length <= 0) {
+            return null;
+        }
+        boolean isOK = Protocol698.PROTOCOL_698.verify698Frame(frame);
+        Log.i(TAG, "parseProxyTransCommandResponseFrame, is OK: " + isOK + ", apdu begin: " + Protocol698.PROTOCOL_698.mApduBegin);
+        if (isOK) {
+            Map map = Protocol698.PROTOCOL_698.parseApud(DataConvertUtils.getSubByteArray(frame,
+                    Protocol698.PROTOCOL_698.mApduBegin, Protocol698.PROTOCOL_698.mApduEnd));
+            return map;
+        }
+        return null;
+    }
+
 
     public static ArrayList<Protocol698Frame.A_RecordRow> parseEventReadFrame(byte[] frame) {
         if (frame == null || frame.length <= 0) {

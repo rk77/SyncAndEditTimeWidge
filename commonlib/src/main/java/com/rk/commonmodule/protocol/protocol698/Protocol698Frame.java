@@ -3235,6 +3235,78 @@ public class Protocol698Frame {
         }
     }
 
+    public static class OctString {
+        public String octString;
+        public byte[] data;
+
+        public OctString(String oct) {
+            this.octString = oct;
+            byte[] oatData = DataConvertUtils.convertHexStringToByteArray(oct, oct.length(), false);
+            if (oatData != null && oatData.length > 0) {
+                try {
+                    int size = oatData.length;
+                    if (size <= 127) {
+                        this.data = new byte[1 + size];
+                        this.data[0] = (byte) size;
+                        for (int i = 0; i < size; i++) {
+                            this.data[1 + i] = oatData[i];
+                        }
+                    } else {
+                        int length_area_length = 1;
+                        int s = size;
+                        while (s / 256 >= 1) {
+                            s = s / 256;
+                            length_area_length++;
+                        }
+                        this.data = new byte[1 + length_area_length + size];
+                        this.data[0] = (byte) ((length_area_length | 0x80) & 0xFF);
+                        int j = length_area_length;
+                        for (int i = 1; i <= 1 + length_area_length - 1; i++) {
+                            this.data[i] = (byte) ((size >> ((j - 1) * 8)) & 0xFF);
+                            j--;
+                        }
+                        System.arraycopy(oatData, 0, this.data, 1 + length_area_length, size);
+                    }
+
+                } catch (Exception e) {
+                    Log.e(TAG, "OCTET_STRING_TYPE, error: " + e.getMessage());
+                }
+            }
+        }
+
+        public OctString(byte[] frame, int begin) {
+            try {
+                if ((frame[begin] & 0x80) == 0x00) {
+                    int size = frame[begin];
+
+                        this.data = new byte[1 + size];
+                        this.data[0] = (byte) size;
+                        byte[] o = new byte[size];
+                        for (int i = 0; i < size; i++) {
+                            data[1 + i] = frame[begin + 1 + i];
+                            o[i] = frame[begin + 1 + i];
+                        }
+                        this.octString = DataConvertUtils.convertByteArrayToString(o, false);
+                } else {
+                    int length_area_length = frame[begin] & 0x7F;
+                    int lenght = frame[begin + 1];
+                    for (int i = begin + 1 + 1; i <= begin + length_area_length; i++) {
+                        lenght = lenght * 256 + frame[i];
+                    }
+                    this.data = new byte[1 + length_area_length + lenght];
+                    byte[] o = new byte[lenght];
+                    System.arraycopy(frame, begin, this.data, 0, this.data.length);
+                    System.arraycopy(frame, begin + length_area_length + 1, o, 0, o.length);
+                    this.octString = DataConvertUtils.convertByteArrayToString(o, false);
+                }
+
+            } catch (Exception err) {
+                this.data = null;
+            }
+
+        }
+    }
+
     public static class TSA {
         public String addr;
         public byte[] data;

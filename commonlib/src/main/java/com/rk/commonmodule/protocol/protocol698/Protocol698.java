@@ -458,6 +458,110 @@ public enum Protocol698 {
                     bytes[i] = byteArray.get(i);
                 }
                 return bytes;
+
+            case ProtocolConstant.CLIENT_APDU.PROXY_REQUEST.CLASS_ID:
+                byteArray.add((byte) ProtocolConstant.CLIENT_APDU.PROXY_REQUEST.CLASS_ID);
+                switch (second_id) {
+                    case ProtocolConstant.CLIENT_APDU.PROXY_REQUEST.PROXY_TRANS_COMMAND_REQUEST.CLASS_ID:
+                        byteArray.add((byte) ProtocolConstant.CLIENT_APDU.PROXY_REQUEST.PROXY_TRANS_COMMAND_REQUEST.CLASS_ID);
+
+                        if (map != null && map.containsKey(ProtocolConstant.PIID_KEY)) {
+                            Protocol698Frame.PIID piid = (Protocol698Frame.PIID) map.get(ProtocolConstant.PIID_KEY);
+                            if (piid != null) {
+                                byteArray.add(piid.data);
+                            } else {
+                                byteArray.add((byte)0x00); // set default priority and service number
+                            }
+
+                        } else {
+                            byteArray.add((byte)0x00); // set default priority and service number
+                        }
+                        //OAD
+                        if (map != null && map.containsKey(OAD_KEY) && map.get(OAD_KEY) != null) {
+                            Protocol698Frame.OAD oad = (Protocol698Frame.OAD) map.get(OAD_KEY);
+                            if (oad != null && oad.data != null) {
+                                for (int i = 0; i < oad.data.length; i++) {
+                                    byteArray.add(oad.data[i]);
+                                }
+                            } else {
+                                return null;
+                            }
+                        } else {
+                            return null;
+                        }
+                        //COMDCB
+                        if (map != null && map.containsKey("comdcb_key") && map.get("comdcb_key") != null) {
+                            Protocol698Frame.COMDCB comdcb = (Protocol698Frame.COMDCB) map.get("comdcb_key");
+                            if (comdcb != null && comdcb.data != null) {
+                                for (int i = 0; i < comdcb.data.length; i++) {
+                                    byteArray.add(comdcb.data[i]);
+                                }
+                            } else {
+                                return null;
+                            }
+                        } else {
+                            return null;
+                        }
+
+                        //timeout
+                        if (map != null && map.containsKey("wait_timeout_key") && map.get("wait_timeout_key") != null) {
+                            int waitTimeout = (int) map.get("wait_timeout_key");
+                            byte h = (byte) ((waitTimeout >> 8) & 0xFF);
+                            byte l = (byte)(waitTimeout & 0xFF);
+                            byteArray.add(h);
+                            byteArray.add(l);
+                        } else {
+                            return null;
+                        }
+                        //timeout
+                        if (map != null && map.containsKey("wait_byte_timeout_key") && map.get("wait_byte_timeout_key") != null) {
+                            int waitTimeout = (int) map.get("wait_byte_timeout_key");
+                            byte h = (byte) ((waitTimeout >> 8) & 0xFF);
+                            byte l = (byte)(waitTimeout & 0xFF);
+                            byteArray.add(h);
+                            byteArray.add(l);
+                        } else {
+                            return null;
+                        }
+
+                        //cmd
+                        if (map != null && map.containsKey("trans_cmd") && map.get("trans_cmd") != null) {
+                            String cmd = (String) map.get("trans_cmd");
+                            byte[] cmd_bytes = DataConvertUtils.convertHexStringToByteArray(cmd, cmd.length(), false);
+                            if (cmd_bytes == null) {
+                                return null;
+                            }
+                            for (int i = 0; i < cmd_bytes.length; i++) {
+                                byteArray.add(cmd_bytes[i]);
+                            }
+                        } else {
+                            return null;
+                        }
+
+                        //TimeTag
+                        if (map != null && map.containsKey(ProtocolConstant.TIME_LABLE_KEY)) {
+                            Protocol698Frame.TimeTag timeTag = (Protocol698Frame.TimeTag) map.get(ProtocolConstant.TIME_LABLE_KEY);
+                            if (timeTag != null && timeTag.data != null) {
+                                for (int i = 0; i < timeTag.data.length; i++) {
+                                    byteArray.add(timeTag.data[i]);
+                                }
+                            } else {
+                                byteArray.add((byte) 0x00);
+                            }
+
+                        } else {
+                            byteArray.add((byte)0x00);
+                        }
+
+                        break;
+                }
+
+                bytes = new byte[byteArray.size()];
+                for (int i = 0; i < bytes.length; i++) {
+                    bytes[i] = byteArray.get(i);
+                }
+                return bytes;
+
         }
         return null;
     }
@@ -1057,6 +1161,32 @@ public enum Protocol698 {
                         return map;
                     default:
                         break;
+                }
+                break;
+            case ProtocolConstant.SERVER_APDU.PROXY_RESPONSE.CLASS_ID:
+                try {
+                    switch (((int) apduFrame[1]) & 0xFF) {
+                        case ProtocolConstant.SERVER_APDU.PROXY_RESPONSE.PROXY_TRANS_COMMAND_RESPONSE.CLASS_ID:
+                            map.put(ProtocolConstant.PIID_ACD_KEY, new Protocol698Frame.PIID_ACD(apduFrame[2]));
+
+                            map.put(OAD_KEY, new Protocol698Frame.OAD(DataConvertUtils.getSubByteArray(apduFrame, 3, 6)));
+                            byte choice = apduFrame[7];
+                            if (choice == 0) {
+                                map.put(DAR_KEY, apduFrame[8]);
+                            } else if (choice == 1) {
+                                Protocol698Frame.OctString octString = new Protocol698Frame.OctString(apduFrame, 8);
+
+                                map.put("ret_cmd", octString.octString);
+
+                            }
+                            return map;
+                        default:
+                            break;
+                    }
+
+                } catch (Exception err) {
+                    Log.e(TAG, "PROXY_RESPONSE, parse err:" + err.getMessage());
+                    return null;
                 }
                 break;
             default:

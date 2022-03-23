@@ -114,6 +114,47 @@
         <item>相对上月月末23点59分</item>
     </string-array>
 
+    <string-array name="comdcb_baudrate">
+        <item>300</item>
+        <item>600</item>
+        <item>1200</item>
+        <item>2400</item>
+        <item>4800</item>
+        <item>7200</item>
+        <item>9600</item>
+        <item>19200</item>
+        <item>38400</item>
+        <item>57600</item>
+        <item>115200</item>
+        <item>230400</item>
+        <item>460800</item>
+        <item>自适应</item>
+    </string-array>
+
+    <string-array name="comdcb_stream_ctrl">
+        <item>无</item>
+        <item>硬件</item>
+        <item>软件</item>
+    </string-array>
+
+    <string-array name="comdcb_chk_bit">
+        <item>无校验</item>
+        <item>奇校验</item>
+        <item>偶校验</item>
+    </string-array>
+
+    <string-array name="comdcb_data_bit">
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+    </string-array>
+
+    <string-array name="comdcb_stop_bit">
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
 
 
 </resources>
