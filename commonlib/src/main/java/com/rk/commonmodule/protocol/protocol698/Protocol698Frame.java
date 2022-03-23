@@ -3131,6 +3131,7 @@ public class Protocol698Frame {
     public enum BaudRate {
         bps_300, bps_600, bps_1200, bps_2400, bps_4800, bps_7200,
         bps_9600, bps_19200, bps_38400, bps_57600, bps_115200,
+        bps_230400, bps_460800,
         self_adaption,
     }
     public enum ChkBit {

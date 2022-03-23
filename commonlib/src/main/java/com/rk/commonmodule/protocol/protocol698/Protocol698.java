@@ -527,7 +527,8 @@ public enum Protocol698 {
                         //cmd
                         if (map != null && map.containsKey("trans_cmd") && map.get("trans_cmd") != null) {
                             String cmd = (String) map.get("trans_cmd");
-                            byte[] cmd_bytes = DataConvertUtils.convertHexStringToByteArray(cmd, cmd.length(), false);
+                            Protocol698Frame.OctString octString = new Protocol698Frame.OctString(cmd);
+                            byte[] cmd_bytes = octString.data;
                             if (cmd_bytes == null) {
                                 return null;
                             }

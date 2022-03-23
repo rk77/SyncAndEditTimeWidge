@@ -75,6 +75,13 @@
         <item>5-OFF</item>
     </string-array>
 
+    <string-array name="port_type">
+        <item>485-1:F2010201</item>
+        <item>485-2:F2010202</item>
+        <item>485-3:F2010203</item>
+        <item>载波:F2090201</item>
+    </string-array>
+
     <string-array name="frozen_type">
         <item>分钟冻结</item>
         <item>日冻结</item>
