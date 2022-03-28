@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:background="@color/white"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <com.zerlings.spinner.SmartSpinner
+        android:id="@+id/spinner"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:paddingStart="10dp"
+        app:menuPaddingEnd="5dp"
+        app:menuPaddingStart="10dp"
+        app:textAlignment="start"
+        app:textSize="16sp"
+        app:entries="@array/languages"
+        app:showSelectedColor="true"
+        app:presetIndex="2"
+        app:menuWidth="fit_horizon"
+        app:menuHeight="75dp"
+        app:arrowPadding="0dp"
+        app:showItemDivider="true"
+        app:menuRadius="4dp"
+        app:menuElevation="8dp"
+        app:menuBackground="@color/white"/>
+
+    <Button
+        android:id="@+id/spinner_reset"
+        android:layout_width="100dp"
+        android:layout_height="40dp"
+        android:text="reset"/>
+
+    <com.zerlings.spinner.SmartSpinnerLayout
+        android:id="@+id/spinner_layout"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        app:menuWidth="match_parent"
+        app:showItemDivider="true"
+        app:dividerHeight="5dp"
+        app:presetIndex="1"
+        app:spinnerBackground="@color/colorPrimaryDark">
+
+        <TextView
+            android:id="@+id/spinner_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:text="PayType"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </com.zerlings.spinner.SmartSpinnerLayout>
+
+    <Button
+        android:id="@+id/spinner_layout_reset"
+        android:layout_width="100dp"
+        android:layout_height="40dp"
+        android:text="reset layout"/>
+
+</LinearLayout>

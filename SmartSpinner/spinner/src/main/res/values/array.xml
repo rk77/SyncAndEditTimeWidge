@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="languages">
+        <item>c++</item>
+        <item>java </item>
+        <item>kotlin</item>
+        <item>go</item>
+        <item>rust</item>
+    </string-array>
+    <string-array name="spinner_default">
+        <item> </item>
+    </string-array>
+</resources>

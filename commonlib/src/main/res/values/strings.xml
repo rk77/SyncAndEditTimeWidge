@@ -162,6 +162,27 @@
         <item>2</item>
     </string-array>
 
+    <string-array name="scheme_type">
+        <item>普通采集方案</item>
+        <item>事件采集方案</item>
+        <item>透明方案</item>
+        <item>上报方案</item>
+        <item>脚本方案</item>
+        <item>转加密方案</item>
+    </string-array>
+
+    <string-array name="task_status_type">
+        <item>正常</item>
+        <item>停用</item>
+    </string-array>
+
+    <string-array name="task_run_time_type">
+        <item>前闭后开</item>
+        <item>前开后闭</item>
+        <item>前闭后闭</item>
+        <item>前开后开</item>
+    </string-array>
+
 
 
 </resources>
