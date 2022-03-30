@@ -1672,7 +1672,16 @@ public class Protocol698Frame {
                                 }
                             }
 
+                        } else {
+                            this.data = new byte[2];
+                            this.data[0] = 2;
+                            this.data[1] = (byte) 0;
+
                         }
+                    } else {
+                        this.data = new byte[2];
+                        this.data[0] = 2;
+                        this.data[1] = (byte) 0;
                     }
                     break;
                 case ENUM_TYPE:
