@@ -17,4 +17,5 @@
     <color name="date_picker_bg">#FFFFFF</color>
     <color name="color_b8d38f">#b8d38f</color>
     <color name="color_ddff95">#ddff95</color>
+    <color name="textInputLayout">#96ffffff</color>
 </resources>
