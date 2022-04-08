@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
 import android.widget.ScrollView;
 
 import com.unnamed.b.atv.R;
@@ -118,6 +119,8 @@ public class AndroidTreeView {
         }
         final LinearLayout viewTreeItems = new LinearLayout(containerContext, null, containerStyle);
 
+        LayoutParams params = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        viewTreeItems.setLayoutParams(params);
         viewTreeItems.setId(R.id.tree_items);
         viewTreeItems.setOrientation(LinearLayout.VERTICAL);
         view.addView(viewTreeItems);
