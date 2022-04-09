@@ -35,6 +35,8 @@
         <mapping class="com.rk.module.ArchiveManageRow" />
         <mapping class="com.rk.module.AreaInfo"/>
         <mapping class="com.rk.module.LineToolBoxInfo"/>
+        <mapping class="com.rk.module.JcMeterInfo"/>
+        <mapping class="com.rk.module.MeterInfoDb"/>
     </list>
 
     <!--

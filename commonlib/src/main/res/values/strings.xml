@@ -183,6 +183,44 @@
         <item>前开后开</item>
     </string-array>
 
+    <string-array name="jc_phrase">
+        <item>A-A相</item>
+        <item>B-B相</item>
+        <item>C-C相</item>
+        <item>Y-三相</item>
+        <item>Z-未知</item>
+    </string-array>
+
+    <string-array name="jc_type">
+        <item>02-LTU</item>
+        <item>05-智能断路器</item>
+        <item>08-智能电表</item>
+    </string-array>
+
+    <string-array name="jc_proto">
+        <item>1-645.97</item>
+        <item>2-交采</item>
+        <item>3-698</item>
+        <item>4-645.07</item>
+    </string-array>
+
+    <string-array name="jc_baudrate">
+        <item>0-300</item>
+        <item>1-600</item>
+        <item>2-1200</item>
+        <item>3-2400</item>
+        <item>4-4800</item>
+        <item>5-7200</item>
+        <item>6-9600</item>
+        <item>7-19200</item>
+    </string-array>
+
+    <string-array name="jc_port">
+        <item>1-交采485</item>
+        <item>2-抄表485</item>
+        <item>31-载波</item>
+    </string-array>
+
 
 
 </resources>
