@@ -5,6 +5,9 @@ public class TestModel extends TreeViewNode {
     public String name;
     public int maginLeft;
     public boolean isSelected;
+    public String id;
+    public TestModel parent;
+    public String code;
 
     @Override
     public String toString() {
