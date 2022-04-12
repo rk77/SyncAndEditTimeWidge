@@ -13,5 +13,7 @@
         android:text="XXXXXXXXX"
         android:textColor="@android:color/black"
         android:textSize="14sp"
-        android:textStyle="italic" />
+        android:textStyle="italic"
+        android:padding="2dp"
+        />
 </FrameLayout>

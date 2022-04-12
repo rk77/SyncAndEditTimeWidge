@@ -2,6 +2,7 @@ package cn.onlyloveyd.lazyorgview.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -104,6 +105,10 @@ public class LazyOrgView extends RecyclerView {
             maxLeaf = 0;
             maxLevel = 0;
             depthCountMap.clear();
+
+            while (getItemDecorationCount() > 0) {
+                removeItemDecorationAt(0);
+            }
 
             this.rootNode = root;
 
