@@ -93,6 +93,12 @@
         <item>选取上第n次</item>
     </string-array>
 
+    <string-array name="loss_query_type">
+        <item>day-日级</item>
+        <item>hour-小时级</item>
+        <item>min-15分钟级</item>
+    </string-array>
+
     <string-array name="unit_type">
         <item>秒</item>
         <item>分</item>
