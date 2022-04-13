@@ -8,6 +8,7 @@ public class TestModel extends TreeViewNode {
     public String id;
     public TestModel parent;
     public String code;
+    public String type;
 
     @Override
     public String toString() {
