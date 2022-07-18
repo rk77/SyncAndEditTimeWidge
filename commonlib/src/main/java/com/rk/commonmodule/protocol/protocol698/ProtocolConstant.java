@@ -7,6 +7,7 @@ public class ProtocolConstant {
     public final static String PIID_KEY = "PIID";
     public final static String PIID_ACD_KEY = "PIID_ACD_KEY";
     public final static String OAD_KEY = "OAD";
+    public final static String OADS_KEY = "OADS";
     public final static String DATA_KEY = "data";
     public final static String OMD_KEY = "OMD";
     public final static String OMD_PARAM_KEY = "omd_param";
@@ -102,6 +103,10 @@ public class ProtocolConstant {
         public final static class PROXY_REQUEST {
             public final static int CLASS_ID = 9;
 
+            public final static class PROXY_GET_REQUEST_LIST {
+                public final static int CLASS_ID = 1;
+            }
+
             public final static class PROXY_TRANS_COMMAND_REQUEST {
                 public final static int CLASS_ID = 7;
             }
@@ -177,6 +182,10 @@ public class ProtocolConstant {
         public final static class PROXY_RESPONSE {
             public final static int CLASS_ID = 137;
             //操作一个对象方法的响应
+            public final static class PROXY_GET_RESPONSE_LIST {
+                public final static int CLASS_ID = 1;
+            }
+
             public final static class PROXY_TRANS_COMMAND_RESPONSE {
                 public final static int CLASS_ID = 7;
             }

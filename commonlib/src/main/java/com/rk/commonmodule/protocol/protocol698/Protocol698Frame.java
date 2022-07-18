@@ -2538,7 +2538,7 @@ public class Protocol698Frame {
                     case 0:
                         this.type = Get_Result_Type.DAR_TYPE;
                         if (begin + 1 <= frame.length - 1) {
-                            this.object = (int) frame[begin + 1];
+                            this.object = ((int) frame[begin + 1]) & 0xFF;
                             data = new byte[2];
                             data[0] = frame[begin];
                             data[1] = frame[begin + 1];
@@ -3349,6 +3349,96 @@ public class Protocol698Frame {
         @Override
         public String toString() {
             return addr;
+        }
+    }
+
+    public static class ProxyGetReqItem {
+        public TSA tsa;
+        public int timeout;
+        public ArrayList<OAD> oads;
+        public byte[] data;
+
+        public ProxyGetReqItem(String addr, int timeout, ArrayList<OAD> oad_list) {
+            this.tsa = new TSA(DataConvertUtils.reverse(addr, 2));
+            this.timeout = timeout;
+            this.oads = oad_list;
+
+            int size = tsa.data.length + 2 + 1 + oad_list.size() * 4;
+
+            this.data = new byte[size];
+
+            int pos = 0;
+            System.arraycopy(tsa.data, 0, data, pos, tsa.data.length);
+            pos = pos + tsa.data.length;
+            this.data[pos] = (byte) ((timeout >> 8) & 0xFF);
+            this.data[pos + 1] = (byte) ((timeout) & 0xFF);
+            pos = pos + 2;
+
+            this.data[pos] = (byte) ((oad_list.size()) & 0xFF);
+            pos = pos + 1;
+            for (int i = 0; i < oad_list.size(); i++) {
+                System.arraycopy(oad_list.get(i).data, 0, this.data, pos, oad_list.get(i).data.length);
+                pos = pos + oad_list.get(i).data.length;
+            }
+
+        }
+
+        public ProxyGetReqItem(byte[] frame, int begin) {
+            try {
+                int pos = begin;
+                this.tsa = new TSA(frame, pos);
+                pos = pos + this.tsa.data.length;
+                this.timeout = (((frame[pos] << 8) & 0xFF00) | (frame[pos + 1] & 0xFF)) & 0xFFFF;
+                pos = pos + 2;
+
+                int size = (frame[pos] & 0xFF);
+                pos = pos + 1;
+                this.oads = new ArrayList<>();
+                for (int i = 0; i < size ; i++) {
+                    OAD oad = new OAD(DataConvertUtils.getSubByteArray(frame, pos, pos + 3));
+                    pos = pos + 4;
+                    oads.add(oad);
+                }
+                pos = pos - 1;
+                this.data = DataConvertUtils.getSubByteArray(frame, begin, pos);
+
+            } catch (Exception e) {
+                Log.e(TAG, "ProxyGetReqItem, e:" + e.getMessage());
+            }
+
+        }
+    }
+
+    public static class ProxyGetRespondItem {
+        public TSA tsa;
+        public ArrayList<A_ResultNormal> a_resultNormals;
+        public byte[] data;
+
+        public ProxyGetRespondItem(String addr, ArrayList<A_ResultNormal> resultNormals) {
+
+        }
+
+        public ProxyGetRespondItem(byte[] frame, int begin) {
+            try {
+                int pos = begin;
+                this.tsa = new TSA(frame, pos);
+                pos = pos + this.tsa.data.length;
+
+                int size = (frame[pos] & 0xFF);
+                pos = pos + 1;
+                this.a_resultNormals = new ArrayList<>();
+                for (int i = 0; i < size ; i++) {
+                    A_ResultNormal item = new A_ResultNormal(frame, pos);
+                    pos = pos + item.data.length;
+                    a_resultNormals.add(item);
+                }
+                pos = pos - 1;
+                this.data = DataConvertUtils.getSubByteArray(frame, begin, pos);
+
+            } catch (Exception e) {
+                Log.e(TAG, "ProxyGetRespondItem, e:" + e.getMessage());
+            }
+
         }
     }
 }

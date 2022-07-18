@@ -462,6 +462,63 @@ public enum Protocol698 {
             case ProtocolConstant.CLIENT_APDU.PROXY_REQUEST.CLASS_ID:
                 byteArray.add((byte) ProtocolConstant.CLIENT_APDU.PROXY_REQUEST.CLASS_ID);
                 switch (second_id) {
+                    case ProtocolConstant.CLIENT_APDU.PROXY_REQUEST.PROXY_GET_REQUEST_LIST.CLASS_ID:
+                        byteArray.add((byte) ProtocolConstant.CLIENT_APDU.PROXY_REQUEST.PROXY_GET_REQUEST_LIST.CLASS_ID);
+
+                        if (map != null && map.containsKey(ProtocolConstant.PIID_KEY)) {
+                            Protocol698Frame.PIID piid = (Protocol698Frame.PIID) map.get(ProtocolConstant.PIID_KEY);
+                            if (piid != null) {
+                                byteArray.add(piid.data);
+                            } else {
+                                byteArray.add((byte)0x00); // set default priority and service number
+                            }
+
+                        } else {
+                            byteArray.add((byte)0x00); // set default priority and service number
+                        }
+                        //total request time out
+                        if (map != null && map.containsKey("time_out") && map.get("time_out") != null) {
+                            int timeOut = (int) map.get("time_out");
+                            byteArray.add((byte)((timeOut>>8) & 0xFF));
+                            byteArray.add((byte)((timeOut) & 0xFF));
+                        } else {
+                            byteArray.add((byte)0x00);
+                            byteArray.add((byte)0x00);
+                        }
+                        //proxy get_req_list
+                        if (map != null && map.containsKey("proxy_get_req_list") && map.get("proxy_get_req_list") != null) {
+                            ArrayList<Protocol698Frame.ProxyGetReqItem> reqItems = (ArrayList<Protocol698Frame.ProxyGetReqItem>)map.get("proxy_get_req_list");
+                            int size = reqItems.size();
+                            byteArray.add((byte)size);
+                            for (int i = 0; i < size; i++) {
+                                Protocol698Frame.ProxyGetReqItem item = reqItems.get(i);
+                                if (item != null && item.data != null) {
+                                    for (int j = 0; j < item.data.length; j++) {
+                                        byteArray.add(item.data[j]);
+                                    }
+                                } else {
+                                    return null;
+                                }
+                            }
+                        } else {
+                            return null;
+                        }
+
+                        //TimeTag
+                        if (map != null && map.containsKey(ProtocolConstant.TIME_LABLE_KEY)) {
+                            Protocol698Frame.TimeTag timeTag = (Protocol698Frame.TimeTag) map.get(ProtocolConstant.TIME_LABLE_KEY);
+                            if (timeTag != null && timeTag.data != null) {
+                                for (int i = 0; i < timeTag.data.length; i++) {
+                                    byteArray.add(timeTag.data[i]);
+                                }
+                            } else {
+                                byteArray.add((byte) 0x00);
+                            }
+
+                        } else {
+                            byteArray.add((byte)0x00);
+                        }
+                        break;
                     case ProtocolConstant.CLIENT_APDU.PROXY_REQUEST.PROXY_TRANS_COMMAND_REQUEST.CLASS_ID:
                         byteArray.add((byte) ProtocolConstant.CLIENT_APDU.PROXY_REQUEST.PROXY_TRANS_COMMAND_REQUEST.CLASS_ID);
 
@@ -1178,6 +1235,24 @@ public enum Protocol698 {
                                 Protocol698Frame.OctString octString = new Protocol698Frame.OctString(apduFrame, 8);
 
                                 map.put("ret_cmd", octString.octString);
+
+                            }
+                            return map;
+                        case ProtocolConstant.SERVER_APDU.PROXY_RESPONSE.PROXY_GET_RESPONSE_LIST.CLASS_ID:
+                            map.put(ProtocolConstant.PIID_ACD_KEY, new Protocol698Frame.PIID_ACD(apduFrame[2]));
+                            int size = apduFrame[3];
+                            int pos = 4;
+                            if (size > 0) {
+                                ArrayList<Protocol698Frame.ProxyGetRespondItem> respondItems = new ArrayList<>();
+                                for (int i = 0; i < size; i++) {
+                                    Protocol698Frame.ProxyGetRespondItem item = new Protocol698Frame.ProxyGetRespondItem(apduFrame, pos);
+                                    pos = pos + item.data.length;
+                                    respondItems.add(item);
+                                }
+                                map.put("proxy_get_rspd_list", respondItems);
+
+                            } else {
+                                map.put("proxy_get_rspd_list", null);
 
                             }
                             return map;

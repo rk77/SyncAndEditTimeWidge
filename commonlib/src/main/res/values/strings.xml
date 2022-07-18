@@ -80,6 +80,7 @@
         <item>485-2:F2010202</item>
         <item>485-3:F2010203</item>
         <item>载波:F2090201</item>
+        <item>交采接口:F2080201</item>
     </string-array>
 
     <string-array name="frozen_type">
@@ -166,6 +167,10 @@
     <string-array name="comdcb_stop_bit">
         <item>1</item>
         <item>2</item>
+    </string-array>
+
+    <string-array name="make_frame_type">
+        <item>交采数据区初始化</item>
     </string-array>
 
     <string-array name="scheme_type">
