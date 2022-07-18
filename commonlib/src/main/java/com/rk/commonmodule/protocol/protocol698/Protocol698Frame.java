@@ -3391,6 +3391,10 @@ public class Protocol698Frame {
             this.timeout = timeout;
             this.oads = oad_list;
 
+            if (tsa == null || tsa.data == null || oad_list == null || oad_list.size() <= 0) {
+                return;
+            }
+
             int size = tsa.data.length + 2 + 1 + oad_list.size() * 4;
 
             this.data = new byte[size];

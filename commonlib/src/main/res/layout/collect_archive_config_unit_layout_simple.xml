@@ -100,7 +100,7 @@
                 android:gravity="left"
                 android:paddingLeft="0dp"
                 android:enabled="false"
-                android:entries="@array/channel_type" />
+                android:entries="@array/channel_type_ex" />
 
         </LinearLayout>
 

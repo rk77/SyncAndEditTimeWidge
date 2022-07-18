@@ -59,6 +59,15 @@
         <item>无效</item>
     </string-array>
 
+    <string-array name="channel_type_ex">
+        <item>交流采用</item>
+        <item>RS485-I</item>
+        <item>RS485-II</item>
+        <item>载波</item>
+        <item>无效</item>
+        <item>RS485-III</item>
+    </string-array>
+
     <string-array name="process_id">
         <item>0-MGR_ID</item>
         <item>1-GPRS_ID</item>
