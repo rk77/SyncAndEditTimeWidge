@@ -150,6 +150,16 @@ public class Protocol698Frame {
             return DataConvertUtils.convertByteArrayToString(this.data, false).toUpperCase();
         }
 
+        public String getName() {
+            String oadString = toString();
+            String name = ProtocolConstant.OAD_MAP.get(oadString);
+            if (TextUtils.isEmpty(name)) {
+                return oadString;
+            } else {
+                return name;
+            }
+        }
+
     }
 
     public static class OMD {
@@ -2560,6 +2570,17 @@ public class Protocol698Frame {
             }
         }
 
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            if (type == Get_Result_Type.DAR_TYPE) {
+                sb.append("DAR(").append(this.object).append(")");
+            } else {
+                sb.append(((Data)object).toString());
+            }
+            return sb.toString();
+        }
+
     }
 
     public static class A_ResultNormal {
@@ -2594,6 +2615,13 @@ public class Protocol698Frame {
                     System.arraycopy(getResult.data, 0, this.data, oad.data.length, getResult.data.length);
                 }
             }
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(oad.getName()).append(":").append(getResult.toString());
+            return sb.toString();
         }
     }
 
@@ -3439,6 +3467,19 @@ public class Protocol698Frame {
                 Log.e(TAG, "ProxyGetRespondItem, e:" + e.getMessage());
             }
 
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(DataConvertUtils.reverse(tsa.addr, 2)).append("::").append('\n');
+            if (a_resultNormals != null && a_resultNormals.size() > 0) {
+                for (int i = 0; i < a_resultNormals.size(); i++) {
+                    A_ResultNormal item = a_resultNormals.get(i);
+                    sb.append("    ").append(item.toString()).append('\n');
+                }
+            }
+            return sb.toString();
         }
     }
 }
