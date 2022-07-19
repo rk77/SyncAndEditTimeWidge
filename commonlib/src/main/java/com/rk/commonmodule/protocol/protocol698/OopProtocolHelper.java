@@ -2439,6 +2439,8 @@ public class OopProtocolHelper {
             oad_s = "F2010202";
         } else if (pos == 3) {
             oad_s = "F2090201";
+        } else if (pos == 5){
+            oad_s = "F2010203";
         } else {
             oad_s = "FFFFFFFF";
         }

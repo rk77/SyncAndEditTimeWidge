@@ -16,6 +16,8 @@ import java.util.ArrayList;
 public class DataConvertUtils {
     private static final String TAG = DataConvertUtils.class.getSimpleName();
 
+    public static String OAD = "";
+
     public static final String alignFrontZeroString(String a, int size) {
         if (size <= 0) {
             return "";

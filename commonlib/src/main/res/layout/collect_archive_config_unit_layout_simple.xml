@@ -5,6 +5,7 @@
     android:background="@drawable/round_corner_bg"
     android:orientation="vertical"
     android:clipChildren="true"
+
     >
 
     <LinearLayout

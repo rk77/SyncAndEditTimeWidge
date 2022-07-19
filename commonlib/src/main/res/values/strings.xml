@@ -57,6 +57,7 @@
         <item>RS485-II</item>
         <item>载波</item>
         <item>无效</item>
+        <item>RS485-III</item>
     </string-array>
 
     <string-array name="channel_type_ex">

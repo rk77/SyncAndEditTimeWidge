@@ -2259,7 +2259,12 @@ public class Protocol698Frame {
                     sb.append("NULL");
                     break;
                 case DOUBLE_LONG_UNSIGNED_TYPE:
-                    sb.append(obj.toString());
+                    if ("00100200".equals(DataConvertUtils.OAD)) {
+                        float v = (((int)obj) / 100f);
+                        sb.append(String.format("%.2f", v));
+                    } else {
+                        sb.append(obj.toString());
+                    }
                     break;
                 case DATE_TIME_S_TYPE:
                     if (obj instanceof DateTimeS) {
@@ -2285,12 +2290,20 @@ public class Protocol698Frame {
                     break;
                 case DOUBLE_LONG_TYPE:
                     if (obj instanceof Integer) {
-                        sb.append((obj).toString());
+                        if ("20010200".equals(DataConvertUtils.OAD)) {
+                            sb.append(String.format("%.3f", ((int)obj / 1000f)));
+                        } else {
+                            sb.append((obj).toString());
+                        }
                     }
                     break;
                 case LONG_UNSIGNED_TYPE:
                     if (obj instanceof Integer) {
-                        sb.append((obj).toString());
+                        if ("20000200".equals(DataConvertUtils.OAD)) {
+                            sb.append(String.format("%.2f", ((int)obj / 10f)));
+                        } else {
+                            sb.append((obj).toString());
+                        }
                     }
                     break;
                 case VISIBLE_STRING_TYPE:
@@ -2620,6 +2633,7 @@ public class Protocol698Frame {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
+            DataConvertUtils.OAD = oad.toString();
             sb.append(oad.getName()).append(":").append(getResult.toString());
             return sb.toString();
         }
