@@ -238,7 +238,9 @@
 
     <string-array name="jc_port">
         <item>1-交采485</item>
-        <item>2-抄表485</item>
+        <item>2-485I</item>
+        <item>3-485II</item>
+        <item>4-485III</item>
         <item>31-载波</item>
     </string-array>
 
