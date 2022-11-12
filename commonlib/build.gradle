@@ -58,5 +58,5 @@ dependencies {
     implementation 'org.litepal.guolindev:core:3.2.1'
     api files('libs/zip4j_1.3.2.jar')
 
-    implementation 'com.github.amggg:YXing:V1.1.1'
+    //implementation 'com.github.amggg:YXing:V1.1.1'
 }
