@@ -180,7 +180,27 @@
     </string-array>
 
     <string-array name="make_frame_type">
-        <item>交采数据区初始化</item>
+        <item>设备ID</item>
+        <item>生产厂家</item>
+        <item>型号</item>
+        <item>软件版本号</item>
+        <item>硬件版本号</item>
+        <item>生产日期</item>
+        <item>CPU</item>
+        <item>内存</item>
+        <item>FLASH参数</item>
+    </string-array>
+
+    <string-array name="make_frame_cmd">
+        <item>devcfg -sn</item>
+        <item>devctl -v</item>
+        <item>devctl -t</item>
+        <item>version -d</item>
+        <item>devctl -H</item>
+        <item>devctl -E</item>
+        <item>devctl -f</item>
+        <item>devctl -m</item>
+        <item>devctl -I</item>
     </string-array>
 
     <string-array name="scheme_type">
