@@ -1055,4 +1055,10 @@ public class LtuIS1871NoEncryptBluetoothInstance implements IBluethoothInstance{
         return false;
     }
 
+    private IFrameVerify mVerifyObj = null;
+    @Override
+    public void setFrameVerifyInterface(IFrameVerify verifyInterface) {
+        mVerifyObj = verifyInterface;
+    }
+
 }

@@ -443,6 +443,9 @@ public class EnergyControlBluetoothInstance implements IBluethoothInstance{
             for (int i = 0; i < tmpFrame.length; i++) {
                 tmpFrame[i] = frame.get(i);
             }
+            if (mVerifyObj != null) {
+                mVerifyObj.verify(tmpFrame, 0);
+            }
             return verify698Frame(tmpFrame);
         }
         return false;
@@ -732,6 +735,12 @@ public class EnergyControlBluetoothInstance implements IBluethoothInstance{
             return mIsConnected;
         }
         return false;
+    }
+
+    private IFrameVerify mVerifyObj = null;
+    @Override
+    public void setFrameVerifyInterface(IFrameVerify verifyInterface) {
+        mVerifyObj = verifyInterface;
     }
 
 

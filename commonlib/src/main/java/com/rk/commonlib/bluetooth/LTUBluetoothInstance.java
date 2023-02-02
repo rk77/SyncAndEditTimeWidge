@@ -1019,4 +1019,10 @@ public class LTUBluetoothInstance implements IBluethoothInstance{
         return false;
     }
 
+    private IFrameVerify mVerifyObj = null;
+    @Override
+    public void setFrameVerifyInterface(IFrameVerify verifyInterface) {
+        mVerifyObj = verifyInterface;
+    }
+
 }

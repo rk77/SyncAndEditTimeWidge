@@ -137,4 +137,12 @@ public class BluetoothManager implements IBluethoothInstance{
         return mCurrentBluetoothInstance.isDeviceConnected(deviceAddr);
     }
 
+    @Override
+    public void setFrameVerifyInterface(IFrameVerify verifyInterface) {
+        if (mCurrentBluetoothInstance == null) {
+            return;
+        }
+        mCurrentBluetoothInstance.setFrameVerifyInterface(verifyInterface);
+    }
+
 }

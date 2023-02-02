@@ -542,6 +542,9 @@ public class TerminalFourBluetoothInstance implements IBluethoothInstance{
             } else if (frame[0] == (byte) 0xFE) {
                 return true;
             } else {
+                if (mVerifyObj != null) {
+                    return mVerifyObj.verify(frame, 0);
+                }
                 return verifyFrame(frame);
             }
         }
@@ -1009,6 +1012,12 @@ public class TerminalFourBluetoothInstance implements IBluethoothInstance{
             return mIsConnected;
         }
         return false;
+    }
+
+    private IFrameVerify mVerifyObj = null;
+    @Override
+    public void setFrameVerifyInterface(IFrameVerify verifyInterface) {
+        mVerifyObj = verifyInterface;
     }
 
 }

@@ -23,4 +23,6 @@ public interface IBluethoothInstance {
 
     byte[] sendAndReceiveSync(byte[] frame);
     boolean isDeviceConnected(String deviceAddr);
+
+    void setFrameVerifyInterface(IFrameVerify verifyInterface);
 }

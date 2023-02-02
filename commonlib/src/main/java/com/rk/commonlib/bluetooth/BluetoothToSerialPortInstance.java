@@ -981,4 +981,10 @@ public class BluetoothToSerialPortInstance implements IBluethoothInstance{
         return false;
     }
 
+    private IFrameVerify mVerifyObj = null;
+    @Override
+    public void setFrameVerifyInterface(IFrameVerify verifyInterface) {
+        mVerifyObj = verifyInterface;
+    }
+
 }
