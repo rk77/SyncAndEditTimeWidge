@@ -8,6 +8,16 @@ public class P101FrameVerifyObj implements IFrameVerify {
         if (frame == null || frame.length <= 0) {
             return false;
         }
+        boolean has68 = false;
+        for (int i = 0; i < frame.length; i++) {
+            if (frame[i] == 0x68) {
+                has68 = true;
+                begin = i;
+            }
+        }
+        if (!has68) {
+            return false;
+        }
         try {
             if (frame[begin] != 0x68) {
                 return false;

@@ -1,12 +1,14 @@
 package com.rk.commonmodule.protocol.protocol101;
 
 import com.rk.commonlib.util.LogUtils;
+import com.rk.commonmodule.protocol.protocol3761.Protocol3761Frame;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 public class Protocol101 {
 
-    public final class FixFrame {
+    public static final class FixFrame {
         public byte c;
         public byte[] a;
         public byte[] data;
@@ -26,8 +28,17 @@ public class Protocol101 {
             data[5] = 0x16;
         }
 
-        public FixFrame(byte[] frame, int begin) {
+        public FixFrame(byte[] frame) {
+
+
             try {
+                int begin = 0;
+                for (int i = 0; i < data.length; i++) {
+                    if (data[i] == 0x10) {
+                        begin = i;
+                        break;
+                    }
+                }
                 if ((frame[begin] == 0x10) && (frame[begin + 5] == 0x16)) {
                     this.c = frame[begin + 1];
                     this.a = new byte[2];
@@ -43,7 +54,7 @@ public class Protocol101 {
         }
     }
 
-    public final class B_Fix_Ctrl_Area {
+    public static final class B_Fix_Ctrl_Area {
         public int dir = 0;
         public int prm = 0;
         public int fcb_res = 0;
@@ -93,7 +104,7 @@ public class Protocol101 {
 
     }
 
-    public final class VarLenFrame {
+    public static final class VarLenFrame {
         public byte c;
         public byte[] a;
         public byte[] data;
@@ -125,8 +136,15 @@ public class Protocol101 {
             data[pos + 1] = 0x16;
         }
 
-        public VarLenFrame(byte[] frame, int begin) {
+        public VarLenFrame(byte[] frame) {
             try {
+                int begin = 0;
+                for (int i = 0; i < data.length; i++) {
+                    if (data[i] == 0x68) {
+                        begin = i;
+                        break;
+                    }
+                }
                 if (frame[begin] != 0x68) {
                     return;
                 }
@@ -169,7 +187,132 @@ public class Protocol101 {
         }
 
         private IAsdu parseAsdu(byte[] frame, int begin, int len) {
-            return null;
+            return new ASDU(frame, begin);
+        }
+    }
+
+    public static final class DataUnitLable {
+        public byte TI;
+        public byte VSQ;
+        public byte[] COT;
+        public int cot;
+        public byte[] CO_ADDR;
+        public int commonAddr;
+        public byte[] data;
+        public DataUnitLable(int ti, byte vsq, int cot, int coAddr) {
+            this.TI = (byte) ti;
+            this.VSQ = vsq;
+            this.COT = new byte[2];
+            this.COT[0] = (byte)(cot & 0x00FF);
+            this.COT[1] = (byte)((cot >> 8) & 0x00FF);
+            this.cot = cot;
+            this.CO_ADDR = new byte[2];
+            this.CO_ADDR[0] = (byte)(coAddr & 0xFF);
+            this.CO_ADDR[1] = (byte)((coAddr >> 8) & 0xFF);
+            this.commonAddr = coAddr;
+
+            this.data = new byte[6];
+            this.data[0] = TI;
+            this.data[1] = VSQ;
+            this.data[2] = COT[0];
+            this.data[3] = COT[1];
+            this.data[4] = CO_ADDR[0];
+            this.data[5] = CO_ADDR[1];
+
+        }
+
+        public DataUnitLable(byte[] frame, int begin) {
+            try {
+                TI = frame[begin];
+                VSQ = frame[begin + 1];
+                COT = new byte[2];
+                COT[0] = frame[begin + 2];
+                COT[1] = frame[begin + 3];
+                cot = COT[1] * 256 + COT[0];
+                CO_ADDR = new byte[2];
+                CO_ADDR[0] = frame[begin + 4];
+                CO_ADDR[1] = frame[begin + 5];
+                commonAddr = CO_ADDR[1] * 256 + CO_ADDR[0];
+                data = new byte[6];
+                System.arraycopy(frame, begin, data, 0, 6);
+            } catch (Exception e) {
+                LogUtils.e("parse err");
+            }
+        }
+    }
+
+    public static final class InfoObj{
+        public byte[] data;
+        public InfoObj() {
+
+        }
+        public InfoObj(byte[] frame, int begin) {
+
+        }
+    }
+
+    public static final class InfoObjList {
+        public byte[] data;
+        public ArrayList<InfoObj> infoObjs = new ArrayList<>();
+
+        public InfoObjList() {
+
+        }
+
+        public InfoObjList(byte[] frame, int begin) {
+
+        }
+
+    }
+
+    public static final class ASDU implements IAsdu {
+
+        public DataUnitLable dataUnitLable;
+        public InfoObjList infoObjList;
+        public byte[] data;
+
+        public ASDU(DataUnitLable lable, InfoObjList objList) {
+            this.dataUnitLable = lable;
+            this.infoObjList = objList;
+            int len = 0;
+            int pos = 0;
+            if (lable != null && lable.data != null) {
+                len = len + lable.data.length;
+            }
+            if (objList != null && objList.data != null) {
+                len = len + objList.data.length;
+            }
+
+            this.data = new byte[len];
+            if (lable != null && lable.data != null) {
+                System.arraycopy(lable.data, 0, this.data, pos, lable.data.length);
+                pos = pos + lable.data.length;
+            }
+            if (objList != null && objList.data != null) {
+                len = len + objList.data.length;
+                System.arraycopy(objList.data, 0, this.data, pos, objList.data.length);
+            }
+
+        }
+
+        public ASDU(byte[] frame, int begin) {
+            try {
+                this.dataUnitLable = new DataUnitLable(frame, begin);
+                this.infoObjList = new InfoObjList(frame, begin + 6);
+            } catch (Exception e) {
+
+            }
+
+        }
+
+        @Override
+        public byte[] getData() {
+            return data;
+        }
+
+        @Override
+        public void parseData(byte[] data, int begin) {
+
         }
     }
 }
