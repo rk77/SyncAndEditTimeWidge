@@ -107,6 +107,11 @@ public class EnergyControlBluetoothInstance implements IBluethoothInstance{
             Log.i(TAG, "onCharacteristicChanged");
             byte[] recvFrame = characteristic.getValue();
             Log.i(TAG, "onCharacteristicChanged, recvFrame: " + DataConvertUtils.convertByteArrayToString(recvFrame, false));
+
+            if (mReceiver != null) {
+                mReceiver.onRecv(recvFrame);
+            }
+
             if (mReceivedFrame != null && recvFrame != null && recvFrame.length > 0) {
                 for (int i = 0; i < recvFrame.length; i++) {
                     mReceivedFrame.add(recvFrame[i]);
@@ -745,12 +750,39 @@ public class EnergyControlBluetoothInstance implements IBluethoothInstance{
 
     @Override
     public void send(byte[] data) {
+        Log.i(TAG, "sendAndReceiveSync, frame: " + DataConvertUtils.convertByteArrayToString(data, false));
+        if (data == null) {
+            return;
+        }
 
+        int sendTime = (data.length + (MTU - 3 - 1)) / (MTU - 3);
+        for (int i = 0; i < sendTime; i++) {
+            int begin = i * (MTU - 3);
+            int end = (i + 1) * (MTU - 3) - 1;
+            if (end > data.length - 1) {
+                end = data.length - 1;
+            }
+            if (mWriteCharacteristic != null && mBluetoothGatt != null) {
+                byte[] subFrame = DataConvertUtils.getSubByteArray(data, begin, end);
+                Log.i(TAG, "sendAndReceiveSync, total: " + data.length + ", begin: " + begin + ", end: " + end
+                        + ", sub frame: " + DataConvertUtils.convertByteArrayToString(subFrame, false));
+
+                try {
+                    mWriteCharacteristic.setValue(subFrame);
+                    mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
+                    Log.i("AX", "send chara: " + mWriteCharacteristic);
+                } catch (Exception e) {
+                    Log.e(TAG, "send, wait for writing error: " + e.getMessage());
+                }
+            }
+        }
+        Log.i(TAG, "send, send done.");
     }
 
+    private IBleReceiver mReceiver;
     @Override
     public void setBleReceiver(IBleReceiver receiver) {
-
+        mReceiver = receiver;
     }
 
 

@@ -147,12 +147,18 @@ public class BluetoothManager implements IBluethoothInstance{
 
     @Override
     public void send(byte[] data) {
-
+        if (mCurrentBluetoothInstance == null || data == null) {
+            return;
+        }
+        mCurrentBluetoothInstance.send(data);
     }
 
     @Override
     public void setBleReceiver(IBleReceiver receiver) {
-
+        if (mCurrentBluetoothInstance == null) {
+            return;
+        }
+        mCurrentBluetoothInstance.setBleReceiver(receiver);
     }
 
 }
