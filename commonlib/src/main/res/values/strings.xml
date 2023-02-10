@@ -203,6 +203,41 @@
         <item>devctl -I</item>
     </string-array>
 
+    <string-array name="run_status_type">
+        <item>CPU</item>
+        <item>内存</item>
+        <item>FLASH</item>
+    </string-array>
+
+    <string-array name="apn_port_name_1">
+        <item>ppp-0</item>
+        <item>ppp-1</item>
+    </string-array>
+
+    <string-array name="apn_port_name_2">
+        <item>ppp-0</item>
+        <item>ppp-1</item>
+        <item>all</item>
+    </string-array>
+
+    <string-array name="chnnl_485_232">
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="chnnl_485_232_idx">
+        <item>485</item>
+        <item>232</item>
+        <item>+12V</item>
+        <item>CAN</item>
+    </string-array>
+
+    <string-array name="run_status_cmd">
+        <item>monitorctl -c</item>
+        <item>monitorctl -m</item>
+        <item>monitorctl -i</item>
+    </string-array>
+
     <string-array name="scheme_type">
         <item>普通采集方案</item>
         <item>事件采集方案</item>
