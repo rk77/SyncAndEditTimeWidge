@@ -743,5 +743,15 @@ public class EnergyControlBluetoothInstance implements IBluethoothInstance{
         mVerifyObj = verifyInterface;
     }
 
+    @Override
+    public void send(byte[] data) {
+
+    }
+
+    @Override
+    public void setBleReceiver(IBleReceiver receiver) {
+
+    }
+
 
 }

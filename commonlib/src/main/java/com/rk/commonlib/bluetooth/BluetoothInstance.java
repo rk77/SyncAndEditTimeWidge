@@ -342,7 +342,7 @@ public class BluetoothInstance {
         /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback, BluetoothDevice.TRANSPORT_LE);
         } else {*/
-            mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback);
+        mBluetoothGatt = device.connectGatt(sContext, false, mGattCallback);
         //}
 
         Log.d(TAG, "connect, Trying to create a new connection.");

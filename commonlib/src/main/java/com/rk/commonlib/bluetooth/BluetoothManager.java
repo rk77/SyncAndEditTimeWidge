@@ -145,4 +145,14 @@ public class BluetoothManager implements IBluethoothInstance{
         mCurrentBluetoothInstance.setFrameVerifyInterface(verifyInterface);
     }
 
+    @Override
+    public void send(byte[] data) {
+
+    }
+
+    @Override
+    public void setBleReceiver(IBleReceiver receiver) {
+
+    }
+
 }

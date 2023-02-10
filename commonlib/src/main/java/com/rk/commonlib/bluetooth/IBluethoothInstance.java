@@ -25,4 +25,7 @@ public interface IBluethoothInstance {
     boolean isDeviceConnected(String deviceAddr);
 
     void setFrameVerifyInterface(IFrameVerify verifyInterface);
+
+    void send(byte[] data);
+    void setBleReceiver(IBleReceiver receiver);
 }
