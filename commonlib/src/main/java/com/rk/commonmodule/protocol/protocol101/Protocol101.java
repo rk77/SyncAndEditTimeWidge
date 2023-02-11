@@ -6,6 +6,7 @@ import com.rk.commonmodule.utils.DataConvertUtils;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Protocol101 {
 
@@ -310,30 +311,54 @@ public class Protocol101 {
 
     }
 
-    public static final class YaoCe_SQ_1_InfoObj extends InfoObj {
+    public static final class YaoCe_YaoXin_SQ_1_InfoObj extends InfoObj {
         public int yaoCeObjAddr;
+        public String infoAddr;
         ArrayList<String> values = new ArrayList<>();
-        public YaoCe_SQ_1_InfoObj(int ti, int vsq, byte[] frame, int begin) {
+        public YaoCe_YaoXin_SQ_1_InfoObj(int ti, int vsq, byte[] frame, int begin) {
             try {
                 int pos = begin;
                 this.yaoCeObjAddr = frame[begin] + frame[begin + 1] * 256;
+                this.infoAddr = DataConvertUtils.convertByteArrayToString(frame, begin, begin + 1, true);
                 pos = pos + 2;
-                for (int i = 0; i < vsq; i++) {
-                    if (ti == 13) {
-                        values.add(DataConvertUtils.byte4ToFloat_Str(frame, pos));
-                    } else if (ti == 9) {
+                switch (yaoCeObjAddr) {
+                    case 0://遥测
+                        for (int i = 0; i < vsq; i++) {
+                            if (ti == 13) {
+                                values.add(DataConvertUtils.byte4ToFloat_Str(frame, pos));
+                            } else if (ti == 9) {
 
-                    } else if (ti == 11) {
+                            } else if (ti == 11) {
 
-                    }
-                    pos = pos + 5;
-
+                            }
+                            pos = pos + 5;
+                        }
+                        break;
+                    case 1://遥信
+                        for (int i = 0; i < vsq; i++) {
+                            if (ti == 1) {
+                                values.add("单点:" + DataConvertUtils.convertByteToString(frame[pos]));
+                            } else if (ti == 3) {
+                                values.add("双点:" + DataConvertUtils.convertByteToString(frame[pos]));
+                            }
+                            pos = pos + 1;
+                        }
+                        break;
                 }
+
                 this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
 
             } catch (Exception e) {
                 LogUtils.e("yc sq 1, err: " + e.getMessage());
             }
+        }
+
+        @Override
+        public String toString() {
+            if (this.data == null || this.data.length <= 0) {
+                return "NULL";
+            }
+            return "信息点地址：" + this.infoAddr + ", 数据：" + Arrays.toString(values.toArray());
         }
     }
 
@@ -376,8 +401,8 @@ public class Protocol101 {
                     infoObjs.add(new ZongZhaoInfoObj(frame, begin));
                 } else if (lable.TI == 100 && lable.cot == 7) {
                     infoObjs.add(new ZongZhaoInfoObj(frame, begin));
-                } else if (lable.cot == 20 && lable.vsq_obj.sq == 1) {
-                    infoObjs.add(new YaoCe_SQ_1_InfoObj(lable.TI, lable.vsq_obj.num, frame, begin));
+                } else if ((lable.cot == 20 || lable.cot == 3) && lable.vsq_obj.sq == 1) {
+                    infoObjs.add(new YaoCe_YaoXin_SQ_1_InfoObj(lable.TI, lable.vsq_obj.num, frame, begin));
                 }
 
                 int size = 0;
