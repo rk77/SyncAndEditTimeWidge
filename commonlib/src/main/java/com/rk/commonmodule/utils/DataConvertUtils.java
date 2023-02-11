@@ -42,6 +42,30 @@ public class DataConvertUtils {
         }
     }
 
+    public static final float byte4ToFloat(byte[] data, int begin) {
+        if (data == null || begin < 0 || data.length - 1 - begin + 1 < 4) {
+            return -1f;
+        }
+
+        float f = (float) ((data[begin] & 0xFF)
+                | ((data[begin + 1] << 8) & 0xFF00)
+                | ((data[begin + 2] << 16) & 0xFF0000)
+                | ((data[begin + 3] << 24) & 0xFF000000));
+        return f;
+    }
+
+    public static final String byte4ToFloat_Str(byte[] data, int begin) {
+        if (data == null || begin < 0 || data.length - 1 - begin + 1 < 4) {
+            return "##";
+        }
+
+        float f = (float) ((data[begin] & 0xFF)
+                | ((data[begin + 1] << 8) & 0xFF00)
+                | ((data[begin + 2] << 16) & 0xFF0000)
+                | ((data[begin + 3] << 24) & 0xFF000000));
+        return String.valueOf(f);
+    }
+
     public static final String convertByteToString(byte data) {
         String item = Integer.toHexString(data & 0xFF);
         if (item == null || item.trim().equals("")) {

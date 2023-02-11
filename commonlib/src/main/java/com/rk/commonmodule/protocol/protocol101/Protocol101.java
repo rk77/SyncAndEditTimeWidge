@@ -2,6 +2,7 @@ package com.rk.commonmodule.protocol.protocol101;
 
 import com.rk.commonlib.util.LogUtils;
 import com.rk.commonmodule.protocol.protocol3761.Protocol3761Frame;
+import com.rk.commonmodule.utils.DataConvertUtils;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -106,6 +107,7 @@ public class Protocol101 {
 
     public static final class VarLenFrame {
         public byte c;
+        public B_Fix_Ctrl_Area ctrlArea;
         public byte[] a;
         public byte[] data;
         public IAsdu asdu;
@@ -115,6 +117,7 @@ public class Protocol101 {
             }
             c = ctrl;
             a = addr;
+            ctrlArea = new B_Fix_Ctrl_Area(c);
             this.asdu = asdu;
             byte cs = (byte)(c + a[0] + a[1]);
             for (int i = 0; i < asdu.getData().length; i++) {
@@ -173,6 +176,7 @@ public class Protocol101 {
                 }
 
                 this.c = frame[c_p];
+                this.ctrlArea = new B_Fix_Ctrl_Area(this.c);
                 this.a = new byte[2];
                 this.a[0] = frame[a_p];
                 this.a[1] = frame[a_p + 1];
@@ -191,9 +195,36 @@ public class Protocol101 {
         }
     }
 
+    public static final class VSQ_Obj {
+        int num;
+        int sq;
+        byte data;
+        public VSQ_Obj(int num, int sq) {
+            data = 0;
+            this.num = num;
+            this.sq = sq;
+
+            data = (byte) ((num << 1) & 0xFE);
+            if (sq == 1) {
+                data = (byte) (data | 0x01);
+            }
+
+        }
+
+        public VSQ_Obj(byte data) {
+            this.data = data;
+            this.num = (data >> 1) & 0x7F;
+            this.sq = 0;
+            if ((data & 0x01) == 1) {
+                this.sq = 1;
+            }
+        }
+    }
+
     public static final class DataUnitLable {
         public byte TI;
         public byte VSQ;
+        public VSQ_Obj vsq_obj;
         public byte[] COT;
         public int cot;
         public byte[] CO_ADDR;
@@ -202,6 +233,7 @@ public class Protocol101 {
         public DataUnitLable(int ti, byte vsq, int cot, int coAddr) {
             this.TI = (byte) ti;
             this.VSQ = vsq;
+            this.vsq_obj = new VSQ_Obj(vsq);
             this.COT = new byte[2];
             this.COT[0] = (byte)(cot & 0x00FF);
             this.COT[1] = (byte)((cot >> 8) & 0x00FF);
@@ -225,6 +257,7 @@ public class Protocol101 {
             try {
                 TI = frame[begin];
                 VSQ = frame[begin + 1];
+                this.vsq_obj = new VSQ_Obj(VSQ);
                 COT = new byte[2];
                 COT[0] = frame[begin + 2];
                 COT[1] = frame[begin + 3];
@@ -241,7 +274,7 @@ public class Protocol101 {
         }
     }
 
-    public static final class InfoObj{
+    public static class InfoObj{
         public byte[] data;
         public InfoObj() {
 
@@ -251,16 +284,125 @@ public class Protocol101 {
         }
     }
 
-    public static final class InfoObjList {
-        public byte[] data;
-        public ArrayList<InfoObj> infoObjs = new ArrayList<>();
+    public static final class ZongZhaoInfoObj extends InfoObj {
+        public int QOI;
+        public int infoObjAddr;
+        public ZongZhaoInfoObj(int infoObjAddr, int qoi) {
+            this.QOI = qoi;
+            this.data = new byte[3];
+            this.data[0] = (byte) (infoObjAddr & 0xFF);
+            this.data[1] = (byte) ((infoObjAddr >> 8) & 0xFF);
+            this.data[2] = (byte) (qoi & 0xFF);
+        }
 
-        public InfoObjList() {
+        public ZongZhaoInfoObj(byte[] frame, int begin) {
+            try {
+                this.infoObjAddr = frame[begin] + frame[begin + 1] * 256;
+                this.QOI = frame[begin + 2];
+                this.data = new byte[3];
+                System.arraycopy(frame, begin, this.data, 0, 3);
+
+            } catch (Exception e) {
+                LogUtils.e("zong zhao info obj parsed err: " + e.getMessage());
+            }
 
         }
 
-        public InfoObjList(byte[] frame, int begin) {
+    }
 
+    public static final class YaoCe_SQ_1_InfoObj extends InfoObj {
+        public int yaoCeObjAddr;
+        ArrayList<String> values = new ArrayList<>();
+        public YaoCe_SQ_1_InfoObj(int ti, int vsq, byte[] frame, int begin) {
+            try {
+                int pos = begin;
+                this.yaoCeObjAddr = frame[begin] + frame[begin + 1] * 256;
+                pos = pos + 2;
+                for (int i = 0; i < vsq; i++) {
+                    if (ti == 13) {
+                        values.add(DataConvertUtils.byte4ToFloat_Str(frame, pos));
+                    } else if (ti == 9) {
+
+                    } else if (ti == 11) {
+
+                    }
+                    pos = pos + 5;
+
+                }
+                this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
+
+            } catch (Exception e) {
+                LogUtils.e("yc sq 1, err: " + e.getMessage());
+            }
+        }
+    }
+
+    public static final class InfoObjList {
+        public byte[] data;
+        public ArrayList<InfoObj> infoObjs;
+
+        public InfoObjList(ArrayList<InfoObj> objs) {
+            infoObjs = objs;
+            if (objs == null ||objs.size() <= 0) {
+                return;
+            }
+
+            int size = 0;
+            for (int i = 0; i < objs.size(); i++) {
+                InfoObj item = objs.get(i);
+                if (item == null || item.data == null || item.data.length <= 0) {
+                    continue;
+                }
+                size = size + item.data.length;
+            }
+
+            int pos = 0;
+            this.data = new byte[size];
+            for (int i = 0; i < objs.size(); i++) {
+                InfoObj item = objs.get(i);
+                if (item == null || item.data == null || item.data.length <= 0) {
+                    continue;
+                }
+                System.arraycopy(item.data, 0, this.data, pos, item.data.length);
+                pos = pos + item.data.length;
+            }
+
+        }
+
+        public InfoObjList(DataUnitLable lable, byte[] frame, int begin) {
+            try {
+                infoObjs = new ArrayList<>();
+                if (lable.TI == 100 && lable.cot == 6) {
+                    infoObjs.add(new ZongZhaoInfoObj(frame, begin));
+                } else if (lable.TI == 100 && lable.cot == 7) {
+                    infoObjs.add(new ZongZhaoInfoObj(frame, begin));
+                } else if (lable.cot == 20 && lable.vsq_obj.sq == 1) {
+                    infoObjs.add(new YaoCe_SQ_1_InfoObj(lable.TI, lable.vsq_obj.num, frame, begin));
+                }
+
+                int size = 0;
+                for (int i = 0; i < infoObjs.size(); i++) {
+                    InfoObj item = infoObjs.get(i);
+                    if (item == null || item.data == null || item.data.length <= 0) {
+                        continue;
+                    }
+                    size = size + item.data.length;
+                }
+
+                int pos = 0;
+                this.data = new byte[size];
+                for (int i = 0; i < infoObjs.size(); i++) {
+                    InfoObj item = infoObjs.get(i);
+                    if (item == null || item.data == null || item.data.length <= 0) {
+                        continue;
+                    }
+                    System.arraycopy(item.data, 0, this.data, pos, item.data.length);
+                    pos = pos + item.data.length;
+                }
+
+            } catch (Exception e){
+                LogUtils.e("p err : " + e.getMessage());
+            }
         }
 
     }
@@ -298,7 +440,7 @@ public class Protocol101 {
         public ASDU(byte[] frame, int begin) {
             try {
                 this.dataUnitLable = new DataUnitLable(frame, begin);
-                this.infoObjList = new InfoObjList(frame, begin + 6);
+                this.infoObjList = new InfoObjList(dataUnitLable, frame, begin + 6);
             } catch (Exception e) {
 
             }
