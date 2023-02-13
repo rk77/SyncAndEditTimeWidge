@@ -2,6 +2,7 @@ package com.rk.commonmodule.protocol.protocol101;
 
 import com.rk.commonlib.util.LogUtils;
 import com.rk.commonmodule.protocol.protocol3761.Protocol3761Frame;
+import com.rk.commonmodule.protocol.protocol645.Ltu645ProtocolHelper;
 import com.rk.commonmodule.utils.DataConvertUtils;
 
 import java.lang.reflect.Array;
@@ -197,9 +198,9 @@ public class Protocol101 {
     }
 
     public static final class VSQ_Obj {
-        int num;
-        int sq;
-        byte data;
+        public int num;
+        public int sq;
+        public byte data;
         public VSQ_Obj(int num, int sq) {
             data = 0;
             this.num = num;
@@ -311,6 +312,48 @@ public class Protocol101 {
 
     }
 
+    public static final class ClockInfoObj extends InfoObj {
+        public String clockTime;
+        public int infoObjAddr;
+
+        //date: yyMMDD; time:HHmmSS
+        public ClockInfoObj (String date, String time) {
+            try {
+                infoObjAddr = 0;
+                byte[] cp56 = Ltu645ProtocolHelper.make_CP56_Time(date, time);
+                this.clockTime = Ltu645ProtocolHelper.parse_CP56_Time(cp56);
+
+                this.data = new byte[9];
+
+                this.data[0] = 0;
+                this.data[1] = 0;
+                System.arraycopy(cp56, 0, data, 2, 7);
+
+            } catch (Exception e) {
+                LogUtils.e("make info body err:" + e.getMessage());
+            }
+        }
+
+        public ClockInfoObj (byte[] frame, int begin) {
+            try {
+                this.infoObjAddr = frame[begin] + frame[begin + 1] * 256;
+                int pos = begin + 2;
+
+                byte[] cp56_d = DataConvertUtils.getSubByteArray(frame, pos, pos + 6);
+                this.clockTime = Ltu645ProtocolHelper.parse_CP56_Time(cp56_d);
+
+                this.data = DataConvertUtils.getSubByteArray(frame, begin, begin + 8);
+
+
+            } catch (Exception e) {
+                LogUtils.e("parse clock info body err: " + e.getMessage());
+            }
+
+        }
+
+
+    }
+
     public static final class YaoCe_YaoXin_SQ_1_InfoObj extends InfoObj {
         public int yaoCeObjAddr;
         public String infoAddr;
@@ -403,6 +446,8 @@ public class Protocol101 {
                     infoObjs.add(new ZongZhaoInfoObj(frame, begin));
                 } else if ((lable.cot == 20 || lable.cot == 3) && lable.vsq_obj.sq == 1) {
                     infoObjs.add(new YaoCe_YaoXin_SQ_1_InfoObj(lable.TI, lable.vsq_obj.num, frame, begin));
+                } else if (lable.TI == 103 && (lable.cot == 7 || lable.cot == 5)) {
+                    infoObjs.add(new ClockInfoObj(frame, begin));
                 }
 
                 int size = 0;

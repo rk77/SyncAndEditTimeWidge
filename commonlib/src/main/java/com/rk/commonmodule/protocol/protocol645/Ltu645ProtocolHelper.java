@@ -275,7 +275,7 @@ public class Ltu645ProtocolHelper {
 
     }
 
-    private static String parse_CP56_Time(byte[] data) {
+    public static String parse_CP56_Time(byte[] data) {
         if (data == null || data.length != 7) {
             return null;
         }
@@ -341,7 +341,7 @@ public class Ltu645ProtocolHelper {
     }
 
     //date: yyMMDD; time:HHmmSS
-    private static byte[] make_CP56_Time(String date, String time) {
+    public static byte[] make_CP56_Time(String date, String time) {
         if (TextUtils.isEmpty(date) || TextUtils.isEmpty(time) || date.length() != 6 || time.length() != 6) {
             return null;
         }
