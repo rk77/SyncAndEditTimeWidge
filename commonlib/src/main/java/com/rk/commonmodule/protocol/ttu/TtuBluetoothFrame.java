@@ -151,7 +151,7 @@ public class TtuBluetoothFrame {
         }
 
         mLengthPos = mHeadPos + 1;
-        mLength = frame[mLengthPos] + frame[mLengthPos + 1] * 256;
+        mLength = (frame[mLengthPos] & 0xFF) + (frame[mLengthPos + 1] & 0xFF) * 256;
 
         int end = mHeadPos + mLength - 1;
         if (end > frame.length - 1 || frame[end] != 0x16) {

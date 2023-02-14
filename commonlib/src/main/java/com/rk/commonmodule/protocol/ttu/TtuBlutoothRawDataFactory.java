@@ -40,7 +40,7 @@ public class TtuBlutoothRawDataFactory {
                 return shellRequestRawData;
             case SHELL_RESPOND:
                 ShellRespondRawData shellRespondRawData = new ShellRespondRawData();
-                shellRespondRawData.parse(data, 0, data.length);
+                shellRespondRawData.parse(data, 0, data == null ? 0 : data.length);
                 return shellRespondRawData;
             case FILE_WRITE_REQUEST:
                 FileWriteRequestRawData fileWriteRequestRawData = new FileWriteRequestRawData();

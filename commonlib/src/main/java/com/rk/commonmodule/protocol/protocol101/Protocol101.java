@@ -114,7 +114,8 @@ public class Protocol101 {
         public byte[] data;
         public IAsdu asdu;
         public VarLenFrame(byte ctrl, byte[] addr, IAsdu asdu) {
-            if (addr == null || addr.length != 2 || asdu == null || asdu.getData() != null) {
+            if (addr == null || addr.length != 2 || asdu == null || asdu.getData() == null) {
+                LogUtils.i("make frame err:" + ((asdu == null) ? "asdu null": asdu.getData()));
                 return;
             }
             c = ctrl;
@@ -144,8 +145,8 @@ public class Protocol101 {
         public VarLenFrame(byte[] frame) {
             try {
                 int begin = 0;
-                for (int i = 0; i < data.length; i++) {
-                    if (data[i] == 0x68) {
+                for (int i = 0; i < frame.length; i++) {
+                    if (frame[i] == 0x68) {
                         begin = i;
                         break;
                     }
@@ -188,7 +189,8 @@ public class Protocol101 {
                 System.arraycopy(frame, begin, this.data, 0, this.data.length);
 
             } catch (Exception e) {
-                LogUtils.e("parse err:" + e.getMessage());
+                LogUtils.e("VarLenFrame parse err: " + e.getMessage());
+                e.printStackTrace();
             }
         }
 
@@ -206,18 +208,18 @@ public class Protocol101 {
             this.num = num;
             this.sq = sq;
 
-            data = (byte) ((num << 1) & 0xFE);
+            data = (byte) ((num) & 0x7F);
             if (sq == 1) {
-                data = (byte) (data | 0x01);
+                data = (byte) (data | 0x80);
             }
 
         }
 
         public VSQ_Obj(byte data) {
             this.data = data;
-            this.num = (data >> 1) & 0x7F;
+            this.num = (data) & 0x7F;
             this.sq = 0;
-            if ((data & 0x01) == 1) {
+            if ((data & 0x80) != 0) {
                 this.sq = 1;
             }
         }
@@ -364,29 +366,27 @@ public class Protocol101 {
                 this.yaoCeObjAddr = frame[begin] + frame[begin + 1] * 256;
                 this.infoAddr = DataConvertUtils.convertByteArrayToString(frame, begin, begin + 1, true);
                 pos = pos + 2;
-                switch (yaoCeObjAddr) {
-                    case 0://遥测
-                        for (int i = 0; i < vsq; i++) {
-                            if (ti == 13) {
-                                values.add(DataConvertUtils.byte4ToFloat_Str(frame, pos));
-                            } else if (ti == 9) {
 
-                            } else if (ti == 11) {
-
-                            }
-                            pos = pos + 5;
+                if (ti == 13 || ti == 9 || ti == 11)  { //YaoCe
+                    for (int i = 0; i < vsq; i++) {
+                        if (ti == 13) {
+                            values.add(DataConvertUtils.byte4ToFloat_Str(frame, pos));
+                        } else if (ti == 9) {
+                            values.add(DataConvertUtils.byte4ToFloat_Str(frame, pos));
+                        } else if (ti == 11) {
+                            values.add(DataConvertUtils.byte4ToFloat_Str(frame, pos));
                         }
-                        break;
-                    case 1://遥信
-                        for (int i = 0; i < vsq; i++) {
-                            if (ti == 1) {
-                                values.add("单点:" + DataConvertUtils.convertByteToString(frame[pos]));
-                            } else if (ti == 3) {
-                                values.add("双点:" + DataConvertUtils.convertByteToString(frame[pos]));
-                            }
-                            pos = pos + 1;
+                        pos = pos + 5;
+                    }
+                } else if (ti == 1 || ti == 3) { //YaoXin
+                    for (int i = 0; i < vsq; i++) {
+                        if (ti == 1) {
+                            values.add("单点:" + DataConvertUtils.convertByteToString(frame[pos]));
+                        } else if (ti == 3) {
+                            values.add("双点:" + DataConvertUtils.convertByteToString(frame[pos]));
                         }
-                        break;
+                        pos = pos + 1;
+                    }
                 }
 
                 this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
@@ -412,6 +412,7 @@ public class Protocol101 {
         public InfoObjList(ArrayList<InfoObj> objs) {
             infoObjs = objs;
             if (objs == null ||objs.size() <= 0) {
+                LogUtils.i("objs is null");
                 return;
             }
 
@@ -491,8 +492,16 @@ public class Protocol101 {
             if (lable != null && lable.data != null) {
                 len = len + lable.data.length;
             }
+            else
+            {
+                LogUtils.i("lable is null");
+            }
             if (objList != null && objList.data != null) {
                 len = len + objList.data.length;
+            }
+            else
+            {
+                LogUtils.i("objList is null");
             }
 
             this.data = new byte[len];
@@ -511,8 +520,36 @@ public class Protocol101 {
             try {
                 this.dataUnitLable = new DataUnitLable(frame, begin);
                 this.infoObjList = new InfoObjList(dataUnitLable, frame, begin + 6);
-            } catch (Exception e) {
+                DataUnitLable lable = this.dataUnitLable;
+                InfoObjList objList = this.infoObjList;
+                int len = 0;
+                int pos = 0;
+                if (lable != null && lable.data != null) {
+                    len = len + lable.data.length;
+                }
+                else
+                {
+                    LogUtils.i("lable is null");
+                }
+                if (objList != null && objList.data != null) {
+                    len = len + objList.data.length;
+                }
+                else
+                {
+                    LogUtils.i("objList is null");
+                }
 
+                this.data = new byte[len];
+                if (lable != null && lable.data != null) {
+                    System.arraycopy(lable.data, 0, this.data, pos, lable.data.length);
+                    pos = pos + lable.data.length;
+                }
+                if (objList != null && objList.data != null) {
+                    len = len + objList.data.length;
+                    System.arraycopy(objList.data, 0, this.data, pos, objList.data.length);
+                }
+            } catch (Exception e) {
+                LogUtils.e("ASDU parse err: " + e.getMessage());
             }
 
         }

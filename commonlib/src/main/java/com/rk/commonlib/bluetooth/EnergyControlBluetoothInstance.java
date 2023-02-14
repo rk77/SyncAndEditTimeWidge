@@ -449,7 +449,7 @@ public class EnergyControlBluetoothInstance implements IBluethoothInstance{
                 tmpFrame[i] = frame.get(i);
             }
             if (mVerifyObj != null) {
-                mVerifyObj.verify(tmpFrame, 0);
+                return mVerifyObj.verify(tmpFrame, 0);
             }
             return verify698Frame(tmpFrame);
         }

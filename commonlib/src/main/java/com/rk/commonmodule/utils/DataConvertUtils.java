@@ -261,10 +261,10 @@ public class DataConvertUtils {
 
     public static String getByteArray2AsciiString(byte[] data, int begin, int end, boolean revertTo){
         if (data == null || data.length <= 0) {
-            return null;
+            return "";
         }
         if (begin > end || begin > data.length - 1 || end > data.length - 1) {
-            return null;
+            return "";
         }
         byte[] subData = new byte[end - begin + 1];
         if (revertTo) {
