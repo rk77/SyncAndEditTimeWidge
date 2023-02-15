@@ -97,12 +97,15 @@ public class TtuBluetoothFrame {
     public TtuBluetoothFrame(byte[] frame, int begin) {
 
         if (!verifyFrame(frame)) {
+            LogUtils.i("verify err");
             return;
         }
 
         mFrameType = FrameType.valueOf(frame[mFrameTypePos]);
         mTotalFrameCount = frame[mTotalPos];
         mSegFrameNum = frame[mSegNumPos];
+
+        LogUtils.i("type: " + mFrameType + ", total: " + mTotalFrameCount + ", seg: " + mSegFrameNum);
 
         TtuBlutoothRawDataFactory factory = new TtuBlutoothRawDataFactory();
         byte[] rawData = DataConvertUtils.getSubByteArray(frame, mRawDataPos, mCsPos - 1);

@@ -109,8 +109,8 @@ public class TtuBlutoothRawDataFactory {
             byte[] topicLength = new byte[1];
             byte[] payloadLength = new byte[2];
             topicLength[0] = (byte) (topic != null ? topic.length : 0);
-            payloadLength[0] = (byte) ((topic != null ? topic.length : 0) & 0xFF);
-            payloadLength[1] = (byte) (((topic != null ? topic.length : 0) >> 8) & 0xFF);
+            payloadLength[0] = (byte) ((payload != null ? payload.length : 0) & 0xFF);
+            payloadLength[1] = (byte) (((payload != null ? payload.length : 0) >> 8) & 0xFF);
             int pos = 0;
             System.arraycopy(topicLength, 0, this.data, pos, topicLength.length);
             pos = pos + topicLength.length;
@@ -208,6 +208,9 @@ public class TtuBlutoothRawDataFactory {
                 pos = pos + 2;
                 this.payload = new byte[payloadLen];
                 System.arraycopy(frame, pos, this.payload, 0, payloadLen);
+                pos = pos + payloadLen;
+                this.data = new byte[1 + 2 + topicLen + payloadLen];
+                System.arraycopy(frame, begin, this.data, 0, this.data.length);
             } catch (Exception e) {
                 LogUtils.e("error: " + e.getMessage());
             }
