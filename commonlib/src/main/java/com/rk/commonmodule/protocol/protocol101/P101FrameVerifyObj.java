@@ -1,9 +1,11 @@
 package com.rk.commonmodule.protocol.protocol101;
 
 import com.rk.commonlib.bluetooth.IFrameVerify;
-import com.rk.commonlib.util.LogUtils;;
+import com.rk.commonlib.util.LogUtils;
+import com.rk.commonmodule.utils.DataConvertUtils;;
 
 public class P101FrameVerifyObj implements IFrameVerify {
+    //68 0c 0c 68 c3 01 00 46 01 04 00 01 00 00 00 00 10 16
     @Override
     public boolean verify(byte[] frame, int begin) {
         if (frame == null || frame.length <= 0) {
@@ -14,6 +16,7 @@ public class P101FrameVerifyObj implements IFrameVerify {
             if (frame[i] == 0x68) {
                 has68 = true;
                 begin = i;
+                break;
             }
         }
         if (!has68) {
@@ -25,6 +28,8 @@ public class P101FrameVerifyObj implements IFrameVerify {
                 LogUtils.i("err2");
                 return false;
             }
+            LogUtils.i("len 1:" + frame[begin + 1]);
+            LogUtils.i("len 2:" + frame[begin + 2]);
             if (frame[begin + 1] != frame[begin + 2]){
                 LogUtils.i("err3");
                 return false;
