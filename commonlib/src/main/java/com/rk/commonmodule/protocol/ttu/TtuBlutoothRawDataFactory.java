@@ -203,11 +203,14 @@ public class TtuBlutoothRawDataFactory {
                 pos = pos + 1;
                 this.topic = new byte[topicLen];
                 System.arraycopy(frame, pos, this.topic, 0, topicLen);
+                LogUtils.i("mqtt respond, topic:" + DataConvertUtils.getByteArray2AsciiString(this.topic));
                 pos = pos + topicLen;
-                int payloadLen = frame[pos] + frame[pos + 1] * 256;
+                int payloadLen = (frame[pos] & 0xFF) + (frame[pos + 1] & 0xFF) * 256;
+                LogUtils.i("mqtt respond, payload len: " + payloadLen);
                 pos = pos + 2;
                 this.payload = new byte[payloadLen];
                 System.arraycopy(frame, pos, this.payload, 0, payloadLen);
+                LogUtils.i("mqtt respond, payload:" + DataConvertUtils.getByteArray2AsciiString(this.payload));
                 pos = pos + payloadLen;
                 this.data = new byte[1 + 2 + topicLen + payloadLen];
                 System.arraycopy(frame, begin, this.data, 0, this.data.length);

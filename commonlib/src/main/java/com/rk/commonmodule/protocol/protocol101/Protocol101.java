@@ -30,14 +30,14 @@ public class Protocol101 {
             data[4] = cs;
             data[5] = 0x16;
         }
-
+        //10 8b 01 00 8c 16
         public FixFrame(byte[] frame) {
 
 
             try {
                 int begin = 0;
-                for (int i = 0; i < data.length; i++) {
-                    if (data[i] == 0x10) {
+                for (int i = 0; i < frame.length; i++) {
+                    if (frame[i] == 0x10) {
                         begin = i;
                         break;
                     }

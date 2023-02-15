@@ -4,6 +4,7 @@ public class JSONTool {
 
     public static String stringToJSON(String strJson) {
         // 计数tab的个数
+        LogUtils.i("string: " + strJson);
         int tabNum = 0;
         StringBuffer jsonFormat = new StringBuffer();
         int length = strJson.length();
