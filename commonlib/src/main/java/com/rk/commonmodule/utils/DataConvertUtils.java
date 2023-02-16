@@ -3,10 +3,16 @@ package com.rk.commonmodule.utils;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.rk.commonlib.util.LogUtils;
+
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -59,11 +65,12 @@ public class DataConvertUtils {
             return "##";
         }
 
-        float f = (float) ((data[begin] & 0xFF)
-                | ((data[begin + 1] << 8) & 0xFF00)
-                | ((data[begin + 2] << 16) & 0xFF0000)
-                | ((data[begin + 3] << 24) & 0xFF000000));
-        return String.valueOf(f);
+        try {
+            float flt = ByteBuffer.wrap(DataConvertUtils.getSubByteArray(data, begin, begin + 3)).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+            return String.valueOf(flt);
+        } catch (Exception e) {
+            return "##";
+        }
     }
 
     public static final String convertByteToString(byte data) {

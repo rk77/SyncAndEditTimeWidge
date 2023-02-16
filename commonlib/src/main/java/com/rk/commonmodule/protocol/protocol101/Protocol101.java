@@ -363,7 +363,7 @@ public class Protocol101 {
         public YaoCe_YaoXin_SQ_1_InfoObj(int ti, int vsq, byte[] frame, int begin) {
             try {
                 int pos = begin;
-                this.yaoCeObjAddr = frame[begin] + frame[begin + 1] * 256;
+                this.yaoCeObjAddr = (frame[begin] & 0xFF) + (frame[begin + 1] & 0xFF) * 256;
                 this.infoAddr = DataConvertUtils.convertByteArrayToString(frame, begin, begin + 1, true);
                 pos = pos + 2;
 
