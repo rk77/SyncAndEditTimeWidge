@@ -564,5 +564,270 @@ public class Protocol101 {
 
         }
     }
+
+    public static final class Read_Param_Ctrl_InfoObj extends InfoObj {
+        public int sn;
+        ArrayList<String> infoAddrList = new ArrayList<>();
+        public Read_Param_Ctrl_InfoObj(int sn, ArrayList<String> list) {
+            try {
+                this.sn = sn;
+                this.infoAddrList = list;
+                this.data = new byte[2 + list.size() * 2];
+                this.data[0] = (byte) (sn & 0xFF);
+                this.data[1] = (byte) ((sn >> 8) & 0xFF);
+                int pos = 2;
+                for (int i = 0; i < list.size(); i++) {
+                    byte[] info_d = DataConvertUtils.convertHexStringToByteArray(list.get(i), list.get(i).length(), true);
+                    data[pos] = info_d[0];
+                    data[pos + 1] = info_d[1];
+                    pos = pos + 2;
+                }
+            } catch (Exception e) {
+                LogUtils.e("yc sq 1, err: " + e.getMessage());
+            }
+        }
+
+        @Override
+        public String toString() {
+            if (this.data == null || this.data.length <= 0) {
+                return "NULL";
+            }
+            return "SN：" + this.sn + ", 信息体地址：" + Arrays.toString(infoAddrList.toArray());
+        }
+    }
+
+
+    public static final class Read_Param_Obsv_InfoObj extends InfoObj {
+        public int sn;
+        public byte parmCharaLable;
+        ArrayList<Param_Obsv_Val> values = new ArrayList<>();
+        public Read_Param_Obsv_InfoObj(int vsq, byte[] frame, int begin) {
+            try {
+                sn = frame[begin + 1] * 256 + frame[begin];
+                parmCharaLable = frame[begin + 2];
+                int pos = begin + 3;
+                for (int i = 0; i < vsq; i++) {
+                    Param_Obsv_Val item = new Param_Obsv_Val(frame, pos);
+                    values.add(item);
+                    pos = pos + item.data.length;
+                }
+
+                this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
+
+
+            } catch (Exception e) {
+                LogUtils.e("Read_Param_Obsv_InfoObj, err: " + e.getMessage());
+            }
+        }
+
+        @Override
+        public String toString() {
+            if (this.data == null || this.data.length <= 0) {
+                return "NULL";
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+            for (int i = 0; i < values.size(); i++) {
+                sb.append(values.get(i).toString()).append(", ");
+            }
+            sb.append("]");
+            return sb.toString();
+        }
+    }
+
+    public static final class Set_Param_Pre_InfoObj extends InfoObj {
+        public int sn;
+        public byte parmCharaLable;
+        ArrayList<Param_Obsv_Val> values = new ArrayList<>();
+        public Set_Param_Pre_InfoObj(int sn, byte parmCharaLable, ArrayList<Param_Obsv_Val> param_obsv_vals) {
+            try {
+                this.sn = sn;
+                this.parmCharaLable = parmCharaLable;
+                values = param_obsv_vals;
+
+                int len = 0;
+                for (int i = 0; i < values.size(); i++) {
+                    len = values.get(i).data.length + len;
+                }
+                this.data = new byte[3 + len];
+
+                this.data[0] = (byte) (sn & 0xFF);
+                this.data[1] = (byte) ((sn >> 8) & 0xFF);
+                this.data[2] = parmCharaLable;
+                int pos = 3;
+                for (int i = 0; i < values.size(); i++) {
+                    Param_Obsv_Val item = values.get(i);
+                    System.arraycopy(item.data, 0, data, pos, item.data.length);
+                    pos = pos + item.data.length;
+                }
+
+            } catch (Exception e) {
+                LogUtils.e("Read_Param_Obsv_InfoObj, err: " + e.getMessage());
+            }
+        }
+
+        @Override
+        public String toString() {
+            if (this.data == null || this.data.length <= 0) {
+                return "NULL";
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+            for (int i = 0; i < values.size(); i++) {
+                sb.append(values.get(i).toString()).append(", ");
+            }
+            sb.append("]");
+            return sb.toString();
+        }
+    }
+
+    public static final class Param_Obsv_Val {
+        public String infoAddr;
+        public byte tag;
+        public String tag_s;
+        public String value;
+
+        public byte[] data;
+
+        public Param_Obsv_Val(String infoAddr, byte tag, String value) {
+            try {
+                this.infoAddr = infoAddr;
+                this.tag = tag;
+                this.value = value;
+                int len = getLen(tag, value);
+
+                byte[] v_d = getData(tag, value);
+
+                this.data = new byte[4 + len];
+
+                byte[] add_d = DataConvertUtils.convertHexStringToByteArray(infoAddr, infoAddr.length(), true);
+                this.data[0] = add_d[0];
+                this.data[1] = add_d[1];
+                this.data[2] = tag;
+                this.data[3] = (byte) len;
+                int pos = 4;
+                for (int i = 0; i < v_d.length; i++) {
+                    this.data[pos + i] = v_d[i];
+                }
+
+            } catch (Exception e) {
+                LogUtils.e("Param_Obsv_Val, make err:" + e.getMessage());
+            }
+
+        }
+
+        public Param_Obsv_Val(byte[] frame, int begin) {
+            this.infoAddr = DataConvertUtils.convertByteArrayToString(frame, begin, begin + 1, true);
+            this.tag = frame[begin + 2];
+            int pos = begin + 3;
+            int len = frame[pos];
+            pos = pos + 1;
+            int end = pos + len - 1;
+
+            byte[] val_data = DataConvertUtils.getSubByteArray(frame, pos, end);
+            value = conV(tag, val_data);
+            this.data = DataConvertUtils.getSubByteArray(frame, begin, end);
+        }
+
+        @Override
+        public String toString() {
+            return this.infoAddr + "：" + value;
+        }
+
+
+    }
+
+    private static String conV(byte tag, byte[] data) {
+        switch (tag & 0xFF) {
+            case 1:
+                return DataConvertUtils.ByteToBool(data[0]) + "";
+            case 43:
+                return DataConvertUtils.ByteToTiny(data[0]) + "";
+            case 32:
+                return DataConvertUtils.ByteToUTiny(data[0]) + "";
+            case 33:
+                return DataConvertUtils.ByteToShort(data) + "";
+            case 45:
+                return DataConvertUtils.ByteToUShort(data) + "";
+            case 2:
+                return DataConvertUtils.ByteToInt(data) + "";
+            case 35:
+                return DataConvertUtils.ByteToUInt(data) + "";
+            case 36:
+                return DataConvertUtils.ByteToLong(data) + "";
+            case 37:
+                return DataConvertUtils.ByteToUlong(data) + "";
+            case 38:
+                return DataConvertUtils.byte4ToFloat_Str(data, 0);
+            case 39:
+                return DataConvertUtils.byte4ToDouble_Str(data, 0);
+            case 4:
+                return DataConvertUtils.ByteToStr(data);
+        }
+        return DataConvertUtils.convertByteArrayToString(data, false);
+    }
+
+    private static int getLen(byte tag, String value) {
+        switch (tag & 0xFF) {
+            case 1:
+                return 1;
+            case 43:
+                return 1;
+            case 32:
+                return 1;
+            case 33:
+                return 2;
+            case 45:
+                return 2;
+            case 2:
+                return 4;
+            case 35:
+                return 4;
+            case 36:
+                return 8;
+            case 37:
+                return 8;
+            case 38:
+                return 4;
+            case 39:
+                return 8;
+            case 4:
+                return value.length() + 1;
+        }
+        return 4;
+    }
+
+    private static byte[] getData(byte tag, String value) {
+        switch (tag & 0xFF) {
+            case 1:
+                return DataConvertUtils.BoolToByte(Boolean.valueOf(value));
+            case 43:
+                return DataConvertUtils.TinyToByte(Byte.valueOf(value));
+            case 32:
+                return DataConvertUtils.UTinyToByte(Integer.valueOf(value));
+            case 33:
+                return DataConvertUtils.ShortToByte(Short.valueOf(value));
+            case 45:
+                return DataConvertUtils.UShortToByte(Integer.valueOf(value));
+            case 2:
+                return DataConvertUtils.IntToByte(Integer.valueOf(value));
+            case 35:
+                return DataConvertUtils.UIntToByte(Long.valueOf(value));
+            case 36:
+                return DataConvertUtils.LongToByte(Long.valueOf(value));
+            case 37:
+                return DataConvertUtils.UlongToByte(Long.valueOf(value));
+            case 38:
+                return DataConvertUtils.floatToByte(Float.valueOf(value));
+            case 39:
+                return DataConvertUtils.doubleToByte(Double.valueOf(value));
+            case 4:
+                return DataConvertUtils.StrToByte(value);
+        }
+        return new byte[]{0, 0, 0, 0};
+    }
+
+
+
 }
 

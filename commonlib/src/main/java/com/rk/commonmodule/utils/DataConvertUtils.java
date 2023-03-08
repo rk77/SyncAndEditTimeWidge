@@ -73,6 +73,181 @@ public class DataConvertUtils {
         }
     }
 
+    public static byte[] floatToByte(float v) {
+        byte[] data = new byte[4];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte)(( Float.floatToIntBits(v) >> (8 * i)) & 0xFF);
+        }
+        return data;
+    }
+
+    public static byte[] doubleToByte(double v) {
+        byte[] data = new byte[8];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte)(( Double.doubleToLongBits(v) >> (8 * i)) & 0xFF);
+        }
+        return data;
+    }
+
+    public static final String byte4ToDouble_Str(byte[] data, int begin) {
+        if (data == null || begin < 0 || data.length - 1 - begin + 1 < 8) {
+            return "##";
+        }
+
+        try {
+            double flt = ByteBuffer.wrap(DataConvertUtils.getSubByteArray(data, begin, begin + 7)).order(ByteOrder.LITTLE_ENDIAN).getDouble();
+            return String.valueOf(flt);
+        } catch (Exception e) {
+            return "##";
+        }
+    }
+
+    public static final boolean ByteToBool(byte data) {
+        if (data > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static final byte[] BoolToByte(boolean v) {
+        if (v) {
+            return new byte[]{0x01};
+        } else {
+            return new byte[]{0x00};
+        }
+    }
+
+    public static final int ByteToTiny(byte data) {
+        return data;
+    }
+
+    public static final byte[] TinyToByte(byte v) {
+        byte[] data = new byte[1];
+        data[0] = v;
+        return data;
+    }
+
+    public static final int ByteToUTiny(byte data) {
+        return (data & 0xFF);
+    }
+
+    public static final byte[] UTinyToByte(int v) {
+        byte[] data = new byte[1];
+        data[0] = (byte) (v & 0xFF);
+        return data;
+    }
+
+    public static final short ByteToShort(byte[] data) {
+        short i = (short) (((data[1] & 0xff) << 8) | (data[0] & 0xff));
+        return i;
+    }
+
+    public static final byte[] ShortToByte(short v) {
+        byte[] data = new byte[2];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte)(((v) >> (8 * i)) & 0xFF);
+        }
+        return data;
+    }
+
+    public static final int ByteToUShort(byte[] data) {
+        int i = (int) ((((data[1] & 0xff) << 8) | (data[0] & 0xff)) & 0xFFFF);
+        return i;
+    }
+
+    public static final byte[] UShortToByte(int v) {
+        byte[] data = new byte[2];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte)(((v) >> (8 * i)) & 0xFF);
+        }
+        return data;
+    }
+
+    public static final int ByteToInt(byte[] data) {
+        int i = (int) ((((data[3] & 0xff) << 24) | ((data[2] & 0xff) << 16) | ((data[1] & 0xff) << 8) | (data[0] & 0xff)));
+        return i;
+    }
+
+    public static final byte[] IntToByte(int v) {
+        byte[] data = new byte[4];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte)(((v) >> (8 * i)) & 0xFF);
+        }
+        return data;
+    }
+
+    public static final long ByteToUInt(byte[] data) {
+        long i = (long) ((((data[3] & 0xff) << 24) | ((data[2] & 0xff) << 16) | ((data[1] & 0xff) << 8) | (data[0] & 0xff)) & 0xFFFFFFFF);
+        return i;
+    }
+
+    public static final byte[] UIntToByte(long v) {
+        byte[] data = new byte[4];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte)(((v) >> (8 * i)) & 0xFF);
+        }
+        return data;
+    }
+
+    public static final long ByteToLong(byte[] data) {
+        long i = (long) ((
+                ((data[7] & 0xff) << 56)
+                | ((data[6] & 0xff) << 48)
+                | ((data[5] & 0xff) << 40)
+                | ((data[4] & 0xff) << 32)
+                | ((data[3] & 0xff) << 24)
+                | ((data[2] & 0xff) << 16)
+                | ((data[1] & 0xff) << 8)
+                | (data[0] & 0xff)));
+        return i;
+    }
+
+    public static final byte[] LongToByte(long v) {
+        byte[] data = new byte[8];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte)(((v) >> (8 * i)) & 0xFF);
+        }
+        return data;
+    }
+
+    public static final long ByteToUlong(byte[] data) {
+        long i = (long) ((
+                ((data[7] & 0xff) << 56)
+                        | ((data[6] & 0xff) << 48)
+                        | ((data[5] & 0xff) << 40)
+                        | ((data[4] & 0xff) << 32)
+                        | ((data[3] & 0xff) << 24)
+                        | ((data[2] & 0xff) << 16)
+                        | ((data[1] & 0xff) << 8)
+                        | (data[0] & 0xff)));
+        return i;
+    }
+
+    public static final byte[] UlongToByte(long v) {
+        byte[] data = new byte[8];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte)(((v) >> (8 * i)) & 0xFF);
+        }
+        return data;
+    }
+
+    public static final String ByteToOctStr(byte[] data) {
+        return convertByteArrayToString(data, false);
+    }
+
+    public static final byte[] OctStrToByte(String octS) {
+        return convertHexStringToByteArray(octS, octS.length(), false);
+    }
+
+    public static final String ByteToStr(byte[] data) {
+        return getByteArray2AsciiString(data, 0, data.length - 1, false);
+    }
+
+    public static final byte[] StrToByte(String str) {
+        return assicString2ByteArray_end_S(str);
+    }
+
     public static final String convertByteToString(byte data) {
         String item = Integer.toHexString(data & 0xFF);
         if (item == null || item.trim().equals("")) {
@@ -84,7 +259,6 @@ public class DataConvertUtils {
             item = "0" + item;
         }
         return item;
-
     }
 
     public static final ArrayList<Byte> convertHexStringToByteArrayList(String hexString, int length, boolean revertTo) {
@@ -313,6 +487,19 @@ public class DataConvertUtils {
         for (int i = 0; i < size; i++) {
             data[i] = (byte) (s.charAt(i));
         }
+        return data;
+    }
+
+    public static byte[] assicString2ByteArray_end_S(String s) {
+        if (TextUtils.isEmpty(s)) {
+            return null;
+        }
+        int size = s.length();
+        byte[] data = new byte[size + 1];
+        for (int i = 0; i < size; i++) {
+            data[i] = (byte) (s.charAt(i));
+        }
+        data[size] = '\0';
         return data;
     }
 
