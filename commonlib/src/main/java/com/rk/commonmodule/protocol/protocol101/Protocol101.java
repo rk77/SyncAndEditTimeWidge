@@ -701,6 +701,10 @@ public class Protocol101 {
 
                 byte[] v_d = getData(tag, value);
 
+                if (v_d == null) {
+                    return;
+                }
+
                 this.data = new byte[4 + len];
 
                 byte[] add_d = DataConvertUtils.convertHexStringToByteArray(infoAddr, infoAddr.length(), true);
@@ -801,33 +805,40 @@ public class Protocol101 {
     }
 
     private static byte[] getData(byte tag, String value) {
-        switch (tag & 0xFF) {
-            case 1:
-                return DataConvertUtils.BoolToByte(Boolean.valueOf(value));
-            case 43:
-                return DataConvertUtils.TinyToByte(Byte.valueOf(value));
-            case 32:
-                return DataConvertUtils.UTinyToByte(Integer.valueOf(value));
-            case 33:
-                return DataConvertUtils.ShortToByte(Short.valueOf(value));
-            case 45:
-                return DataConvertUtils.UShortToByte(Integer.valueOf(value));
-            case 2:
-                return DataConvertUtils.IntToByte(Integer.valueOf(value));
-            case 35:
-                return DataConvertUtils.UIntToByte(Long.valueOf(value));
-            case 36:
-                return DataConvertUtils.LongToByte(Long.valueOf(value));
-            case 37:
-                return DataConvertUtils.UlongToByte(Long.valueOf(value));
-            case 38:
-                return DataConvertUtils.floatToByte(Float.valueOf(value));
-            case 39:
-                return DataConvertUtils.doubleToByte(Double.valueOf(value));
-            case 4:
-                return DataConvertUtils.StrToByte(value);
+        try {
+
+            switch (tag & 0xFF) {
+                case 1:
+                    return DataConvertUtils.BoolToByte(Boolean.valueOf(value));
+                case 43:
+                    return DataConvertUtils.TinyToByte(Byte.valueOf(value));
+                case 32:
+                    return DataConvertUtils.UTinyToByte(Integer.valueOf(value));
+                case 33:
+                    return DataConvertUtils.ShortToByte(Short.valueOf(value));
+                case 45:
+                    return DataConvertUtils.UShortToByte(Integer.valueOf(value));
+                case 2:
+                    return DataConvertUtils.IntToByte(Integer.valueOf(value));
+                case 35:
+                    return DataConvertUtils.UIntToByte(Long.valueOf(value));
+                case 36:
+                    return DataConvertUtils.LongToByte(Long.valueOf(value));
+                case 37:
+                    return DataConvertUtils.UlongToByte(Long.valueOf(value));
+                case 38:
+                    return DataConvertUtils.floatToByte(Float.valueOf(value));
+                case 39:
+                    return DataConvertUtils.doubleToByte(Double.valueOf(value));
+                case 4:
+                    return DataConvertUtils.StrToByte(value);
+            }
+
+        } catch (Exception e) {
+            return null;
         }
-        return new byte[]{0, 0, 0, 0};
+
+        return null;
     }
 
     public static int getTag(String type) {
