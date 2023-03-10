@@ -226,7 +226,7 @@ public class Protocol101 {
     }
 
     public static final class DataUnitLable {
-        public byte TI;
+        public int TI;
         public byte VSQ;
         public VSQ_Obj vsq_obj;
         public byte[] COT;
@@ -235,7 +235,7 @@ public class Protocol101 {
         public int commonAddr;
         public byte[] data;
         public DataUnitLable(int ti, byte vsq, int cot, int coAddr) {
-            this.TI = (byte) ti;
+            this.TI = ti;
             this.VSQ = vsq;
             this.vsq_obj = new VSQ_Obj(vsq);
             this.COT = new byte[2];
@@ -248,7 +248,7 @@ public class Protocol101 {
             this.commonAddr = coAddr;
 
             this.data = new byte[6];
-            this.data[0] = TI;
+            this.data[0] = (byte) TI;
             this.data[1] = VSQ;
             this.data[2] = COT[0];
             this.data[3] = COT[1];
@@ -259,7 +259,7 @@ public class Protocol101 {
 
         public DataUnitLable(byte[] frame, int begin) {
             try {
-                TI = frame[begin];
+                TI = frame[begin] & 0xFF;
                 VSQ = frame[begin + 1];
                 this.vsq_obj = new VSQ_Obj(VSQ);
                 COT = new byte[2];
@@ -440,6 +440,7 @@ public class Protocol101 {
 
         public InfoObjList(DataUnitLable lable, byte[] frame, int begin) {
             try {
+                LogUtils.i("InfoObjList, lable TI: " + lable.TI + ", cot: " + lable.cot);
                 infoObjs = new ArrayList<>();
                 if (lable.TI == 100 && lable.cot == 6) {
                     infoObjs.add(new ZongZhaoInfoObj(frame, begin));
@@ -449,6 +450,8 @@ public class Protocol101 {
                     infoObjs.add(new YaoCe_YaoXin_SQ_1_InfoObj(lable.TI, lable.vsq_obj.num, frame, begin));
                 } else if (lable.TI == 103 && (lable.cot == 7 || lable.cot == 5)) {
                     infoObjs.add(new ClockInfoObj(frame, begin));
+                } else if (lable.TI == 202 && lable.cot == 7) {
+                    infoObjs.add(new Read_Param_Obsv_InfoObj(lable.vsq_obj.num, frame, begin));
                 }
 
                 int size = 0;
@@ -825,6 +828,40 @@ public class Protocol101 {
                 return DataConvertUtils.StrToByte(value);
         }
         return new byte[]{0, 0, 0, 0};
+    }
+
+    public static int getTag(String type) {
+        String t = type.toLowerCase();
+        switch (t) {
+            case "boolean":
+                return 1;
+            case "tiny":
+                return 43;
+            case "utiny":
+                return 32;
+            case "short":
+                return 33;
+            case "ushort":
+                return 45;
+            case "int":
+                return 2;
+            case "uint":
+                return 35;
+            case "long":
+                return 36;
+            case "ulong":
+                return 37;
+            case "float":
+                return 38;
+            case "double":
+                return 39;
+            case "octerstring":
+                return 4;
+            case "string":
+                return 4;
+            default:
+                return 0;
+        }
     }
 
 
