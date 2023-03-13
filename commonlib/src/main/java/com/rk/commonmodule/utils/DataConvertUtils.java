@@ -542,4 +542,14 @@ public class DataConvertUtils {
         return md5code;
     }
 
+    public static byte setBitVal(byte data, int pos, int value) {
+        if (value <= 0) {
+            byte mask = (byte) (~(0x01 << pos));
+            return (byte)(mask & data);
+        } else {
+            byte mask = (byte) (0x01 << pos);
+            return (byte)(mask | data);
+        }
+    }
+
 }
