@@ -1,5 +1,6 @@
 package com.rk.commonmodule.protocol.protocol101;
 
+import com.rk.commonlib.util.ConstantUtil;
 import com.rk.commonlib.util.LogUtils;
 import com.rk.commonmodule.protocol.protocol3761.Protocol3761Frame;
 import com.rk.commonmodule.protocol.protocol645.Ltu645ProtocolHelper;
@@ -452,6 +453,8 @@ public class Protocol101 {
                     infoObjs.add(new ClockInfoObj(frame, begin));
                 } else if (lable.TI == 202 && lable.cot == 7) {
                     infoObjs.add(new Read_Param_Obsv_InfoObj(lable.vsq_obj.num, frame, begin));
+                } else if (lable.TI == 203 && lable.cot == 7) {
+                    infoObjs.add(new Set_Param_Pre_InfoObj(lable.vsq_obj.num, frame, begin));
                 }
 
                 int size = 0;
@@ -641,11 +644,15 @@ public class Protocol101 {
     public static final class Set_Param_Pre_InfoObj extends InfoObj {
         public int sn;
         public byte parmCharaLable;
+        public PI pi;
         ArrayList<Param_Obsv_Val> values = new ArrayList<>();
         public Set_Param_Pre_InfoObj(int sn, byte parmCharaLable, ArrayList<Param_Obsv_Val> param_obsv_vals) {
             try {
                 this.sn = sn;
                 this.parmCharaLable = parmCharaLable;
+                byte[] pi_d = new byte[1];
+                pi_d[0] = parmCharaLable;
+                this.pi = new PI(pi_d, 0);
                 values = param_obsv_vals;
 
                 int len = 0;
@@ -665,7 +672,28 @@ public class Protocol101 {
                 }
 
             } catch (Exception e) {
-                LogUtils.e("Read_Param_Obsv_InfoObj, err: " + e.getMessage());
+                LogUtils.e("Set_Param_Pre_InfoObj, make err: " + e.getMessage());
+            }
+        }
+
+        public Set_Param_Pre_InfoObj(int vsq_num, byte[] frame, int begin) {
+            try {
+                int pos = begin;
+                this.sn = frame[pos + 1] * 256 + frame[pos];
+                this.parmCharaLable = frame[pos + 2];
+                this.pi = new PI(frame, pos + 2);
+                pos = begin + 3;
+                for (int i = 0; i < vsq_num; i++) {
+                    Param_Obsv_Val param_obsv_val = new Param_Obsv_Val(frame, pos);
+                    if (param_obsv_val.data == null) {
+                        break;
+                    }
+                    pos = pos + param_obsv_val.data.length;
+                }
+                this.data = DataConvertUtils.getSubByteArray(frame, begin, pos - 1);
+
+            } catch (Exception e) {
+                LogUtils.e("Set_Param_Pre_InfoObj, parse err: " + e.getMessage());
             }
         }
 
@@ -873,6 +901,47 @@ public class Protocol101 {
             default:
                 return 0;
         }
+    }
+
+    public static class PI {
+        public boolean cont, cr, s_e;
+        public byte[] data;
+
+        public PI(boolean cont, boolean cr, boolean s_e) {
+            this.cont = cont;
+            this.cr = cr;
+            this.s_e = s_e;
+
+            data = new byte[1];
+            if (cont) {
+                data[0] = DataConvertUtils.setBitVal(data[0], 0, 1);
+            } else {
+                data[0] = DataConvertUtils.setBitVal(data[0], 0, 0);
+            }
+            if (cr) {
+                data[0] = DataConvertUtils.setBitVal(data[0], 6, 1);
+            } else {
+                data[0] = DataConvertUtils.setBitVal(data[0], 6, 0);
+            }
+            if (s_e) {
+                data[0] = DataConvertUtils.setBitVal(data[0], 7, 1);
+            } else {
+                data[0] = DataConvertUtils.setBitVal(data[0], 7, 0);
+            }
+        }
+
+        public PI(byte[] frame, int begin) {
+            try {
+                data = new byte[1];
+                data[0] = frame[begin];
+                this.cont = DataConvertUtils.getBitVal(data[0], 0);
+                this.cr = DataConvertUtils.getBitVal(data[0], 6);
+                this.s_e = DataConvertUtils.getBitVal(data[0], 7);
+            } catch (Exception e) {
+                LogUtils.e("PI, err: " + e.getMessage());
+            }
+        }
+
     }
 
 

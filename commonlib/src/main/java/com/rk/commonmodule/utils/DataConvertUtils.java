@@ -552,4 +552,13 @@ public class DataConvertUtils {
         }
     }
 
+    public static boolean getBitVal(byte data, int pos) {
+        byte v = (byte) ((data >> pos) & 0x01);
+        if (v > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 }
