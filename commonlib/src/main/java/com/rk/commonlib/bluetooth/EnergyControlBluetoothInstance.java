@@ -767,12 +767,15 @@ public class EnergyControlBluetoothInstance implements IBluethoothInstance{
                 Log.i(TAG, "sendAndReceiveSync, total: " + data.length + ", begin: " + begin + ", end: " + end
                         + ", sub frame: " + DataConvertUtils.convertByteArrayToString(subFrame, false));
 
-                try {
-                    mWriteCharacteristic.setValue(subFrame);
-                    mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
-                    Log.i("AX", "send chara: " + mWriteCharacteristic);
-                } catch (Exception e) {
-                    Log.e(TAG, "send, wait for writing error: " + e.getMessage());
+                synchronized (mWriteSync) {
+                    try {
+                        mWriteCharacteristic.setValue(subFrame);
+                        mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
+                        Log.i("AX", "send chara: " + mWriteCharacteristic);
+                        mWriteSync.wait(WAIT_TIMEOUT);
+                    } catch (Exception e) {
+                        Log.e(TAG, "send, wait for writing error: " + e.getMessage());
+                    }
                 }
             }
         }

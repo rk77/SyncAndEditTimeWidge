@@ -861,7 +861,6 @@ public class Protocol101 {
                 case 4:
                     return DataConvertUtils.StrToByte(value);
             }
-
         } catch (Exception e) {
             return null;
         }
