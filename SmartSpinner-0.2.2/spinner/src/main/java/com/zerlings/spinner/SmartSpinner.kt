@@ -179,6 +179,10 @@ class SmartSpinner @JvmOverloads constructor(context: Context, attrs: AttributeS
         return if (text == presetText) null else text
     }
 
+    fun getEntry() : Array<CharSequence>? {
+        return entries;
+    }
+
     fun getSelectedIndex(): Int {
         return selectedIndex
     }
