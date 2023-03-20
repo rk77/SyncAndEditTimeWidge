@@ -180,7 +180,7 @@ class SmartSpinner @JvmOverloads constructor(context: Context, attrs: AttributeS
     }
 
     fun getEntry() : Array<CharSequence>? {
-        return entries;
+        return entries
     }
 
     fun getSelectedIndex(): Int {
